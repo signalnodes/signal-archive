@@ -16,6 +16,11 @@ export const workerEnvSchema = baseSchema.extend({
   STAGEHAND_ENV: z.enum(["LOCAL", "BROWSERBASE"]).default("LOCAL"),
   BROWSERBASE_API_KEY: z.string().optional(),
   BROWSERBASE_PROJECT_ID: z.string().optional(),
+  MOCK_INGESTION: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
+  ANTHROPIC_API_KEY: z.string().optional(),
 });
 
 export const webEnvSchema = baseSchema.extend({

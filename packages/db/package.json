@@ -12,7 +12,9 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:migrate:run": "tsx src/migrate-cli.ts",
+    "db:seed": "tsx ../../scripts/seed-accounts.ts"
   },
   "dependencies": {
     "@taa/shared": "*",
@@ -21,6 +23,7 @@
   },
   "devDependencies": {
     "drizzle-kit": "^0.30.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.0"
   }
 }

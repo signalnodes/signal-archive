@@ -2,17 +2,28 @@ import { createIngestionWorkers } from "./jobs/ingest";
 import { createDeletionCheckWorker } from "./jobs/check-deletions";
 import { createHcsSubmitWorker } from "./jobs/submit-hcs";
 import { createMediaArchiveWorker } from "./jobs/archive-media";
+import { createProvider } from "./services/scraper";
+import { registerScheduledJobs } from "./scheduler";
 
 console.log("[worker] Starting TAA workers...");
 
+const provider = createProvider();
+
 const workers = [
-  ...createIngestionWorkers(),
+  ...createIngestionWorkers(provider),
   createDeletionCheckWorker(),
   createHcsSubmitWorker(),
   createMediaArchiveWorker(),
 ];
 
 console.log(`[worker] ${workers.length} workers registered`);
+
+registerScheduledJobs()
+  .then(() => console.log("[worker] Scheduler ready"))
+  .catch((err) => {
+    console.error("[worker] Scheduler failed, shutting down:", err);
+    process.exit(1);
+  });
 
 async function shutdown() {
   console.log("[worker] Shutting down gracefully...");

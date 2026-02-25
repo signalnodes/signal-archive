@@ -9,10 +9,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@browserbasehq/stagehand": "^3.0.0",
     "@taa/db": "*",
     "@taa/shared": "*",
     "bullmq": "^5.0.0",
-    "ioredis": "^5.4.0"
+    "ioredis": "^5.4.0",
+    "zod": "^3.24.0"
   },
   "devDependencies": {
     "tsx": "^4.21.0",

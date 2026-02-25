@@ -3,6 +3,7 @@ import { connection } from "../queues";
 import { QUEUE_NAMES } from "@taa/shared";
 
 export interface SubmitHcsJobData {
+  dbId: string;
   tweetId: string;
   contentHash: string;
   type: "tweet_attestation" | "deletion_detected";
