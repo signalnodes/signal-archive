@@ -1,0 +1,85 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { CategoryBadge, TierBadge } from "@/components/category-badge";
+import { CATEGORY_LABELS } from "@/lib/category";
+import { formatNumber } from "@/lib/format";
+import type { AccountCategory } from "@taa/shared";
+
+export interface AccountRow {
+  id: string;
+  username: string;
+  displayName: string | null;
+  category: string;
+  trackingTier: string;
+  tweetCount: number;
+  deletionCount: number;
+}
+
+export function AccountsGrid({ accounts }: { accounts: AccountRow[] }) {
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  const categories = [...new Set(accounts.map((a) => a.category))].sort();
+  const filtered = activeCategory
+    ? accounts.filter((a) => a.category === activeCategory)
+    : accounts;
+
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2 mb-6">
+        <Button
+          variant={activeCategory === null ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveCategory(null)}
+        >
+          All ({accounts.length})
+        </Button>
+        {categories.map((cat) => (
+          <Button
+            key={cat}
+            variant={activeCategory === cat ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveCategory(cat)}
+          >
+            {CATEGORY_LABELS[cat as AccountCategory] ?? cat}
+            <span className="ml-1 text-xs opacity-60">
+              ({accounts.filter((a) => a.category === cat).length})
+            </span>
+          </Button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {filtered.map((account) => (
+          <Link key={account.id} href={`/accounts/${account.username}`}>
+            <Card className="hover:border-border/80 transition-colors h-full cursor-pointer">
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-sm">@{account.username}</div>
+                    {account.displayName && (
+                      <div className="text-xs text-muted-foreground truncate">
+                        {account.displayName}
+                      </div>
+                    )}
+                  </div>
+                  <TierBadge tier={account.trackingTier} />
+                </div>
+                <CategoryBadge category={account.category} />
+                <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
+                  <span>{formatNumber(account.tweetCount)} archived</span>
+                  <span className={account.deletionCount > 0 ? "text-destructive" : ""}>
+                    {formatNumber(account.deletionCount)} deleted
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}

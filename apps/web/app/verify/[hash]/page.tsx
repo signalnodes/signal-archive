@@ -1,15 +1,68 @@
-interface VerifyProps {
+export const dynamic = "force-dynamic";
+
+import type { Metadata } from "next";
+import { eq } from "drizzle-orm";
+import { getDb, tweets, trackedAccounts, hcsAttestations } from "@taa/db";
+import { VerifyInput } from "@/components/verify-input";
+import { VerifyResult } from "@/components/verify-result";
+
+export const metadata: Metadata = { title: "Verify Hash" };
+
+interface Props {
   params: Promise<{ hash: string }>;
 }
 
-export default async function VerifyPage({ params }: VerifyProps) {
+export default async function VerifyHashPage({ params }: Props) {
   const { hash } = await params;
+  const db = getDb();
+
+  const [tweetRow] = await db
+    .select({
+      tweet: {
+        id: tweets.id,
+        content: tweets.content,
+        postedAt: tweets.postedAt,
+        isDeleted: tweets.isDeleted,
+      },
+      account: {
+        username: trackedAccounts.username,
+      },
+    })
+    .from(tweets)
+    .leftJoin(trackedAccounts, eq(tweets.accountId, trackedAccounts.id))
+    .where(eq(tweets.contentHash, hash))
+    .limit(1);
+
+  const attestation = tweetRow
+    ? await db
+        .select({
+          transactionId: hcsAttestations.transactionId,
+          topicId: hcsAttestations.topicId,
+          sequenceNumber: hcsAttestations.sequenceNumber,
+          consensusTimestamp: hcsAttestations.consensusTimestamp,
+        })
+        .from(hcsAttestations)
+        .where(eq(hcsAttestations.tweetId, tweetRow.tweet.id))
+        .limit(1)
+        .then((rows) => rows[0] ?? null)
+    : null;
+
   return (
-    <main className="p-8">
-      <h1 className="text-2xl font-bold">Verify Hash</h1>
-      <p className="mt-4 text-gray-600">
-        Verify content hash <code className="bg-gray-100 px-1 rounded">{hash}</code> against Hedera Consensus Service.
+    <div className="container mx-auto max-w-2xl px-4 py-12">
+      <h1 className="text-2xl font-bold mb-2">Verify Content Hash</h1>
+      <p className="text-muted-foreground mb-8">
+        Enter a SHA-256 content hash to check if a matching tweet is in the archive with a
+        valid Hedera attestation.
       </p>
-    </main>
+      <VerifyInput defaultHash={hash} />
+      <div className="mt-8">
+        <VerifyResult
+          hash={hash}
+          tweet={tweetRow?.tweet ?? null}
+          account={tweetRow?.account ?? null}
+          attestation={attestation}
+        />
+      </div>
+    </div>
   );
 }
