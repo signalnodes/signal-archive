@@ -55,3 +55,36 @@ Never commit secrets.
 Quick checks:
 - git check-ignore -v .env || echo ".env is NOT ignored"
 - git ls-files | grep -E '^\.env' && echo "BAD: env tracked" || echo "OK: env not tracked"
+
+---
+
+# TAA — Tweet Accountability Archive
+
+## Project context
+Read docs/ARCHITECTURE.md for full system design, database schema, tech stack, and implementation patterns.
+Read docs/SEED_ACCOUNTS.md for Phase 1 tracked accounts list.
+
+## Tech stack
+- **Frontend**: Next.js 14+ (App Router), Tailwind CSS
+- **Backend**: TypeScript, Node.js
+- **Database**: PostgreSQL 16 (Docker), Drizzle ORM
+- **Job queue**: BullMQ + Redis
+- **Blockchain**: Hedera Consensus Service (@hashgraph/sdk)
+- **Browser automation**: Stagehand or similar (TBD)
+
+## Local services
+- Postgres: `docker run --name taa-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=tweet_accountability -p 5432:5432 -d postgres:16`
+- Redis: `docker run --name taa-redis -p 6379:6379 -d redis:7-alpine`
+
+## Env vars (see .env.example)
+- DATABASE_URL=postgresql://postgres:postgres@localhost:5432/tweet_accountability
+- REDIS_URL=redis://localhost:6379
+- HEDERA_OPERATOR_ID=
+- HEDERA_OPERATOR_KEY=
+- HEDERA_NETWORK=testnet
+
+## Monorepo structure
+- apps/web — Next.js frontend + API routes
+- apps/worker — BullMQ job consumers (ingestion, deletion checks, HCS)
+- packages/db — Drizzle schema + migrations
+- packages/shared — Types, canonical hash utils, constants
