@@ -13,6 +13,7 @@ import { getDb, hcsAttestations } from "@taa/db";
 export interface SubmitHcsJobData {
   dbId: string;
   tweetId: string;
+  authorId: string; // numeric Twitter user ID
   contentHash: string;
   type: "tweet_attestation" | "deletion_detected";
   username: string;
@@ -41,7 +42,7 @@ function getTopicId(): string {
 }
 
 async function processHcsSubmission(job: Job<SubmitHcsJobData>) {
-  const { dbId, tweetId, contentHash, type, username, postedAt } = job.data;
+  const { dbId, tweetId, authorId, contentHash, type, username, postedAt } = job.data;
   const db = getDb();
 
   // Skip if already attested (idempotency guard)
@@ -62,6 +63,7 @@ async function processHcsSubmission(job: Job<SubmitHcsJobData>) {
   const payload = {
     type,
     tweetId,
+    authorId,
     username,
     postedAt,
     contentHash,

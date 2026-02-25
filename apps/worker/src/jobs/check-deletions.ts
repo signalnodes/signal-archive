@@ -77,6 +77,7 @@ async function processDeletionCheck(
       content: tweets.content,
       postedAt: tweets.postedAt,
       contentHash: tweets.contentHash,
+      authorId: tweets.authorId,
       username: trackedAccounts.username,
     })
     .from(tweets)
@@ -131,6 +132,7 @@ async function processDeletionCheck(
     await hcsSubmitQueue.add(`hcs:deletion:${tweet.tweetId}`, {
       dbId: tweet.id,
       tweetId: tweet.tweetId,
+      authorId: tweet.authorId,
       contentHash: tweet.contentHash,
       type: "deletion_detected" as const,
       username: tweet.username ?? "unknown",

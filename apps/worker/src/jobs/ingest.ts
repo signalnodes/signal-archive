@@ -75,6 +75,7 @@ async function processIngestion(
     await hcsSubmitQueue.add(`hcs:${tweet.tweetId}`, {
       dbId: inserted.id,
       tweetId: tweet.tweetId,
+      authorId: tweet.authorId,
       contentHash,
       type: "tweet_attestation" as const,
       username,
