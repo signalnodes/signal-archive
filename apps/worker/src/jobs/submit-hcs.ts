@@ -15,6 +15,8 @@ export interface SubmitHcsJobData {
   tweetId: string;
   contentHash: string;
   type: "tweet_attestation" | "deletion_detected";
+  username: string;
+  postedAt: string; // ISO string
 }
 
 function getHederaClient(): Client {
@@ -39,7 +41,7 @@ function getTopicId(): string {
 }
 
 async function processHcsSubmission(job: Job<SubmitHcsJobData>) {
-  const { dbId, tweetId, contentHash, type } = job.data;
+  const { dbId, tweetId, contentHash, type, username, postedAt } = job.data;
   const db = getDb();
 
   // Skip if already attested (idempotency guard)
@@ -60,6 +62,8 @@ async function processHcsSubmission(job: Job<SubmitHcsJobData>) {
   const payload = {
     type,
     tweetId,
+    username,
+    postedAt,
     contentHash,
     topicId,
     submittedAt: new Date().toISOString(),

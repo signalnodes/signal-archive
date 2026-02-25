@@ -2,7 +2,7 @@ import { Worker, Job } from "bullmq";
 import { eq, and, lte, gt, sql } from "drizzle-orm";
 import { connection, hcsSubmitQueue } from "../queues";
 import { QUEUE_NAMES, DELETION_CHECK_THRESHOLDS } from "@taa/shared";
-import { getDb, tweets, deletionEvents } from "@taa/db";
+import { getDb, tweets, deletionEvents, trackedAccounts } from "@taa/db";
 import type { DeletionChecker } from "../services/deletion-checker";
 
 const MAX_BATCH_SIZE = 100;
@@ -77,8 +77,10 @@ async function processDeletionCheck(
       content: tweets.content,
       postedAt: tweets.postedAt,
       contentHash: tweets.contentHash,
+      username: trackedAccounts.username,
     })
     .from(tweets)
+    .leftJoin(trackedAccounts, eq(tweets.accountId, trackedAccounts.id))
     .where(sql`(${sql.join(conditions, sql` OR `)})`)
     .orderBy(tweets.postedAt)
     .limit(MAX_BATCH_SIZE);
@@ -131,6 +133,8 @@ async function processDeletionCheck(
       tweetId: tweet.tweetId,
       contentHash: tweet.contentHash,
       type: "deletion_detected" as const,
+      username: tweet.username ?? "unknown",
+      postedAt: tweet.postedAt.toISOString(),
     });
   }
 

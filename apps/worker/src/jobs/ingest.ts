@@ -77,6 +77,8 @@ async function processIngestion(
       tweetId: tweet.tweetId,
       contentHash,
       type: "tweet_attestation" as const,
+      username,
+      postedAt: tweet.postedAt.toISOString(),
     });
 
     // Queue media archival if media present
