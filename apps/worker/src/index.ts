@@ -3,15 +3,17 @@ import { createDeletionCheckWorker } from "./jobs/check-deletions";
 import { createHcsSubmitWorker } from "./jobs/submit-hcs";
 import { createMediaArchiveWorker } from "./jobs/archive-media";
 import { createProvider } from "./services/scraper";
+import { createDeletionChecker } from "./services/deletion-checker";
 import { registerScheduledJobs } from "./scheduler";
 
 console.log("[worker] Starting TAA workers...");
 
 const provider = createProvider();
+const checker = createDeletionChecker();
 
 const workers = [
   ...createIngestionWorkers(provider),
-  createDeletionCheckWorker(),
+  createDeletionCheckWorker(checker),
   createHcsSubmitWorker(),
   createMediaArchiveWorker(),
 ];

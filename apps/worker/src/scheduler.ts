@@ -10,8 +10,10 @@ import {
   ingestionPriorityQueue,
   ingestionStandardQueue,
   ingestionLowQueue,
+  deletionCheckQueue,
 } from "./queues";
 import type { IngestJobData } from "./jobs/ingest";
+import type { CheckDeletionsJobData } from "./jobs/check-deletions";
 
 const TIER_QUEUES = {
   priority: ingestionPriorityQueue,
@@ -69,5 +71,15 @@ export async function registerScheduledJobs() {
     );
   }
 
+  // Register deletion-check repeatable job (every 5 minutes)
+  const deletionJobId = "deletion-check:main";
+  const deletionJobData: CheckDeletionsJobData = { cycleCount: 0 };
+
+  await deletionCheckQueue.add(deletionJobId, deletionJobData, {
+    repeat: { every: 5 * 60 * 1000 },
+    jobId: deletionJobId,
+  });
+
+  console.log("[scheduler] Deletion check registered (every 5 min)");
   console.log("[scheduler] All repeatable jobs registered");
 }

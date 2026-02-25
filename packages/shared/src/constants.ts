@@ -11,13 +11,14 @@ export const TIER_INTERVALS: Record<TrackingTier, number> = {
 export const DELETION_CHECK_THRESHOLDS = {
   /** Tweets < 7 days: check every cycle */
   RECENT_DAYS: 7,
-  /** Tweets 7-30 days: check every 4 cycles */
+  /** Tweets 7-30 days: check every 4th cycle (~20 min) */
   MEDIUM_DAYS: 30,
   MEDIUM_CYCLE_DIVISOR: 4,
-  /** Tweets 30-90 days: check daily */
+  /** Tweets 30-90 days: check every 12th cycle (~1 hour) */
   OLD_DAYS: 90,
-  /** Tweets > 90 days: check weekly */
-  ARCHIVE_CYCLE_DIVISOR: 7,
+  OLD_CYCLE_DIVISOR: 12,
+  /** Tweets > 90 days: check every 84th cycle (~7 hours) */
+  ARCHIVE_CYCLE_DIVISOR: 84,
 } as const;
 
 /** BullMQ queue names */
