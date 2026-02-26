@@ -3,12 +3,21 @@ import { Redis } from "ioredis";
 import { QUEUE_NAMES } from "@taa/shared";
 
 const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379";
-const isTls = redisUrl.startsWith("rediss://");
 
-export const connection = new Redis(redisUrl, {
-  maxRetriesPerRequest: null,
-  tls: isTls ? {} : undefined,
-});
+function parseRedisConnection(url: string) {
+  const parsed = new URL(url);
+  const isTls = parsed.protocol === "rediss:";
+  return {
+    host: parsed.hostname,
+    port: parsed.port ? parseInt(parsed.port) : 6379,
+    password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
+    username: parsed.username ? decodeURIComponent(parsed.username) : undefined,
+    tls: isTls ? {} : undefined,
+    maxRetriesPerRequest: null as null,
+  };
+}
+
+export const connection = new Redis(parseRedisConnection(redisUrl));
 
 export const ingestionPriorityQueue = new Queue(QUEUE_NAMES.INGESTION_PRIORITY, { connection });
 export const ingestionStandardQueue = new Queue(QUEUE_NAMES.INGESTION_STANDARD, { connection });
