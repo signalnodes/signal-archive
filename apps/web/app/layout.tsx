@@ -16,15 +16,26 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | Tweet Accountability Archive",
-    default: "Tweet Accountability Archive",
+    template: "%s | Signal Archive",
+    default: "Signal Archive — Public Statements. Permanent Record.",
   },
   description:
-    "Monitoring, recording, and cryptographically attesting public statements from political figures and officials. Proof anchored to the Hedera Consensus Service.",
+    "Signal Archive monitors public figures, captures their statements, and creates cryptographic proof anchored to the Hedera Consensus Service — so deletion is never the last word.",
   openGraph: {
-    siteName: "Tweet Accountability Archive",
+    siteName: "Signal Archive",
     type: "website",
+    title: "Signal Archive — Public Statements. Permanent Record.",
+    description:
+      "Signal Archive monitors public figures, captures their statements, and creates cryptographic proof anchored to the Hedera Consensus Service — so deletion is never the last word.",
+    url: "https://signalarchive.org",
   },
+  twitter: {
+    card: "summary",
+    title: "Signal Archive — Public Statements. Permanent Record.",
+    description:
+      "Monitoring public figures. Cryptographic proof of every tweet. Deletion is never the last word.",
+  },
+  metadataBase: new URL("https://signalarchive.org"),
 };
 
 export default function RootLayout({

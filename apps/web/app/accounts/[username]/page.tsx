@@ -14,7 +14,31 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
-  return { title: `@${username}` };
+  const db = getDb();
+  const [account] = await db
+    .select({ displayName: trackedAccounts.displayName })
+    .from(trackedAccounts)
+    .where(eq(trackedAccounts.username, username))
+    .limit(1);
+
+  const displayName = account?.displayName ?? `@${username}`;
+  const title = `@${username}`;
+  const description = `${displayName}'s archived tweets and detected deletions — cryptographically attested on Signal Archive.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `@${username} — Signal Archive`,
+      description,
+      url: `https://signalarchive.org/accounts/${username}`,
+    },
+    twitter: {
+      card: "summary",
+      title: `@${username} — Signal Archive`,
+      description,
+    },
+  };
 }
 
 export default async function AccountProfilePage({ params }: Props) {
