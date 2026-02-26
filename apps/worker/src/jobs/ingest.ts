@@ -17,6 +17,11 @@ export interface IngestJobData {
   tier: TrackingTier;
 }
 
+// Only archive tweets posted on or after this date (reduces cost, keeps scope relevant)
+const ARCHIVE_SINCE = process.env.ARCHIVE_SINCE
+  ? new Date(process.env.ARCHIVE_SINCE)
+  : new Date("2025-01-01T00:00:00Z");
+
 async function processIngestion(
   job: Job<IngestJobData>,
   provider: TweetProvider
@@ -28,8 +33,15 @@ async function processIngestion(
   const db = getDb();
   let newCount = 0;
   let dupeCount = 0;
+  let skippedCount = 0;
 
   for (const tweet of scraped) {
+    // Skip tweets before the archive cutoff date
+    if (tweet.postedAt < ARCHIVE_SINCE) {
+      skippedCount++;
+      continue;
+    }
+
     // Dedup: check if tweet already exists
     const existing = await db.query.tweets.findFirst({
       where: eq(tweets.tweetId, tweet.tweetId),
@@ -92,7 +104,7 @@ async function processIngestion(
   }
 
   console.log(
-    `[ingest] Done @${username}: ${newCount} new, ${dupeCount} already seen`
+    `[ingest] Done @${username}: ${newCount} new, ${dupeCount} already seen, ${skippedCount} before cutoff`
   );
 }
 
