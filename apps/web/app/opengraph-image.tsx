@@ -45,6 +45,8 @@ export default function Image() {
         {/* Headline */}
         <div
           style={{
+            display: "flex",
+            flexDirection: "column",
             color: "#ffffff",
             fontSize: "56px",
             fontWeight: 700,
@@ -52,9 +54,8 @@ export default function Image() {
             marginBottom: "24px",
           }}
         >
-          Public statements.
-          <br />
-          Permanent record.
+          <span>Public statements.</span>
+          <span>Permanent record.</span>
         </div>
 
         {/* Subline */}
