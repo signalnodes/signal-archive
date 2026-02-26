@@ -86,7 +86,7 @@ A public accountability platform that monitors, records, and cryptographically a
 ### Blockchain / Attestation
 | Component | Technology | Rationale |
 |-----------|-----------|-----------|
-| Consensus Layer | **Hedera Consensus Service (HCS)** | Immutable timestamped proof, low cost (~$0.0001/msg) |
+| Consensus Layer | **Hedera Consensus Service (HCS)** | Immutable timestamped proof, low cost (~$0.0008/msg as of Jan 2026) |
 | Hedera SDK | **@hashgraph/sdk** | Official JS SDK |
 | Hash Algorithm | **SHA-256** | Industry standard, deterministic |
 
@@ -227,9 +227,9 @@ CREATE TABLE tracking_requests (
 **Scheduling Tiers:**
 | Tier | Interval | Use Case |
 |------|----------|----------|
-| Priority | Every 5 minutes | Trump family, active controversy accounts |
-| Standard | Every 15 minutes | Congress, agency accounts |
-| Low | Every 60 minutes | Lower-priority tracked accounts |
+| Priority | Every 30 minutes | Trump family, active controversy accounts |
+| Standard | Every 2 hours | Congress, agency accounts |
+| Low | Every 6 hours | Lower-priority tracked accounts |
 
 **Canonical JSON for Hashing:**
 ```typescript
@@ -610,11 +610,13 @@ async function submitAttestation(tweet: Tweet, topicId: string) {
 ```
 
 ### Cost Estimate
+Note: HCS fee increased to $0.0008/msg as of January 2026 (8× prior rate).
+
 | Volume | Monthly HCS Cost |
 |--------|-----------------|
-| 10,000 tweets/mo | ~$1.00 |
-| 100,000 tweets/mo | ~$10.00 |
-| 1,000,000 tweets/mo | ~$100.00 |
+| 10,000 tweets/mo | ~$8.00 |
+| 100,000 tweets/mo | ~$80.00 |
+| 1,000,000 tweets/mo | ~$800.00 |
 
 Extremely affordable — this is one of Hedera's strengths.
 
@@ -626,10 +628,10 @@ Extremely affordable — this is one of Hedera's strengths.
 
 | Queue | Purpose | Concurrency |
 |-------|---------|-------------|
-| `ingestion:priority` | Poll priority accounts every 5 min | 3 workers |
-| `ingestion:standard` | Poll standard accounts every 15 min | 5 workers |
-| `ingestion:low` | Poll low-priority accounts every 60 min | 2 workers |
-| `deletion-check` | Batch deletion verification | 2 workers |
+| `ingestion:priority` | Poll priority accounts every 30 min | 3 workers |
+| `ingestion:standard` | Poll standard accounts every 2 hours | 5 workers |
+| `ingestion:low` | Poll low-priority accounts every 6 hours | 2 workers |
+| `deletion-check` | Batch deletion verification every 15 min | 2 workers |
 | `hcs-submit` | Submit attestations to HCS | 1 worker (sequential) |
 | `media-archive` | Download and store tweet media | 3 workers |
 
@@ -637,7 +639,7 @@ Extremely affordable — this is one of Hedera's strengths.
 ```typescript
 // Repeatable jobs
 await ingestionQueue.add('poll-priority', {}, {
-  repeat: { every: 5 * 60 * 1000 },  // 5 minutes
+  repeat: { every: 30 * 60 * 1000 },  // 30 minutes
 });
 
 await deletionQueue.add('check-batch', {}, {
