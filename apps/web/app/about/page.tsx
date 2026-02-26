@@ -53,7 +53,7 @@ export default function AboutPage() {
             {
               step: "1. Continuous monitoring",
               detail:
-                "We poll tracked accounts at regular intervals — every few minutes for high-priority accounts, every 15–60 minutes for others. Each poll captures the full tweet text, metadata, and engagement counts at time of capture.",
+                "We poll tracked accounts at regular intervals — every 30 minutes for high-priority accounts, every 2–6 hours for others. Each poll captures the full tweet text, metadata, and engagement counts at time of capture.",
             },
             {
               step: "2. Cryptographic hashing",
@@ -135,7 +135,7 @@ export default function AboutPage() {
           </li>
           <li>
             <span className="text-foreground font-medium">Cost.</span> Each attestation costs
-            approximately $0.0001 — making large-scale archival economically viable.
+            approximately $0.0008 — making large-scale archival economically viable.
           </li>
         </ul>
       </section>
@@ -151,6 +151,35 @@ export default function AboutPage() {
           Accounts are selected based on public interest, history of deletion, and relevance to
           active legal or political accountability questions.
         </p>
+      </section>
+
+      <section className="mb-10">
+        <h2 className="text-xl font-semibold mb-3">Transparency</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+          All attestations are submitted to a single public HCS topic on Hedera Mainnet. Anyone can
+          read the full message history independently — no account or login required.
+        </p>
+        <div className="rounded-lg border bg-muted/40 px-4 py-3 text-sm space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-muted-foreground">HCS Topic:</span>
+            <span className="font-mono text-foreground">0.0.10301350</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-muted-foreground">Network:</span>
+            <span className="font-mono text-foreground">Hedera Mainnet</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-muted-foreground">Public explorer:</span>
+            <a
+              href="https://hashscan.io/mainnet/topic/0.0.10301350"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-foreground underline underline-offset-2 hover:text-muted-foreground"
+            >
+              hashscan.io/mainnet/topic/0.0.10301350 ↗
+            </a>
+          </div>
+        </div>
       </section>
 
       <Separator className="mb-10" />
