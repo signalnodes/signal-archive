@@ -24,6 +24,12 @@ export function SiteHeader() {
             Deletions
           </Link>
           <Link
+            href="/search"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Search
+          </Link>
+          <Link
             href="/accounts"
             className="text-muted-foreground hover:text-foreground transition-colors"
           >
