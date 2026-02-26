@@ -2,23 +2,23 @@ import type { TrackingTier } from "./types";
 
 /** Polling intervals per tracking tier (milliseconds) */
 export const TIER_INTERVALS: Record<TrackingTier, number> = {
-  priority: 5 * 60 * 1000, // 5 minutes
-  standard: 15 * 60 * 1000, // 15 minutes
-  low: 60 * 60 * 1000, // 60 minutes
+  priority: 30 * 60 * 1000, // 30 minutes
+  standard: 2 * 60 * 60 * 1000, // 2 hours
+  low: 6 * 60 * 60 * 1000, // 6 hours
 };
 
 /** Deletion check age thresholds — determines how often to re-check tweets */
 export const DELETION_CHECK_THRESHOLDS = {
   /** Tweets < 7 days: check every cycle */
   RECENT_DAYS: 7,
-  /** Tweets 7-30 days: check every 4th cycle (~20 min) */
+  /** Tweets 7-30 days: check every 4th cycle (~1 hour) */
   MEDIUM_DAYS: 30,
   MEDIUM_CYCLE_DIVISOR: 4,
-  /** Tweets 30-90 days: check every 12th cycle (~1 hour) */
+  /** Tweets 30-90 days: check every 12th cycle (~3 hours) */
   OLD_DAYS: 90,
   OLD_CYCLE_DIVISOR: 12,
-  /** Tweets > 90 days: check every 84th cycle (~7 hours) */
-  ARCHIVE_CYCLE_DIVISOR: 84,
+  /** Tweets > 90 days: skip entirely (too old to be worth checking) */
+  ARCHIVE_CYCLE_DIVISOR: 0,
 } as const;
 
 /** BullMQ queue names */

@@ -30,6 +30,16 @@ const TIER_QUEUE_NAMES: Record<TrackingTier, string> = {
 export async function registerScheduledJobs() {
   const db = getDb();
 
+  // Clear stale repeatable jobs from previous intervals before re-registering
+  const allQueues = [ingestionPriorityQueue, ingestionStandardQueue, ingestionLowQueue, deletionCheckQueue];
+  for (const queue of allQueues) {
+    const repeatable = await queue.getRepeatableJobs();
+    for (const job of repeatable) {
+      await queue.removeRepeatableByKey(job.key);
+    }
+  }
+  console.log("[scheduler] Cleared old repeatable jobs");
+
   const accounts = await db.query.trackedAccounts.findMany({
     where: eq(trackedAccounts.isActive, true),
   });
@@ -71,15 +81,15 @@ export async function registerScheduledJobs() {
     );
   }
 
-  // Register deletion-check repeatable job (every 5 minutes)
+  // Register deletion-check repeatable job (every 15 minutes)
   const deletionJobId = "deletion-check:main";
   const deletionJobData: CheckDeletionsJobData = { cycleCount: 0 };
 
   await deletionCheckQueue.add(deletionJobId, deletionJobData, {
-    repeat: { every: 5 * 60 * 1000 },
+    repeat: { every: 15 * 60 * 1000 },
     jobId: deletionJobId,
   });
 
-  console.log("[scheduler] Deletion check registered (every 5 min)");
+  console.log("[scheduler] Deletion check registered (every 15 min)");
   console.log("[scheduler] All repeatable jobs registered");
 }

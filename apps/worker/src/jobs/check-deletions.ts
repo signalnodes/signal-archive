@@ -5,7 +5,7 @@ import { QUEUE_NAMES, DELETION_CHECK_THRESHOLDS } from "@taa/shared";
 import { getDb, tweets, deletionEvents, trackedAccounts } from "@taa/db";
 import type { DeletionChecker } from "../services/deletion-checker";
 
-const MAX_BATCH_SIZE = 100;
+const MAX_BATCH_SIZE = 25;
 
 export interface CheckDeletionsJobData {
   cycleCount: number;
@@ -61,8 +61,8 @@ async function processDeletionCheck(
     );
   }
 
-  // Archive (>90d): every 84th cycle
-  if (cycleCount % ARCHIVE_CYCLE_DIVISOR === 0) {
+  // Archive (>90d): skip if divisor is 0 (disabled), otherwise every Nth cycle
+  if (ARCHIVE_CYCLE_DIVISOR > 0 && cycleCount % ARCHIVE_CYCLE_DIVISOR === 0) {
     conditions.push(
       and(eq(tweets.isDeleted, false), lte(tweets.postedAt, oldCutoff))
     );
