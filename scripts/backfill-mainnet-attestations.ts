@@ -38,7 +38,7 @@ function getClient(): Client {
   const client = Client.forMainnet();
   client.setOperator(
     AccountId.fromString(operatorId!),
-    PrivateKey.fromString(operatorKey!)
+    PrivateKey.fromStringED25519(operatorKey!)
   );
   return client;
 }

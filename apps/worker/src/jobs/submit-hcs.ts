@@ -31,7 +31,7 @@ function getHederaClient(): Client {
 
   const client =
     network === "mainnet" ? Client.forMainnet() : Client.forTestnet();
-  client.setOperator(AccountId.fromString(operatorId), PrivateKey.fromString(operatorKey));
+  client.setOperator(AccountId.fromString(operatorId), PrivateKey.fromStringED25519(operatorKey));
   return client;
 }
 

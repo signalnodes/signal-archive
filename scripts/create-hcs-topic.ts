@@ -28,12 +28,12 @@ async function main() {
     network === "mainnet" ? Client.forMainnet() : Client.forTestnet();
   client.setOperator(
     AccountId.fromString(operatorId!),
-    PrivateKey.fromString(operatorKey!)
+    PrivateKey.fromStringED25519(operatorKey!)
   );
 
   const tx = await new TopicCreateTransaction()
     .setTopicMemo("Signal Archive — tweet attestations")
-    .setSubmitKey(PrivateKey.fromString(operatorKey!).publicKey)
+    .setSubmitKey(PrivateKey.fromStringED25519(operatorKey!).publicKey)
     .execute(client);
 
   const receipt = await tx.getReceipt(client);
