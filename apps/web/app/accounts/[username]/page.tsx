@@ -8,8 +8,11 @@ import { AccountHeader } from "@/components/account-header";
 import { AccountTabs } from "@/components/account-tabs";
 import type { DeletionRow } from "@/components/recent-deletions-feed";
 
+const PAGE_SIZE = 25;
+
 interface Props {
   params: Promise<{ username: string }>;
+  searchParams: Promise<{ page?: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -41,8 +44,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function AccountProfilePage({ params }: Props) {
+export default async function AccountProfilePage({ params, searchParams }: Props) {
   const { username } = await params;
+  const { page: pageParam } = await searchParams;
+  const currentPage = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
+  const offset = (currentPage - 1) * PAGE_SIZE;
   const db = getDb();
 
   const [accountRow] = await db
@@ -68,7 +74,8 @@ export default async function AccountProfilePage({ params }: Props) {
       .from(tweets)
       .where(eq(tweets.accountId, accountRow.id))
       .orderBy(desc(tweets.postedAt))
-      .limit(25),
+      .limit(PAGE_SIZE)
+      .offset(offset),
     db
       .select({
         deletion: {
@@ -100,6 +107,7 @@ export default async function AccountProfilePage({ params }: Props) {
 
   const totalTweets = tweetCountResult[0]?.count ?? 0;
   const totalDeletions = deletionCountResult[0]?.count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalTweets / PAGE_SIZE));
 
   return (
     <div className="container mx-auto max-w-screen-xl px-4 py-8">
@@ -113,6 +121,8 @@ export default async function AccountProfilePage({ params }: Props) {
         totalTweets={totalTweets}
         totalDeletions={totalDeletions}
         username={accountRow.username}
+        currentPage={currentPage}
+        totalPages={totalPages}
       />
     </div>
   );
