@@ -14,6 +14,7 @@ interface TweetEngagement {
 interface TweetCardProps {
   tweet: {
     id: string;
+    tweetId: string;
     content: string;
     tweetType: string;
     isDeleted: boolean;
@@ -21,9 +22,10 @@ interface TweetCardProps {
     engagement?: TweetEngagement | unknown;
     mediaUrls?: string[] | null;
   };
+  username: string;
 }
 
-export function TweetCard({ tweet }: TweetCardProps) {
+export function TweetCard({ tweet, username }: TweetCardProps) {
   const eng = tweet.engagement as TweetEngagement | null;
   return (
     <Card className={tweet.isDeleted ? "border-destructive/40 opacity-75" : ""}>
@@ -62,12 +64,24 @@ export function TweetCard({ tweet }: TweetCardProps) {
               </>
             )}
           </div>
-          <Link
-            href={`/tweet/${tweet.id}`}
-            className="text-xs text-muted-foreground hover:text-foreground hover:underline"
-          >
-            View proof →
-          </Link>
+          <div className="flex items-center gap-3">
+            {!tweet.isDeleted && (
+              <Link
+                href={`https://x.com/${username}/status/${tweet.tweetId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+              >
+                View on X ↗
+              </Link>
+            )}
+            <Link
+              href={`/tweet/${tweet.id}`}
+              className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+            >
+              View proof →
+            </Link>
+          </div>
         </div>
       </CardContent>
     </Card>

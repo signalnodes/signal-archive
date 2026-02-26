@@ -33,6 +33,7 @@ export default async function AccountProfilePage({ params }: Props) {
     db
       .select({
         id: tweets.id,
+        tweetId: tweets.tweetId,
         content: tweets.content,
         tweetType: tweets.tweetType,
         isDeleted: tweets.isDeleted,
@@ -87,6 +88,7 @@ export default async function AccountProfilePage({ params }: Props) {
         deletions={deletionList as DeletionRow[]}
         totalTweets={totalTweets}
         totalDeletions={totalDeletions}
+        username={accountRow.username}
       />
     </div>
   );

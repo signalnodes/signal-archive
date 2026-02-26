@@ -14,6 +14,7 @@ interface TweetEngagement {
 
 interface TweetRow {
   id: string;
+  tweetId: string;
   content: string;
   tweetType: string;
   isDeleted: boolean;
@@ -27,9 +28,10 @@ interface AccountTabsProps {
   deletions: DeletionRow[];
   totalTweets: number;
   totalDeletions: number;
+  username: string;
 }
 
-export function AccountTabs({ tweets, deletions, totalTweets, totalDeletions }: AccountTabsProps) {
+export function AccountTabs({ tweets, deletions, totalTweets, totalDeletions, username }: AccountTabsProps) {
   return (
     <Tabs defaultValue="tweets">
       <TabsList className="mb-6">
@@ -48,7 +50,7 @@ export function AccountTabs({ tweets, deletions, totalTweets, totalDeletions }: 
         ) : (
           <div className="flex flex-col gap-3">
             {tweets.map((tweet) => (
-              <TweetCard key={tweet.id} tweet={tweet} />
+              <TweetCard key={tweet.id} tweet={tweet} username={username} />
             ))}
           </div>
         )}
