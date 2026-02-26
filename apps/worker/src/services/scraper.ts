@@ -142,11 +142,17 @@ export function createProvider(): TweetProvider {
     };
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error(
-      "ANTHROPIC_API_KEY is required when MOCK_INGESTION is not enabled"
-    );
+  if (process.env.SOCIALDATA_API_KEY) {
+    const { createSocialDataProvider } = require("./socialdata-provider");
+    return createSocialDataProvider();
   }
 
-  return createStagehandProvider();
+  // Legacy: Stagehand browser automation fallback
+  if (process.env.ANTHROPIC_API_KEY) {
+    return createStagehandProvider();
+  }
+
+  throw new Error(
+    "SOCIALDATA_API_KEY (or ANTHROPIC_API_KEY for legacy Stagehand mode) is required when MOCK_INGESTION is not enabled"
+  );
 }

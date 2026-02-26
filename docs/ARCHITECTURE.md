@@ -210,6 +210,13 @@ CREATE TABLE tracking_requests (
 
 ### 1. Tweet Ingestion Agent
 
+**Primary data source: [SocialData.tools](https://api.socialdata.tools) REST API**
+- `GET /twitter/user/{user_id}/tweets-and-replies` — fetches ~20 tweets per page
+- Response format mirrors Twitter v1.1 (`id_str`, `full_text`, `tweet_created_at`, engagement counts)
+- Cost: ~$0.0002/request, shared 120 req/min rate limit
+- Retweets are skipped (other people's content, not the account's own statements)
+- Legacy fallback: Stagehand browser automation (requires `ANTHROPIC_API_KEY`)
+
 **Responsibilities:**
 - Poll tracked accounts for new tweets on a configurable schedule
 - Capture full tweet data including text, media, metadata
@@ -288,10 +295,16 @@ When a deletion is detected, submit a second HCS message:
 
 ### 3. Deletion Detection Agent
 
+**Primary: SocialData.tools API**
+- `GET /twitter/tweets/{id}` — returns 404 when tweet is deleted
+- Sequential per-tweet checks with shared rate limiter (120 req/min)
+- Conservative: HTTP 403 (private) / 5xx → assume tweet exists; only 404 → mark deleted
+- Legacy fallback: Stagehand browser automation
+
 **Approach:**
 - BullMQ scheduled job runs per-tier
 - For each tracked account, check all non-deleted tweet IDs from the last N days
-- Batch check via API (or sequential for scraping approach)
+- Sequential check via SocialData API (individual GET per tweet)
 - On 404/not-found: mark as deleted, create deletion_event, queue HCS deletion attestation
 
 **Batch Strategy:**

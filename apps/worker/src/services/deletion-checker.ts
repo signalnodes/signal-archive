@@ -97,11 +97,17 @@ export function createDeletionChecker(): DeletionChecker {
     return createMockDeletionChecker();
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error(
-      "ANTHROPIC_API_KEY is required when MOCK_INGESTION is not enabled"
-    );
+  if (process.env.SOCIALDATA_API_KEY) {
+    const { createSocialDataDeletionChecker } = require("./socialdata-deletion-checker");
+    return createSocialDataDeletionChecker();
   }
 
-  return createStagehandDeletionChecker();
+  // Legacy: Stagehand browser automation fallback
+  if (process.env.ANTHROPIC_API_KEY) {
+    return createStagehandDeletionChecker();
+  }
+
+  throw new Error(
+    "SOCIALDATA_API_KEY (or ANTHROPIC_API_KEY for legacy Stagehand mode) is required when MOCK_INGESTION is not enabled"
+  );
 }
