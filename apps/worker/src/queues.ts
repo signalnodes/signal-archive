@@ -3,9 +3,11 @@ import { Redis } from "ioredis";
 import { QUEUE_NAMES } from "@taa/shared";
 
 const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379";
+const isTls = redisUrl.startsWith("rediss://");
 
 export const connection = new Redis(redisUrl, {
   maxRetriesPerRequest: null,
+  tls: isTls ? {} : undefined,
 });
 
 export const ingestionPriorityQueue = new Queue(QUEUE_NAMES.INGESTION_PRIORITY, { connection });
