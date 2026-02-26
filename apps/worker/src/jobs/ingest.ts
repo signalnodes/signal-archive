@@ -7,7 +7,7 @@ import {
   type CanonicalTweet,
   type TrackingTier,
 } from "@taa/shared";
-import { getDb, tweets } from "@taa/db";
+import { getDb, tweets, trackedAccounts } from "@taa/db";
 import type { TweetProvider } from "../services/scraper";
 
 export interface IngestJobData {
@@ -26,11 +26,24 @@ async function processIngestion(
   job: Job<IngestJobData>,
   provider: TweetProvider
 ) {
-  const { accountId, username, twitterId, tier } = job.data;
+  const { accountId, username, tier } = job.data;
   console.log(`[ingest] Processing @${username} (tier: ${tier})`);
 
-  const scraped = await provider.fetchTweets(username, twitterId);
   const db = getDb();
+
+  // Fetch twitterId fresh from DB — job.data.twitterId may be stale from
+  // when the repeatable job was first registered in BullMQ
+  const account = await db.query.trackedAccounts.findFirst({
+    where: eq(trackedAccounts.id, accountId),
+    columns: { twitterId: true },
+  });
+
+  if (!account?.twitterId) {
+    console.warn(`[ingest] @${username} has no twitterId, skipping`);
+    return;
+  }
+
+  const scraped = await provider.fetchTweets(username, account.twitterId);
   let newCount = 0;
   let dupeCount = 0;
   let skippedCount = 0;
