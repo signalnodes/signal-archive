@@ -27,12 +27,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .where(eq(tweets.id, id))
     .limit(1);
   if (!row) return { title: "Tweet Not Found" };
-  const preview = row.content.slice(0, 60);
+  const username = row.username ?? "unknown";
+  const preview = row.content.slice(0, 120);
+  const title = `@${username}: "${preview}${row.content.length > 120 ? "…" : ""}"`;
+  const description = row.isDeleted
+    ? `@${username} deleted this tweet. Cryptographic proof of its existence is anchored to the Hedera Consensus Service.`
+    : `Archived tweet from @${username} with Hedera Consensus Service attestation.`;
   return {
-    title: `@${row.username ?? "unknown"}: "${preview}…"`,
-    description: row.isDeleted
-      ? "This tweet was deleted. Cryptographic proof available."
-      : "Archived tweet with Hedera Consensus Service attestation.",
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `https://signalarchive.org/tweet/${id}`,
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
   };
 }
 
@@ -76,9 +89,22 @@ export default async function TweetDetailPage({ params }: Props) {
     views?: number;
   } | null;
 
+  const network = process.env.HEDERA_NETWORK ?? "testnet";
+  const isTestnet = network === "testnet";
+
   return (
     <div className="container mx-auto max-w-screen-xl px-4 py-8">
       <div className="max-w-2xl mx-auto">
+        {/* Back link */}
+        {account && (
+          <Link
+            href={`/accounts/${account.username}`}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors mb-6 inline-block"
+          >
+            ← @{account.username}
+          </Link>
+        )}
+
         {/* Account + status line */}
         <div className="flex items-center gap-2 flex-wrap mb-4">
           {account && (
@@ -91,6 +117,11 @@ export default async function TweetDetailPage({ params }: Props) {
           )}
           {account && <CategoryBadge category={account.category} />}
           {tweet.isDeleted && <Badge variant="destructive">DELETED</Badge>}
+          {isTestnet && (
+            <Badge variant="outline" className="text-xs text-yellow-500 border-yellow-500/40">
+              TESTNET
+            </Badge>
+          )}
         </div>
 
         {/* Tweet content */}
@@ -112,8 +143,18 @@ export default async function TweetDetailPage({ params }: Props) {
               <span>👁 {formatNumber(eng.views)}</span>
             </div>
           )}
-          <div className="mt-3">
+          <div className="mt-3 flex items-center justify-between">
             <Timestamp date={tweet.postedAt} />
+            {!tweet.isDeleted && account && (
+              <Link
+                href={`https://x.com/${account.username}/status/${tweet.tweetId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                View on X ↗
+              </Link>
+            )}
           </div>
         </div>
 
