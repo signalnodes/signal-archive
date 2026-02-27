@@ -96,7 +96,16 @@ export function VerifyResult({ hash, tweet, account, attestation }: VerifyResult
             <dl className="text-xs space-y-2">
               <div>
                 <dt className="text-muted-foreground">Hedera Transaction</dt>
-                <dd className="font-mono break-all">{attestation.transactionId}</dd>
+                <dd className="font-mono break-all">
+                  <a
+                    href={`https://hashscan.io/${process.env.NEXT_PUBLIC_HEDERA_NETWORK ?? "mainnet"}/transaction/${attestation.transactionId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2 hover:text-foreground"
+                  >
+                    {attestation.transactionId}
+                  </a>
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Consensus Timestamp</dt>

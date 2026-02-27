@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { CategoryBadge, TierBadge } from "@/components/category-badge";
 import { LetterAvatar } from "@/components/letter-avatar";
 import { CATEGORY_LABELS } from "@/lib/category";
@@ -22,35 +23,59 @@ export interface AccountRow {
 
 export function AccountsGrid({ accounts }: { accounts: AccountRow[] }) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const categories = [...new Set(accounts.map((a) => a.category))].sort();
-  const filtered = activeCategory
-    ? accounts.filter((a) => a.category === activeCategory)
-    : accounts;
+  const filtered = accounts
+    .filter((a) => (activeCategory ? a.category === activeCategory : true))
+    .filter((a) => {
+      const q = searchQuery.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        a.username.toLowerCase().includes(q) ||
+        (a.displayName?.toLowerCase().includes(q) ?? false)
+      );
+    });
 
   return (
     <div>
+      <Input
+        placeholder="Search accounts…"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="max-w-xs mb-4"
+      />
       <div className="flex flex-wrap gap-2 mb-6">
         <Button
           variant={activeCategory === null ? "default" : "outline"}
           size="sm"
           onClick={() => setActiveCategory(null)}
         >
-          All ({accounts.length})
+          All ({filtered.length})
         </Button>
-        {categories.map((cat) => (
-          <Button
-            key={cat}
-            variant={activeCategory === cat ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveCategory(cat)}
-          >
-            {CATEGORY_LABELS[cat as AccountCategory] ?? cat}
-            <span className="ml-1 text-xs opacity-60">
-              ({accounts.filter((a) => a.category === cat).length})
-            </span>
-          </Button>
-        ))}
+        {categories.map((cat) => {
+          const catFiltered = accounts
+            .filter((a) => a.category === cat)
+            .filter((a) => {
+              const q = searchQuery.trim().toLowerCase();
+              if (!q) return true;
+              return (
+                a.username.toLowerCase().includes(q) ||
+                (a.displayName?.toLowerCase().includes(q) ?? false)
+              );
+            });
+          return (
+            <Button
+              key={cat}
+              variant={activeCategory === cat ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveCategory(cat)}
+            >
+              {CATEGORY_LABELS[cat as AccountCategory] ?? cat}
+              <span className="ml-1 text-xs opacity-60">({catFiltered.length})</span>
+            </Button>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
