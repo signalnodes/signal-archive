@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { absoluteDate } from "@/lib/format";
+import { CopyButton } from "@/components/copy-button";
 
 interface HcsAttestation {
   transactionId: string;
@@ -27,9 +28,12 @@ export function HcsProofPanel({ attestation, contentHash, tweetId }: HcsProofPan
           HCS attestation pending — this tweet has been captured and hashed but the
           blockchain submission has not yet been confirmed.
         </p>
-        <p className="text-xs text-muted-foreground mt-3 font-mono break-all">
-          SHA-256: {contentHash}
-        </p>
+        <div className="flex items-start gap-2 mt-3">
+          <p className="text-xs text-muted-foreground font-mono break-all">
+            SHA-256: {contentHash}
+          </p>
+          <CopyButton text={contentHash} />
+        </div>
       </div>
     );
   }
@@ -70,7 +74,10 @@ export function HcsProofPanel({ attestation, contentHash, tweetId }: HcsProofPan
         </div>
         <div>
           <dt className="text-xs text-muted-foreground mb-0.5">Content Hash (SHA-256)</dt>
-          <dd className="font-mono text-xs break-all text-muted-foreground">{contentHash}</dd>
+          <dd className="flex items-start gap-2">
+            <span className="font-mono text-xs break-all text-muted-foreground">{contentHash}</span>
+            <CopyButton text={contentHash} />
+          </dd>
         </div>
       </dl>
       <p className="text-xs text-muted-foreground mt-4 pt-4 border-t leading-relaxed">

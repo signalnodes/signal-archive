@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { absoluteDate, formatTweetAge } from "@/lib/format";
+import { CopyButton } from "@/components/copy-button";
 
 interface TweetMetaPanelProps {
   tweet: {
@@ -32,13 +33,14 @@ export function TweetMetaPanel({ tweet, deletion }: TweetMetaPanelProps) {
       </div>
       <div>
         <dt className="text-xs text-muted-foreground mb-0.5">Content Hash</dt>
-        <dd className="font-mono text-xs">
+        <dd className="flex items-center gap-2 font-mono text-xs">
           <Link
             href={`/verify/${tweet.contentHash}`}
             className="underline underline-offset-2 hover:text-foreground"
           >
             {tweet.contentHash.slice(0, 16)}…
           </Link>
+          <CopyButton text={tweet.contentHash} />
         </dd>
       </div>
       {deletion && (

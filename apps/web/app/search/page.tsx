@@ -19,10 +19,22 @@ interface Props {
 
 const PAGE_SIZE = 25;
 
+// Parse "from:username" tokens out of the query string.
+// Returns { ftsQuery, fromUser } where fromUser may be null.
+function parseQuery(raw: string): { ftsQuery: string; fromUser: string | null } {
+  const fromMatch = raw.match(/\bfrom:(\S+)/i);
+  const fromUser = fromMatch ? fromMatch[1].replace(/^@/, "") : null;
+  const ftsQuery = raw.replace(/\bfrom:\S+/gi, "").trim();
+  return { ftsQuery, fromUser };
+}
+
 export default async function SearchPage({ searchParams }: Props) {
   const { q, filter } = await searchParams;
-  const query = q?.trim() ?? "";
+  const rawQuery = q?.trim() ?? "";
   const deletedOnly = filter === "deleted";
+
+  const { ftsQuery, fromUser } = parseQuery(rawQuery);
+  const hasSearch = ftsQuery.length > 0 || fromUser !== null;
 
   let results: {
     tweet: {
@@ -38,8 +50,17 @@ export default async function SearchPage({ searchParams }: Props) {
     username: string | null;
   }[] = [];
 
-  if (query.length > 0) {
+  if (hasSearch) {
     const db = getDb();
+
+    const conditions = [
+      ftsQuery.length > 0
+        ? sql`to_tsvector('english', ${tweets.content}) @@ websearch_to_tsquery('english', ${ftsQuery})`
+        : undefined,
+      fromUser ? sql`lower(${trackedAccounts.username}) = lower(${fromUser})` : undefined,
+      deletedOnly ? eq(tweets.isDeleted, true) : undefined,
+    ].filter(Boolean);
+
     const rows = await db
       .select({
         tweet: {
@@ -56,14 +77,11 @@ export default async function SearchPage({ searchParams }: Props) {
       })
       .from(tweets)
       .leftJoin(trackedAccounts, eq(tweets.accountId, trackedAccounts.id))
-      .where(
-        and(
-          sql`to_tsvector('english', ${tweets.content}) @@ websearch_to_tsquery('english', ${query})`,
-          deletedOnly ? eq(tweets.isDeleted, true) : undefined
-        )
-      )
+      .where(and(...(conditions as Parameters<typeof and>)))
       .orderBy(
-        sql`ts_rank(to_tsvector('english', ${tweets.content}), websearch_to_tsquery('english', ${query})) DESC`,
+        ftsQuery.length > 0
+          ? sql`ts_rank(to_tsvector('english', ${tweets.content}), websearch_to_tsquery('english', ${ftsQuery})) DESC`
+          : desc(tweets.postedAt),
         desc(tweets.postedAt)
       )
       .limit(PAGE_SIZE);
@@ -71,7 +89,16 @@ export default async function SearchPage({ searchParams }: Props) {
     results = rows;
   }
 
-  const filterBase = query ? `?q=${encodeURIComponent(query)}` : "";
+  const resultSummary = (() => {
+    if (!hasSearch) return null;
+    const parts = [];
+    if (results.length === 0) return `No results`;
+    parts.push(`${results.length === PAGE_SIZE ? `${PAGE_SIZE}+` : results.length} result${results.length === 1 ? "" : "s"}`);
+    if (ftsQuery) parts.push(`for "${ftsQuery}"`);
+    if (fromUser) parts.push(`from @${fromUser}`);
+    if (deletedOnly) parts.push("— deleted only");
+    return parts.join(" ");
+  })();
 
   return (
     <div className="container mx-auto max-w-screen-xl px-4 py-8">
@@ -81,10 +108,10 @@ export default async function SearchPage({ searchParams }: Props) {
       <form method="GET" action="/search" className="flex gap-2 mb-6">
         <Input
           name="q"
-          defaultValue={query}
-          placeholder='Search archived tweets — try "crypto", "deleted", "Trump"'
+          defaultValue={rawQuery}
+          placeholder='Search tweets — try "crypto" or "from:elonmusk tariffs"'
           className="max-w-xl"
-          autoFocus={!query}
+          autoFocus={!rawQuery}
         />
         {filter === "deleted" && (
           <input type="hidden" name="filter" value="deleted" />
@@ -92,11 +119,11 @@ export default async function SearchPage({ searchParams }: Props) {
         <Button type="submit">Search</Button>
       </form>
 
-      {/* Filter pills — only show once a query is active */}
-      {query && (
+      {/* Filter pills */}
+      {hasSearch && (
         <div className="flex gap-2 mb-6">
           <Link
-            href={`/search?q=${encodeURIComponent(query)}`}
+            href={`/search?q=${encodeURIComponent(rawQuery)}`}
             className={`text-sm px-3 py-1.5 rounded border transition-colors ${
               !deletedOnly
                 ? "bg-foreground text-background border-foreground"
@@ -106,7 +133,7 @@ export default async function SearchPage({ searchParams }: Props) {
             All tweets
           </Link>
           <Link
-            href={`/search?q=${encodeURIComponent(query)}&filter=deleted`}
+            href={`/search?q=${encodeURIComponent(rawQuery)}&filter=deleted`}
             className={`text-sm px-3 py-1.5 rounded border transition-colors ${
               deletedOnly
                 ? "bg-destructive text-destructive-foreground border-destructive"
@@ -118,23 +145,19 @@ export default async function SearchPage({ searchParams }: Props) {
         </div>
       )}
 
-      {/* Results */}
-      {query && (
-        <p className="text-sm text-muted-foreground mb-4">
-          {results.length === 0
-            ? `No results for "${query}"${deletedOnly ? " (deleted only)" : ""}`
-            : `${results.length === PAGE_SIZE ? `${PAGE_SIZE}+` : results.length} result${results.length === 1 ? "" : "s"} for "${query}"${deletedOnly ? " — deleted only" : ""}`}
-        </p>
+      {/* Result count */}
+      {resultSummary && (
+        <p className="text-sm text-muted-foreground mb-4">{resultSummary}</p>
       )}
 
-      {!query && (
+      {/* Empty state */}
+      {!hasSearch && (
         <div className="text-sm text-muted-foreground py-12 text-center space-y-2">
           <p>Search across all archived tweets.</p>
-          <p className="text-xs">
-            Supports phrases (<span className="font-mono">"exact phrase"</span>
-            ), exclusions (<span className="font-mono">-word</span>), and
-            boolean (
-            <span className="font-mono">word1 OR word2</span>).
+          <p className="text-xs space-x-3">
+            <span><span className="font-mono">"exact phrase"</span> — phrase match</span>
+            <span><span className="font-mono">-word</span> — exclude</span>
+            <span><span className="font-mono">from:username</span> — filter by account</span>
           </p>
         </div>
       )}
