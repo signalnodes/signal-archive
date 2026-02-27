@@ -257,8 +257,9 @@ function computeHash(tweet: CanonicalTweet): string {
 ### 2. HCS Attestation Service
 
 **Topic Structure:**
-- One HCS Topic per logical group (e.g., `trump-family`, `congress-senate`, `congress-house`, `agencies`)
-- Topic IDs stored in config, referenced in attestation records
+- Single HCS topic for all attestations (`HEDERA_TOPIC_ID`)
+- Topic created via `scripts/create-hcs-topic.ts`, submit-key locked to operator key
+- Per-category topic routing deferred to Phase 2 if needed
 
 **Message Format (submitted to HCS):**
 ```json
