@@ -25,6 +25,7 @@
  *   --login                Open browser for manual login, then exit (saves session)
  *   --dry-run              Parse and log tweets but don't write to DB or queue HCS
  *   --no-hcs               Write to DB but skip queuing HCS attestations
+ *   --skip-vpn-check       Skip ProtonVPN detection (read-only check, safe to run)
  *
  * Env vars (add to .env):
  *   BROWSER_PROFILE_DIR    Chrome profile path (default: ~/.signal-archive-browser)
@@ -42,6 +43,8 @@ import { eq } from "drizzle-orm";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
+import { execSync } from "node:child_process";
+import * as readline from "node:readline";
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -64,16 +67,89 @@ const SINCE_RAW = getArg("--since");
 const DRY_RUN = hasFlag("--dry-run");
 const NO_HCS = hasFlag("--no-hcs");
 const LOGIN_MODE = hasFlag("--login");
+const SKIP_VPN_CHECK = hasFlag("--skip-vpn-check");
 
 const SINCE: Date | null = SINCE_RAW ? new Date(SINCE_RAW) : null;
 const PROFILE_DIR =
   process.env.BROWSER_PROFILE_DIR ??
   path.join(os.homedir(), ".signal-archive-browser");
 
-const MAX_EMPTY_SCROLLS = 3; // Stop after this many scrolls with no new tweets
-const MAX_SCROLLS = 200;     // Hard cap to prevent infinite loops
-const SCROLL_DELAY_MS = 3000; // Base delay between scrolls (±30% jitter applied)
-const ACCOUNT_DELAY_MS = 90_000; // 90s between accounts (looks organic)
+const MAX_EMPTY_SCROLLS = 3;  // Stop after this many scrolls with no new tweets
+const MAX_SCROLLS = 200;      // Hard cap to prevent infinite loops
+const SCROLL_DELAY_MS = 3000; // Base delay between scrolls (jitter applied)
+// Account delay range: 50–220 seconds, random uniform distribution
+const ACCOUNT_DELAY_MIN_MS = 50_000;
+const ACCOUNT_DELAY_MAX_MS = 220_000;
+
+// ---------------------------------------------------------------------------
+// Utility helpers
+// ---------------------------------------------------------------------------
+
+/** Uniform random integer between min and max ms (inclusive). */
+function randomBetween(minMs: number, maxMs: number): number {
+  return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+}
+
+/**
+ * Wait for a duration while making small randomized mouse movements to mimic
+ * a human idly moving their cursor. Splits the total wait into ~800ms steps.
+ */
+async function humanizeWait(page: import("playwright").Page, ms: number): Promise<void> {
+  const steps = Math.max(1, Math.floor(ms / 800));
+  const stepMs = ms / steps;
+  const { width, height } = page.viewportSize() ?? { width: 1280, height: 900 };
+
+  for (let i = 0; i < steps; i++) {
+    const x = Math.floor(Math.random() * width);
+    const y = Math.floor(Math.random() * height);
+    // steps: how many intermediate mouse positions to interpolate (smoother = more human)
+    await page.mouse.move(x, y, { steps: randomBetween(5, 15) });
+    await page.waitForTimeout(stepMs);
+  }
+}
+
+/**
+ * Check if ProtonVPN appears to be active. Read-only — no settings are changed.
+ *
+ * On WSL2: queries the Windows process list via `tasklist.exe` (built-in, safe).
+ * On Linux: checks for a `tun` network interface (created by VPN clients).
+ * If detection is unavailable, returns null (unknown).
+ */
+async function detectVpn(): Promise<{ active: boolean; method: string } | null> {
+  // WSL2 path: query Windows process list
+  try {
+    const out = execSync("tasklist.exe 2>/dev/null", {
+      encoding: "utf8",
+      timeout: 4000,
+    }).toLowerCase();
+    const active = out.includes("protonvpn");
+    return { active, method: "tasklist.exe (Windows)" };
+  } catch {
+    // Not WSL2 or tasklist unavailable — try Linux interface check
+  }
+
+  try {
+    const out = execSync("ip link show 2>/dev/null", {
+      encoding: "utf8",
+      timeout: 2000,
+    }).toLowerCase();
+    const active = /tun\d|proton/.test(out);
+    return { active, method: "ip link (Linux)" };
+  } catch {
+    return null; // Can't determine
+  }
+}
+
+/** Pause and wait for the user to press Enter before continuing. */
+async function waitForEnter(prompt: string): Promise<void> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    rl.question(prompt, () => {
+      rl.close();
+      resolve();
+    });
+  });
+}
 
 // ---------------------------------------------------------------------------
 // X GraphQL response parser
@@ -281,14 +357,14 @@ async function ingestAccount(
 
   try {
     await page.goto(`https://x.com/${username}`, { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(applyJitter(3000));
+    await humanizeWait(page, applyJitter(3000));
 
     // Scroll loop
     while (scrollCount < MAX_SCROLLS && !hitCutoff) {
       const countBefore = collectedTweets.length;
 
       await page.evaluate(() => window.scrollBy(0, window.innerHeight * 3));
-      await page.waitForTimeout(applyJitter(SCROLL_DELAY_MS));
+      await humanizeWait(page, applyJitter(SCROLL_DELAY_MS));
 
       const countAfter = collectedTweets.length;
       const newThisScroll = countAfter - countBefore;
@@ -430,10 +506,46 @@ async function main() {
   // Ensure profile dir exists
   fs.mkdirSync(PROFILE_DIR, { recursive: true });
 
-  console.log(`[browser-ingest] Profile: ${PROFILE_DIR}`);
-  if (SINCE) console.log(`[browser-ingest] Since: ${SINCE_RAW}`);
-  if (DRY_RUN) console.log(`[browser-ingest] DRY RUN mode`);
-  if (NO_HCS) console.log(`[browser-ingest] HCS queueing disabled`);
+  // ---------------------------------------------------------------------------
+  // Pre-flight: VPN check + manual confirmation gate
+  // ---------------------------------------------------------------------------
+
+  console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("  Signal Archive — Browser Ingest");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+  console.log(`  Profile dir : ${PROFILE_DIR}`);
+  console.log(`  Since       : ${SINCE_RAW ?? "no limit (full backfill)"}`);
+  console.log(`  Mode        : ${DRY_RUN ? "DRY RUN" : "LIVE"}`);
+  console.log(`  HCS queue   : ${NO_HCS || DRY_RUN ? "disabled" : "enabled"}`);
+  if (!LOGIN_MODE) {
+    console.log(`  Accounts    : ${usernames.length} (${usernames.slice(0, 3).join(", ")}${usernames.length > 3 ? "…" : ""})`);
+    console.log(`  Delay range : ${ACCOUNT_DELAY_MIN_MS / 1000}–${ACCOUNT_DELAY_MAX_MS / 1000}s between accounts`);
+  }
+  console.log();
+
+  // VPN detection (read-only — only checks process list / network interfaces)
+  if (!SKIP_VPN_CHECK) {
+    process.stdout.write("  VPN status  : checking… ");
+    const vpn = await detectVpn();
+    if (vpn === null) {
+      console.log("unknown (add --skip-vpn-check to suppress)");
+    } else if (vpn.active) {
+      console.log(`⚠️  PROTONVPN DETECTED (via ${vpn.method})`);
+      console.log();
+      console.log("  ⚠️  A VPN changes your IP — this removes one of your best");
+      console.log("      stealth advantages (residential IP looks human).");
+      console.log("      Consider turning ProtonVPN off before proceeding.");
+      console.log();
+    } else {
+      console.log(`✓ not detected (via ${vpn.method})`);
+    }
+  } else {
+    console.log("  VPN status  : skipped (--skip-vpn-check)");
+  }
+
+  console.log();
+  await waitForEnter("  Press Enter when ready to open the browser and start… ");
+  console.log();
 
   const browser = await chromium.launchPersistentContext(PROFILE_DIR, {
     headless: false,
@@ -482,11 +594,11 @@ async function main() {
 
     // Delay between accounts (skip after last)
     if (i < usernames.length - 1) {
-      const delay = applyJitter(ACCOUNT_DELAY_MS);
+      const delay = randomBetween(ACCOUNT_DELAY_MIN_MS, ACCOUNT_DELAY_MAX_MS);
       console.log(
         `[browser-ingest] Waiting ${Math.round(delay / 1000)}s before next account…`
       );
-      await page.waitForTimeout(delay);
+      await humanizeWait(page, delay);
     }
   }
 
