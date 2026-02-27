@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  alternates: {
+    types: {
+      "application/rss+xml": "https://signalarchive.org/rss.xml",
+    },
+  },
   title: {
     template: "%s | Signal Archive",
     default: "Signal Archive — Public Statements. Permanent Record.",
