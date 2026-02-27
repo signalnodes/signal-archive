@@ -61,6 +61,9 @@ export default async function HomePage() {
           <Button variant="outline" asChild>
             <Link href="/accounts">Browse Accounts</Link>
           </Button>
+          <Button variant="outline" asChild>
+            <Link href="/search">Search Archive</Link>
+          </Button>
         </div>
       </section>
 
