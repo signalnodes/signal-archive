@@ -175,7 +175,7 @@ One username per line. `@` prefix optional. `#` lines are comments and ignored.
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Signal Archive — Browser Ingest
+  Signal Archive - Browser Ingest
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   Profile dir : /home/user/.signal-archive-browser
