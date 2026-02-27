@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CategoryBadge, TierBadge } from "@/components/category-badge";
 import { Separator } from "@/components/ui/separator";
 import { formatNumber } from "@/lib/format";
+import { LetterAvatar } from "@/components/letter-avatar";
 
 interface AccountHeaderProps {
   account: {
@@ -26,22 +27,25 @@ export function AccountHeader({ account, stats }: AccountHeaderProps) {
   return (
     <div className="mb-8">
       <div className="flex items-start justify-between flex-wrap gap-6">
-        <div>
-          <h1 className="text-3xl font-bold">@{account.username}</h1>
-          {account.displayName && (
-            <p className="text-lg text-muted-foreground mt-1">{account.displayName}</p>
-          )}
-          <div className="flex items-center gap-2 mt-3">
-            <CategoryBadge category={account.category} />
-            <TierBadge tier={account.trackingTier} />
-            <Link
-              href={`https://x.com/${account.username}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              View on X ↗
-            </Link>
+        <div className="flex items-start gap-4">
+          <LetterAvatar username={account.username} size="lg" />
+          <div>
+            <h1 className="text-3xl font-bold">@{account.username}</h1>
+            {account.displayName && (
+              <p className="text-lg text-muted-foreground mt-1">{account.displayName}</p>
+            )}
+            <div className="flex items-center gap-2 mt-3">
+              <CategoryBadge category={account.category} />
+              <TierBadge tier={account.trackingTier} />
+              <Link
+                href={`https://x.com/${account.username}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                View on X ↗
+              </Link>
+            </div>
           </div>
         </div>
         <div className="flex gap-6 text-center">

@@ -121,7 +121,16 @@ export default async function SearchPage({ searchParams }: Props) {
 
       {/* Filter pills */}
       {hasSearch && (
-        <div className="flex gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-6">
+          {fromUser && (
+            <Link
+              href={`/search?q=${encodeURIComponent(ftsQuery)}${deletedOnly ? "&filter=deleted" : ""}`}
+              className="text-sm px-3 py-1.5 rounded border border-blue-500/40 bg-blue-500/10 text-blue-600 dark:text-blue-400 transition-colors hover:bg-blue-500/20 flex items-center gap-1.5"
+              title="Remove account filter"
+            >
+              from:@{fromUser} <span aria-hidden className="opacity-60">×</span>
+            </Link>
+          )}
           <Link
             href={`/search?q=${encodeURIComponent(rawQuery)}`}
             className={`text-sm px-3 py-1.5 rounded border transition-colors ${
