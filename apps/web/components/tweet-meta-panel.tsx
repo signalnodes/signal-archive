@@ -46,7 +46,7 @@ export function TweetMetaPanel({ tweet, deletion }: TweetMetaPanelProps) {
       {deletion && (
         <>
           <div>
-            <dt className="text-xs text-destructive mb-0.5">Deleted Detected</dt>
+            <dt className="text-xs text-destructive mb-0.5">Deletion Detected</dt>
             <dd className="font-mono text-xs text-destructive">
               {absoluteDate(deletion.detectedAt)}
             </dd>

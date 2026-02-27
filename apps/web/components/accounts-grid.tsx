@@ -26,16 +26,20 @@ export function AccountsGrid({ accounts }: { accounts: AccountRow[] }) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const categories = [...new Set(accounts.map((a) => a.category))].sort();
-  const filtered = accounts
-    .filter((a) => (activeCategory ? a.category === activeCategory : true))
-    .filter((a) => {
-      const q = searchQuery.trim().toLowerCase();
-      if (!q) return true;
-      return (
-        a.username.toLowerCase().includes(q) ||
-        (a.displayName?.toLowerCase().includes(q) ?? false)
-      );
-    });
+
+  const matchesSearch = (a: AccountRow) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      a.username.toLowerCase().includes(q) ||
+      (a.displayName?.toLowerCase().includes(q) ?? false)
+    );
+  };
+
+  const searchFiltered = accounts.filter(matchesSearch);
+  const filtered = searchFiltered.filter((a) =>
+    activeCategory ? a.category === activeCategory : true
+  );
 
   return (
     <div>
@@ -51,19 +55,10 @@ export function AccountsGrid({ accounts }: { accounts: AccountRow[] }) {
           size="sm"
           onClick={() => setActiveCategory(null)}
         >
-          All ({filtered.length})
+          All ({searchFiltered.length})
         </Button>
         {categories.map((cat) => {
-          const catFiltered = accounts
-            .filter((a) => a.category === cat)
-            .filter((a) => {
-              const q = searchQuery.trim().toLowerCase();
-              if (!q) return true;
-              return (
-                a.username.toLowerCase().includes(q) ||
-                (a.displayName?.toLowerCase().includes(q) ?? false)
-              );
-            });
+          const catFiltered = searchFiltered.filter((a) => a.category === cat);
           return (
             <Button
               key={cat}

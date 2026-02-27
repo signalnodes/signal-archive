@@ -6,13 +6,6 @@ import { TweetCard } from "@/components/tweet-card";
 import { RecentDeletionsFeed } from "@/components/recent-deletions-feed";
 import type { DeletionRow } from "@/components/recent-deletions-feed";
 
-interface TweetEngagement {
-  likes?: number;
-  retweets?: number;
-  replies?: number;
-  views?: number;
-}
-
 interface TweetRow {
   id: string;
   tweetId: string;
@@ -20,7 +13,6 @@ interface TweetRow {
   tweetType: string;
   isDeleted: boolean;
   postedAt: Date;
-  engagement?: TweetEngagement | unknown;
   mediaUrls?: string[] | null;
 }
 
