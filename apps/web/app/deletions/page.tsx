@@ -6,6 +6,8 @@ import { count, desc, eq } from "drizzle-orm";
 import { getDb, deletionEvents, trackedAccounts } from "@taa/db";
 import { RecentDeletionsFeed } from "@/components/recent-deletions-feed";
 import { DeletionFilters } from "@/components/deletion-filters";
+import { CATEGORY_LABELS } from "@/lib/category";
+import type { AccountCategory } from "@taa/shared";
 
 export const metadata: Metadata = { title: "Deletion Feed" };
 
@@ -83,7 +85,7 @@ export default async function DeletionsPage({ searchParams }: Props) {
         {category && (
           <span className="ml-1">
             Filtered by:{" "}
-            <span className="text-foreground font-medium">{category.replace(/_/g, " ")}</span>
+            <span className="text-foreground font-medium">{CATEGORY_LABELS[category as AccountCategory] ?? category}</span>
           </span>
         )}
       </p>

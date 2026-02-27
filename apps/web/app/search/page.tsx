@@ -96,7 +96,7 @@ export default async function SearchPage({ searchParams }: Props) {
     parts.push(`${results.length === PAGE_SIZE ? `${PAGE_SIZE}+` : results.length} result${results.length === 1 ? "" : "s"}`);
     if (ftsQuery) parts.push(`for "${ftsQuery}"`);
     if (fromUser) parts.push(`from @${fromUser}`);
-    if (deletedOnly) parts.push("— deleted only");
+    if (deletedOnly) parts.push("- deleted only");
     return parts.join(" ");
   })();
 
@@ -109,7 +109,7 @@ export default async function SearchPage({ searchParams }: Props) {
         <Input
           name="q"
           defaultValue={rawQuery}
-          placeholder='Search tweets — try "crypto" or "from:elonmusk tariffs"'
+          placeholder='Search tweets - try "crypto" or "from:elonmusk tariffs"'
           className="max-w-xl"
           autoFocus={!rawQuery}
         />
@@ -164,9 +164,9 @@ export default async function SearchPage({ searchParams }: Props) {
         <div className="text-sm text-muted-foreground py-12 text-center space-y-2">
           <p>Search across all archived tweets.</p>
           <p className="text-xs space-x-3">
-            <span><span className="font-mono">"exact phrase"</span> — phrase match</span>
-            <span><span className="font-mono">-word</span> — exclude</span>
-            <span><span className="font-mono">from:username</span> — filter by account</span>
+            <span><span className="font-mono">"exact phrase"</span> - phrase match</span>
+            <span><span className="font-mono">-word</span> - exclude</span>
+            <span><span className="font-mono">from:username</span> - filter by account</span>
           </p>
         </div>
       )}

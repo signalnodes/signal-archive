@@ -2,14 +2,6 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Timestamp } from "@/components/timestamp";
-import { formatNumber } from "@/lib/format";
-
-interface TweetEngagement {
-  likes?: number;
-  retweets?: number;
-  replies?: number;
-  views?: number;
-}
 
 interface TweetCardProps {
   tweet: {
@@ -19,14 +11,12 @@ interface TweetCardProps {
     tweetType: string;
     isDeleted: boolean;
     postedAt: Date;
-    engagement?: TweetEngagement | unknown;
     mediaUrls?: string[] | null;
   };
   username: string;
 }
 
 export function TweetCard({ tweet, username }: TweetCardProps) {
-  const eng = tweet.engagement as TweetEngagement | null;
   return (
     <Card className={tweet.isDeleted ? "border-destructive/40 opacity-75" : ""}>
       <CardContent className="pt-4 pb-4">
@@ -54,34 +44,23 @@ export function TweetCard({ tweet, username }: TweetCardProps) {
             {tweet.mediaUrls.length > 1 ? "s" : ""}]
           </p>
         )}
-        <div className="flex items-center justify-between">
-          <div className="flex gap-4 text-xs text-muted-foreground">
-            {eng && (
-              <>
-                <span>♥ {formatNumber(eng.likes)}</span>
-                <span>↺ {formatNumber(eng.retweets)}</span>
-                <span>💬 {formatNumber(eng.replies)}</span>
-              </>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            {!tweet.isDeleted && (
-              <Link
-                href={`https://x.com/${username}/status/${tweet.tweetId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-muted-foreground hover:text-foreground hover:underline"
-              >
-                View on X ↗
-              </Link>
-            )}
+        <div className="flex items-center justify-end gap-3">
+          {!tweet.isDeleted && (
             <Link
-              href={`/tweet/${tweet.id}`}
+              href={`https://x.com/${username}/status/${tweet.tweetId}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-xs text-muted-foreground hover:text-foreground hover:underline"
             >
-              View proof →
+              View on X ↗
             </Link>
-          </div>
+          )}
+          <Link
+            href={`/tweet/${tweet.id}`}
+            className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+          >
+            View proof →
+          </Link>
         </div>
       </CardContent>
     </Card>

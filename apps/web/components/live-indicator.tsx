@@ -41,7 +41,7 @@ export function LiveIndicator({ accountCount }: LiveIndicatorProps) {
         <div className="absolute left-0 top-5 z-50 w-56 rounded-md border border-border bg-popover px-3 py-2 shadow-md text-xs text-popover-foreground">
           <p className="font-semibold text-destructive mb-1">● Live</p>
           <p className="text-muted-foreground">
-            Actively monitoring {accountCount} accounts — ingesting tweets and
+            Actively monitoring {accountCount} accounts, ingesting tweets and
             checking for deletions.
           </p>
         </div>

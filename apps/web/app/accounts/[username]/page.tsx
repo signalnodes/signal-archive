@@ -26,19 +26,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const displayName = account?.displayName ?? `@${username}`;
   const title = `@${username}`;
-  const description = `${displayName}'s archived tweets and detected deletions — cryptographically attested on Signal Archive.`;
+  const description = `${displayName}'s archived tweets and detected deletions, cryptographically attested on Signal Archive.`;
 
   return {
     title,
     description,
     openGraph: {
-      title: `@${username} — Signal Archive`,
+      title: `@${username} - Signal Archive`,
       description,
       url: `https://signalarchive.org/accounts/${username}`,
     },
     twitter: {
       card: "summary_large_image",
-      title: `@${username} — Signal Archive`,
+      title: `@${username} - Signal Archive`,
       description,
     },
   };

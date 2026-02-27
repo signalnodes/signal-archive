@@ -11,7 +11,6 @@ import { CategoryBadge } from "@/components/category-badge";
 import { Timestamp } from "@/components/timestamp";
 import { TweetMetaPanel } from "@/components/tweet-meta-panel";
 import { HcsProofPanel } from "@/components/hcs-proof-panel";
-import { formatNumber } from "@/lib/format";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -82,13 +81,6 @@ export default async function TweetDetailPage({ params }: Props) {
   const attestation = attestationRows[0] ?? null;
   const deletion = deletionRows[0] ?? null;
 
-  const eng = tweet.engagement as {
-    likes?: number;
-    retweets?: number;
-    replies?: number;
-    views?: number;
-  } | null;
-
   const network = process.env.HEDERA_NETWORK ?? "testnet";
   const isTestnet = network === "testnet";
 
@@ -134,14 +126,6 @@ export default async function TweetDetailPage({ params }: Props) {
               [{tweet.mediaUrls.length} media attachment
               {tweet.mediaUrls.length > 1 ? "s" : ""}]
             </p>
-          )}
-          {eng && (
-            <div className="mt-4 pt-4 border-t flex flex-wrap gap-6 text-sm text-muted-foreground">
-              <span>♥ {formatNumber(eng.likes)}</span>
-              <span>↺ {formatNumber(eng.retweets)}</span>
-              <span>💬 {formatNumber(eng.replies)}</span>
-              <span>👁 {formatNumber(eng.views)}</span>
-            </div>
           )}
           <div className="mt-3 flex items-center justify-between">
             <Timestamp date={tweet.postedAt} />

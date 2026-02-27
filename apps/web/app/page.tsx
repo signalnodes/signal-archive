@@ -51,7 +51,7 @@ export default async function HomePage() {
         </h1>
         <p className="mt-4 text-lg text-muted-foreground max-w-2xl leading-relaxed">
           The Tweet Accountability Archive monitors public figures, captures their statements,
-          and creates cryptographic proof anchored to the Hedera Consensus Service — so deletion
+          and creates cryptographic proof anchored to the Hedera Consensus Service. Deletion
           is never the last word.
         </p>
         <div className="mt-6 flex gap-3 flex-wrap">
@@ -61,17 +61,14 @@ export default async function HomePage() {
           <Button variant="outline" asChild>
             <Link href="/accounts">Browse Accounts</Link>
           </Button>
-          <Button variant="outline" asChild>
-            <Link href="/search">Search Archive</Link>
-          </Button>
         </div>
       </section>
 
       {/* Stats */}
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
-        <StatCard label="Tweets Archived" value={tweetCount[0]?.count ?? 0} />
-        <StatCard label="Deletions Detected" value={deletionCount[0]?.count ?? 0} />
-        <StatCard label="Accounts Tracked" value={accountCount[0]?.count ?? 0} />
+        <StatCard label="Tweets Archived" value={tweetCount[0]?.count ?? 0} href="/search" />
+        <StatCard label="Deletions Detected" value={deletionCount[0]?.count ?? 0} href="/deletions" />
+        <StatCard label="Accounts Tracked" value={accountCount[0]?.count ?? 0} href="/accounts" />
       </section>
 
       {/* Recent deletions */}

@@ -5,11 +5,11 @@ import { Separator } from "@/components/ui/separator";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "How Signal Archive works — continuous monitoring, cryptographic attestation, and independent verification via the Hedera Consensus Service.",
+    "How Signal Archive works: continuous monitoring, cryptographic attestation, and independent verification via the Hedera Consensus Service.",
   openGraph: {
-    title: "About — Signal Archive",
+    title: "About - Signal Archive",
     description:
-      "How Signal Archive works — continuous monitoring, cryptographic attestation, and independent verification via the Hedera Consensus Service.",
+      "How Signal Archive works: continuous monitoring, cryptographic attestation, and independent verification via the Hedera Consensus Service.",
   },
 };
 
@@ -37,7 +37,7 @@ export default function AboutPage() {
           >
             Hedera Consensus Service
           </a>{" "}
-          — a public, immutable ledger operated by a global network of independent nodes.
+          , a public, immutable ledger operated by a global network of independent nodes.
         </p>
         <p className="text-muted-foreground leading-relaxed">
           When a tweet is deleted, we detect it, record it, and file a second attestation. The
@@ -53,7 +53,7 @@ export default function AboutPage() {
             {
               step: "1. Continuous monitoring",
               detail:
-                "We poll tracked accounts at regular intervals — every 30 minutes for high-priority accounts, every 2–6 hours for others. Each poll captures the full tweet text, metadata, and engagement counts at time of capture.",
+                "We poll tracked accounts at regular intervals: every 30 minutes for high-priority accounts, every 2-6 hours for others. Each poll captures the full tweet text, metadata, and engagement counts at time of capture.",
             },
             {
               step: "2. Cryptographic hashing",
@@ -63,7 +63,7 @@ export default function AboutPage() {
             {
               step: "3. Hedera attestation",
               detail:
-                "The hash — along with the tweet ID, author ID, and timestamps — is submitted as a message to a Hedera Consensus Service topic. Hedera assigns a consensus timestamp and sequence number. This record is permanent and cannot be altered or deleted by anyone, including us.",
+                "The hash, along with the tweet ID, author ID, and timestamps, is submitted as a message to a Hedera Consensus Service topic. Hedera assigns a consensus timestamp and sequence number. This record is permanent and cannot be altered or deleted by anyone, including us.",
             },
             {
               step: "4. Deletion detection",
@@ -127,7 +127,7 @@ export default function AboutPage() {
         <ul className="space-y-2 text-sm text-muted-foreground">
           <li>
             <span className="text-foreground font-medium">Independent governance.</span> Hedera is
-            governed by a council of global enterprises — no single company controls the ledger.
+            governed by a council of global enterprises, with no single company controlling the ledger.
           </li>
           <li>
             <span className="text-foreground font-medium">Immutability.</span> Messages submitted to
@@ -135,7 +135,7 @@ export default function AboutPage() {
           </li>
           <li>
             <span className="text-foreground font-medium">Cost.</span> Each attestation costs
-            approximately $0.0008 — making large-scale archival economically viable.
+            approximately $0.0008, making large-scale archival economically viable.
           </li>
         </ul>
       </section>
@@ -144,8 +144,8 @@ export default function AboutPage() {
         <h2 className="text-xl font-semibold mb-3">Methodology & scope</h2>
         <p className="text-sm text-muted-foreground leading-relaxed mb-3">
           Phase 1 tracks approximately 40 accounts: Trump family members, affiliated crypto project
-          accounts, key political appointees, and select members of Congress. Retweets are excluded
-          — we track what people say, not what they amplify.
+          accounts, key political appointees, and select members of Congress. Retweets are excluded;
+          we track what people say, not what they amplify.
         </p>
         <p className="text-sm text-muted-foreground leading-relaxed">
           Accounts are selected based on public interest, history of deletion, and relevance to
@@ -157,7 +157,7 @@ export default function AboutPage() {
         <h2 className="text-xl font-semibold mb-3">Transparency</h2>
         <p className="text-sm text-muted-foreground leading-relaxed mb-4">
           All attestations are submitted to a single public HCS topic on Hedera Mainnet. Anyone can
-          read the full message history independently — no account or login required.
+          read the full message history independently, no account or login required.
         </p>
         <div className="rounded-lg border bg-muted/40 px-4 py-3 text-sm space-y-2">
           <div className="flex flex-wrap items-center gap-2">

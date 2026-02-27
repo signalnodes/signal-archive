@@ -1,0 +1,69 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { Menu, X } from "lucide-react";
+
+const NAV_LINKS = [
+  { href: "/deletions", label: "Deletions" },
+  { href: "/accounts", label: "Accounts" },
+  { href: "/verify", label: "Verify" },
+  { href: "/about", label: "About" },
+];
+
+export function HeaderNav() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      {/* Desktop nav */}
+      <nav className="hidden sm:flex items-center gap-5 text-sm ml-auto">
+        {NAV_LINKS.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {link.label}
+          </Link>
+        ))}
+      </nav>
+
+      {/* Mobile hamburger */}
+      <button
+        className="sm:hidden ml-auto p-1 text-muted-foreground hover:text-foreground transition-colors"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={open ? "Close menu" : "Open menu"}
+        aria-expanded={open}
+      >
+        {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      </button>
+
+      {/* Mobile dropdown */}
+      {open && (
+        <div className="sm:hidden absolute top-full left-0 right-0 border-b border-border bg-background/95 backdrop-blur px-4 py-3 flex flex-col gap-1 z-50">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-sm py-2 text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setOpen(false)}
+            >
+              {link.label}
+            </Link>
+          ))}
+          <div className="pt-2 mt-1 border-t border-border">
+            <form method="GET" action="/search">
+              <input
+                name="q"
+                type="text"
+                placeholder="Search archive..."
+                className="w-full h-9 rounded-md border border-border bg-transparent px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            </form>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

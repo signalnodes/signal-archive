@@ -55,7 +55,7 @@ export function VerifyResult({ hash, tweet, account, attestation }: VerifyResult
             </Badge>
           ) : (
             <Badge variant="outline" className="border-yellow-500/60 text-yellow-500">
-              HASH MATCH — ATTESTATION PENDING
+              HASH MATCH - ATTESTATION PENDING
             </Badge>
           )}
           {tweet.isDeleted && (
