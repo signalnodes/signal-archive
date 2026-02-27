@@ -1,11 +1,12 @@
-# Browser Ingestion Lifehack
+# Browser Ingestion Lifehack (Internal Tool)
 *Date: February 26, 2026*
+*Status: Internal-only local operator tool*
 
 ---
 
 ## The Problem
 
-Onboarding a new tracked account via our paid API (SocialData.tools) costs money proportional to how far back we want to go — roughly $0.0002 per request, ~20 tweets per request. A senator with 5,000 tweets costs $0.05 to backfill. That sounds cheap until you're onboarding 535 Congress members at once ($26+), plus additional accounts sourced from community suggestions on an ongoing basis. The API is also limited in how far back it can reach.
+Onboarding a new tracked account via our paid API (SocialData.tools) costs money proportional to how far back we want to go. That sounds cheap until we're onboarding hundreds of accounts at once, plus additional accounts sourced from community suggestions over time. The API is also limited in how far back it can reach.
 
 We want to grow the account list aggressively and keep costs near zero until we have funding.
 
@@ -13,19 +14,19 @@ We want to grow the account list aggressively and keep costs near zero until we 
 
 ## The Lifehack
 
-Run a real browser on a local machine (your laptop/desktop), logged into a dummy X account. The browser scrapes tweet history by intercepting X's own internal API responses as you scroll a profile page — no third-party API needed, no per-request cost, no rate limit beyond what a human user would face.
+Run a real browser on a local machine (your laptop/desktop), logged into a dummy X account. The browser collects tweet history by intercepting X's own internal timeline responses as you scroll a profile page. No third-party API needed, and no per-request API cost. The dummy account should look normal and be treated as disposable if it gets challenged or suspended.
 
-**This is the same technique used by investigative journalists and open-source intelligence researchers.** It is not hacking — it reads public tweets that anyone with a browser can see. The dummy account follows the tracked accounts to maintain a natural-looking profile.
+> Note: This is an internal-only operator workflow. Account enforcement is still possible even for local use, so the dummy account should not be linked to your real identity or the @signalarchives account.
 
 ---
 
 ## How It Works
 
-### Why intercept GraphQL instead of parsing the page HTML?
+### Why intercept timeline responses instead of parsing page HTML?
 
-When you scroll a Twitter/X profile, the browser fires requests to X's internal GraphQL endpoint (`api.x.com/graphql/.../UserTweets`). These return clean, structured JSON containing full tweet data — IDs, text, timestamps, engagement counts, media URLs. Intercepting these responses gives us exactly the same structured data as a paid API, for free, without touching the DOM.
+When you scroll a Twitter/X profile, the browser fires requests that return structured JSON containing tweet data (IDs, text, timestamps, media info). Intercepting these responses gives us clean, structured data without touching the DOM.
 
-The alternative (parsing HTML/CSS selectors) is fragile — X redesigns their UI frequently and scrapers break. The GraphQL responses are more stable because they are the data layer X's own frontend depends on.
+The alternative (parsing HTML/CSS selectors) is fragile since X redesigns their UI frequently.
 
 ### Flow
 
@@ -35,18 +36,18 @@ Launch Chromium (real browser, not headless)
         ▼
 Navigate to x.com/{username}  ←── logged in as dummy account
         │
-        ├── Intercept: api.x.com/graphql/.../UserTweets responses
-        │       └── Parse tweet JSON → extract id, text, timestamp, media, engagement
+        ├── Intercept timeline responses (GraphQL/internal endpoints)
+        │       └── Parse tweet JSON → extract id, text, created_at, media
         │
-        ├── Scroll down slowly (randomized delays + mouse movements)
-        │       └── X auto-loads more tweets, fires more GraphQL requests
+        ├── Scroll down slowly (randomized delays + natural-ish idle behavior)
+        │       └── X auto-loads more tweets, fires more timeline requests
         │
         ├── Repeat until:
         │       - Oldest tweet hits the --since date cutoff, OR
         │       - 3 consecutive scrolls return no new tweets (end of timeline), OR
         │       - Safety cap of 200 scrolls reached
         │
-        └── Write all collected tweets to production Neon DB
+        └── Write collected tweets to production Neon DB
                 └── Queue HCS attestation for each new tweet → Hedera mainnet
 ```
 
@@ -60,31 +61,63 @@ Navigate to x.com/{username}  ←── logged in as dummy account
 
 ## Anti-Detection Measures
 
-X actively combats automated scraping. Here's what we do to look like a human:
+X combats automated scraping. For internal use, we still aim to look like normal browsing:
 
 | Measure | Detail |
 |---|---|
-| **Real browser** | Playwright launches a real Chromium binary, not a headless fake. Headless Chrome has dozens of detectable fingerprint differences. |
-| **Persistent profile** | The browser uses a saved profile directory. The dummy account stays logged in between runs, just like a real user. No fresh sessions that look suspicious. |
-| **Residential IP** | Running on your home machine means your home IP. Datacenter IPs (Railway, AWS, etc.) are flagged heavily. Your residential IP looks like a real person browsing Twitter. |
-| **Randomized mouse movements** | During every wait period, the mouse moves to random positions with randomized interpolation steps — mimics idle human cursor behavior. |
-| **Jittered scroll delays** | Base 3-second scroll delay with ±30% random variance. Never a perfectly consistent rhythm. |
-| **Random account delays** | Between accounts: 50–220 seconds chosen uniformly at random. Not a fixed interval, not a pattern. |
-| **VPN warning** | A VPN changes your IP from residential to a datacenter/known-VPN range, which undermines the residential IP advantage. Script detects ProtonVPN before starting and warns you. |
-| **Manual start gate** | Script pauses and prints a status summary before opening the browser. You press Enter to proceed — gives you a moment to confirm VPN is off and conditions are good. |
+| **Real browser** | Playwright launches a real Chromium binary (not headless). |
+| **Persistent profile** | Uses a saved profile directory so the dummy account stays logged in between runs. |
+| **Residential IP** | Running on your home machine uses your residential IP (datacenter IPs are more likely to be flagged). |
+| **Randomized mouse movements** | Idle cursor movement during waits to avoid perfectly static behavior. |
+| **Jittered scroll delays** | Base 3-second scroll delay with ±30% variance. |
+| **Random account delays** | Between accounts: 50–220 seconds uniformly random. |
+| **VPN warning** | Warn if VPN is detected since it can undermine the residential IP advantage. |
+| **Manual start gate** | Pauses before launch so you can confirm VPN is off and conditions are good. |
 
-### The VPN check (important nuance)
+### VPN check nuance
 
-The VPN detection is **purely read-only**. On Windows/WSL2 it runs `tasklist.exe` — the Windows equivalent of `ps aux`, a built-in OS command that just lists running processes. On Linux it checks `ip link` for VPN-related network interfaces. No settings are changed, nothing is written, no network calls are made. It warns you if ProtonVPN is detected, but you can still proceed (or pass `--skip-vpn-check` to suppress it entirely).
+VPN detection is read-only:
+- Windows/WSL2: `tasklist.exe` (lists running processes)
+- Linux: `ip link` (checks network interfaces)
+
+Nothing is changed; it only warns. You can override with `--skip-vpn-check`.
+
+---
+
+## Parser Resilience (Important)
+
+This method is robust in concept, but X can change response structures over time. The main risk is silent under-collection (collecting fewer tweets) if the parser assumes a single JSON shape.
+
+### Hardening plan
+
+1. **Extraction accounting (always on)**
+   - Log counts per account:
+     - `responses_intercepted`
+     - `entries_seen`
+     - `tweets_extracted`
+     - `skipped_retweets`
+     - `skipped_non_tweet_entries` (ads, tombstones, etc.)
+     - `parse_failures`
+2. **Fail-soft parsing**
+   - Support multiple known JSON paths for tweet objects.
+   - Skip unknown entry types with a reason code (don't crash).
+3. **Raw payload capture (debug mode)**
+   - In `--dry-run`, or on `tweets_extracted == 0` for a response, save the raw JSON body to disk:
+     - `./tmp/browser-ingest/{username}/{timestamp}-{request_id}.json`
+   - This makes fixes fast when X changes shapes.
+4. **Dry-run sanity preview**
+   - Print a small sample (first 3 extracted tweets) with:
+     - `tweet_id`, `created_at`, first 80 chars of text
+   - This catches mis-parses immediately before DB writes.
 
 ---
 
 ## Setup (One-Time)
 
-**Prerequisites:** Node.js, the project repo cloned, `.env` configured with `DATABASE_URL` and `REDIS_URL`.
+**Prerequisites:** Node.js, repo cloned, `.env` configured with `DATABASE_URL` and `REDIS_URL`.
 
 ```bash
-# 1. Download the Chromium browser (one time, ~170MB)
+# 1. Download Chromium (one time, ~170MB)
 npx playwright install chromium
 
 # 2. Log the dummy X account into the browser
@@ -92,13 +125,13 @@ npx playwright install chromium
 npx tsx --env-file=.env scripts/browser-ingest.ts --login
 ```
 
-The session is saved to `~/.signal-archive-browser` (configurable via `BROWSER_PROFILE_DIR` in `.env`). You only do the login step once — the session persists indefinitely as long as X doesn't force a logout.
+Session is saved to `~/.signal-archive-browser` (configurable via `BROWSER_PROFILE_DIR` in `.env`).
 
-**The dummy account should:**
-- Be a real account (not obviously fake name/handle)
-- Follow all the accounts we track — this looks natural and may improve timeline visibility
-- Have some normal-looking activity (a few follows, maybe a bio)
-- Not be linked to your real identity or the @signalarchives account
+**Dummy account guidelines**
+- Looks like a normal account (not obviously fake)
+- Minimal human-scale activity (bio, a few follows)
+- Not linked to your real identity or the @signalarchives account
+- Treated as disposable if challenged/banned
 
 ---
 
@@ -111,14 +144,13 @@ npx tsx --env-file=.env scripts/browser-ingest.ts --username realDonaldTrump
 # Backfill with a date cutoff
 npx tsx --env-file=.env scripts/browser-ingest.ts --username realDonaldTrump --since 2024-01-01
 
-# Bulk onboard from a list file (see format below)
+# Bulk onboard from a list file
 npx tsx --env-file=.env scripts/browser-ingest.ts --list accounts.txt --since 2024-01-01
 
 # Test run — parses and logs tweets but writes nothing to DB
 npx tsx --env-file=.env scripts/browser-ingest.ts --username elonmusk --dry-run
 
-# Write to DB but skip queuing HCS attestations (useful for very large batches
-# where you want to defer the Hedera cost and queue HCS separately later)
+# Write to DB but skip queuing HCS attestations (defer Hedera cost)
 npx tsx --env-file=.env scripts/browser-ingest.ts --list accounts.txt --no-hcs
 ```
 
@@ -135,11 +167,11 @@ SenWarren
 AOC
 ```
 
-One username per line. `@` prefix optional. `#` lines are comments and are ignored.
+One username per line. `@` prefix optional. `#` lines are comments and ignored.
 
 ---
 
-## Pre-Flight Output (what you see before it starts)
+## Pre-Flight Output
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -162,32 +194,27 @@ One username per line. `@` prefix optional. `#` lines are comments and are ignor
 
 ## Important Limitations
 
-- **Accounts must already exist in `tracked_accounts`** before running the script. Add them via the seed script first — the browser script only ingests tweets, it doesn't create account records.
-- **X limits profile timelines to ~3,200 tweets** regardless of how far you scroll. This is an X-side restriction, not a script limitation.
-- **Runs on your local machine only** — not deployed to Railway. Requires your laptop/desktop to be on and available. The Railway worker handles ongoing monitoring; this script is for one-time backfills and new account onboarding.
-- **Not tested end-to-end yet** — the GraphQL parser is built from X's known response format but needs a real run to confirm all fields parse correctly. The `--dry-run` flag exists specifically for this: run it first to inspect what gets parsed before writing to DB.
+- **Accounts must already exist in `tracked_accounts`** before running. This script only ingests tweets.
+- **X limits profile timelines to ~3,200 tweets** regardless of how far you scroll (X-side restriction).
+- **Runs on your local machine only** (not deployed to Railway). Railway handles ongoing monitoring; this script is for backfills and onboarding.
+- **Needs end-to-end test** — run `--dry-run` first to validate parsing before large batches.
 
 ---
 
-## Cost Comparison
+## Cost Comparison (Placeholder)
 
-| Approach | Cost to onboard 535 Congress accounts (est. 2,000 tweets each) |
-|---|---|
-| SocialData API | ~$10.70 (100 requests/account × $0.0002 × 535) |
-| Browser script | $0 |
-| Hedera HCS (both) | ~$0.85 (1,000 new tweets × $0.0008) — same either way |
+Goal: avoid API costs where possible by using the browser method for backfills/onboarding.
 
-The savings grow significantly for deeper backfills (e.g., going back 3+ years).
+> TODO: Verify SocialData pricing unit (per tweet vs per request) for the exact endpoints/plan in use, and update this section accordingly. Regardless, browser ingestion minimizes third-party backfill costs before funding.
 
 ---
 
 ## Risks & Mitigations
 
 | Risk | Likelihood | Mitigation |
-|---|---|---|
-| Dummy account gets banned | Low-Medium | Anti-detection measures above; if banned, create a new one and re-login |
-| X changes GraphQL response format | Medium | Parser has fallbacks and won't crash — it'll just collect fewer tweets. Run `--dry-run` to spot issues before a big batch. |
-| X detects headless/automation | Low | Using real Chromium (not headless), real profile, residential IP |
-| Script runs while VPN is active | Low | Pre-flight check warns you; manual gate gives you time to turn it off |
-| Duplicate tweets in DB | None | `tweet_id UNIQUE` constraint — duplicates are silently skipped |
-| Overwrites good data | None | Script only inserts, never updates existing records |
+|---|---:|---|
+| Dummy account gets challenged/banned | Low–Medium | Treat as disposable, keep profile isolated, human-scale behavior, re-login with a new account if needed |
+| Response shape changes reduce extraction | Medium | Parser resilience plan (accounting, fail-soft parsing, raw payload capture, dry-run preview) |
+| Script runs while VPN is active | Low | Pre-flight warning + manual gate |
+| Duplicate tweets in DB | None | `tweet_id UNIQUE` constraint; duplicates skipped |
+| Overwrites data | None | Insert-only; no updates |
