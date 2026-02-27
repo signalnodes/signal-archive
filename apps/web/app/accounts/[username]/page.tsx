@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: `https://signalarchive.org/accounts/${username}`,
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: `@${username} — Signal Archive`,
       description,
     },
