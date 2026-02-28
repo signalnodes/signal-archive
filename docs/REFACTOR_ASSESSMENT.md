@@ -252,3 +252,70 @@ A `toEventUI()` adapter merges records from tweets, deletion_events, and hcs_att
 7. IdentityTimeline tab (placeholder-ready)
 8. IDENTITY_ONLY mode gating (disable tabs, skip queries)
 9. Prospective handle-change detection in ingestion worker (optional, low-cost)
+
+---
+
+## Implementation Guardrails
+
+These constraints apply to every step of the implementation.
+
+### Core Principles
+
+- **Cost-conscious**: no ingestion expansion, no new paid API usage
+- **Query-efficient**: thin payloads, lazy-loaded tabs, no over-fetching
+- **Minimal in scope**: UI refactor only, not a backend redesign
+- **No regressions**: existing functionality must continue to work
+
+### Routing (Locked)
+
+- Keep `/accounts/[username]` as-is. No new public routes.
+- Internally resolve `username → twitter_id` and use `twitter_id` as the canonical stable identifier for all DB queries.
+- No redirects required. Existing links remain stable.
+
+### Activity Tab — MVP Snapshot Model
+
+- Do NOT implement a fully normalized cursor-based merged timeline.
+- Treat Activity as a "Recent Snapshot": fetch a limited N from each stream (tweets, deletions, attestations), merge and sort in JS, render the top combined N.
+- No SQL UNION. No global offset pagination across streams.
+- Identity-only accounts must never trigger tweet/deletion fetches in this tab.
+
+### Engagement Fields
+
+- Drop `engagement` from the Statements tab select. Enforce with an explicit `TweetListItem` select shape — only fields required by `TweetCard`.
+- Do not use broad `tweets.*` selects.
+- If engagement is needed later: add to the proof/details page only, or explicitly extend the select shape. Never reintroduce accidentally.
+
+### Handle Changes Metric
+
+- Do NOT render "0 handle changes." Zero implies confirmed absence; we have not implemented tracking yet.
+- Omit the metric entirely until real handle history data exists.
+
+### Identity Tab — Initial State
+
+- Must look intentional, not broken.
+- Minimum content: Stable ID (`twitter_id`), current handle, observed since (`created_at`).
+- Acceptable placeholder text: "Handle history not yet available."
+- No empty panels.
+
+### trackingMode
+
+- Derive from `metadata` JSONB: `metadata?.trackingMode ?? "FULL_ARCHIVE"`.
+- All existing accounts default to `FULL_ARCHIVE`.
+- Avoid drift between `tracking_tier` (polling frequency) and `trackingMode` (tracking scope) — they are separate concerns.
+
+### Counts
+
+- Current indexed `COUNT(*)` on `account_id` is acceptable for MVP.
+- Do not expand per-request aggregates. Do not add new count queries.
+- Prefer lazy-loading counts where possible.
+
+### Non-Negotiables
+
+- No new ingestion
+- No new third-party API calls
+- No automatic historical backfills
+- No heavy SQL UNION
+- No over-fetching large datasets
+- Thin payloads on all list views
+- Lazy-loaded tab content (default tab only loads on initial render)
+- Any cost-impacting query must include a code comment explaining the cost
