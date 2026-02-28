@@ -1,0 +1,192 @@
+REFACTOR_SPEC.md
+Signal Archive Account Page Refactor Spec
+Tier-Aware Layout + Cost Discipline
+Objective
+Refactor the /account/[id] page to support tier-aware tracking modes while preserving the existing backend and ingestion architecture.
+This refactor must:
+Preserve current backend data structures where possible
+Avoid introducing new ingestion costs
+Minimize API, database, compute, and third-party usage
+Maintain current visual credibility and minimal design language
+This is a UI refactor with efficiency constraints, not a backend expansion.
+Critical Cost Constraint
+Until our custom ingestion “lifehack” is completed and operational:
+Do NOT add any new third-party X/Twitter ingestion calls.
+Do NOT introduce automatic backfills.
+Do NOT increase SocialData.tools or similar paid API usage.
+Do NOT expand tracking scope for identity-only accounts.
+Do NOT trigger expensive historical fetches automatically.
+All new UI behavior must operate strictly on:
+Already captured data
+Already stored metadata
+Already attested events
+Progressive disclosure only. Nothing expensive by default.
+Tracking Modes
+Some accounts operate in different tracking modes:
+FULL_ARCHIVE
+Statements (tweets) captured
+Deletions detected
+Identity continuity tracked
+Attestations recorded
+IDENTITY_ONLY
+Handle continuity tracked
+Limited metadata tracked (e.g., created region, created date if available)
+Attestations recorded
+No statement capture
+No deletion tracking
+The UI must reflect these modes without looking broken or incomplete.
+Page Structure
+Route
+/account/:stableUserId
+Layout Overview (Hybrid A + Receipt Card)
+1. Receipt Card (Top Block)
+Screenshotable citation block including:
+Current handle
+Stable User ID (copyable)
+Tracking Mode chip
+Observed since
+Coverage summary (auto-generated based on mode)
+“View latest proof” button
+This establishes credibility immediately.
+2. Account Header Section
+Includes:
+@handle (large)
+Optional display name
+Optional category
+Optional metadata fields (if present)
+Stats row (mode-aware)
+Stats logic:
+FULL_ARCHIVE:
+Statements count
+Deletions count
+Handle changes count
+IDENTITY_ONLY:
+Handle changes count
+Metadata changes count (if tracked)
+Do not render irrelevant zeroed metrics.
+3. Segmented Control (Always Render Same Structure)
+Always render in this order:
+Activity | Statements | Deletions | Identity | Attestations
+Behavior rules:
+FULL_ARCHIVE → all enabled
+IDENTITY_ONLY → Statements + Deletions disabled
+Disabled state:
+Muted styling
+Not clickable
+Tooltip: “Not tracked for this account’s mode.”
+Do not remove disabled tabs from DOM.
+Tab Behavior
+Activity (Default Tab)
+Unified chronological event feed.
+Possible event types:
+STATEMENT_CAPTURED (FULL_ARCHIVE only)
+STATEMENT_DELETED (FULL_ARCHIVE only)
+HANDLE_CHANGED
+METADATA_CHANGED (if applicable)
+ATTESTED
+Identity-only accounts still show:
+HANDLE_CHANGED
+ATTESTED
+Activity must always function.
+Statements (FULL_ARCHIVE only)
+Reuse existing tweet list UI.
+Requirements:
+Paginated or infinite scroll
+Thin payload (summary only)
+Full proof available via existing proof page
+Must not load entire history by default.
+Deletions (FULL_ARCHIVE only)
+Reuse existing deletions list UI.
+Requirements:
+Paginated
+Efficient queries
+No heavy joins
+Proof links preserved
+Identity
+Always enabled.
+Shows:
+Handle history timeline
+First observed handle
+Current handle
+Change timestamps
+Metadata changes (if tracked)
+Must load lazily if history is large.
+Attestations
+Always enabled.
+Shows:
+Hash
+Event type
+HCS topic ID
+Transaction ID
+Timestamp
+External proof link
+Must not re-fetch heavy verification data unnecessarily.
+Efficiency Requirements
+These are mandatory:
+Do not fetch all data on initial page load.
+Load only what the default tab requires.
+Use thin payloads for list views.
+Paginate all large collections.
+Avoid per-request aggregate recomputation.
+Use existing stored counters when available.
+Identity-only accounts must never trigger statement/deletion queries.
+Any new fetch must include a code comment explaining cost impact.
+Prefer cached or statically revalidated data when safe.
+Avoid additional HCS writes triggered by UI behavior.
+Data Contract (UI Layer Placeholders)
+These are UI contracts only. Map them to existing backend structures via adapters.
+AccountUI
+stableUserId: string
+currentHandle: string
+displayName?: string
+category?: string
+trackingMode: "IDENTITY_ONLY" | "FULL_ARCHIVE"
+observedSince?: ISO timestamp
+metadata?:
+createdRegion?: string
+createdAt?: ISO timestamp
+stats:
+handleChanges?: number
+statements?: number
+deletions?: number
+EventUI
+id: string
+type:
+"STATEMENT_CAPTURED"
+"STATEMENT_DELETED"
+"HANDLE_CHANGED"
+"METADATA_CHANGED"
+"ATTESTED"
+timestamp: ISO string
+summary: short string
+proof?:
+hash?: string
+topicId?: string
+transactionId?: string
+proofUrl?: string
+Adapters must map existing backend shapes into this contract without altering ingestion.
+Implementation Notes
+Locate current account detail page and data fetching logic.
+Reuse existing tweet and deletion components.
+Add:
+ReceiptCard component
+SegmentedControl (if not already present)
+ActivityFeed
+IdentityTimeline
+AttestationsList
+Keep styling consistent with current minimal aesthetic.
+Ensure mobile-first layout.
+Document any cost-impacting decisions in code comments.
+Non-Goals
+No ingestion expansion.
+No automatic historical backfills.
+No new paid API usage.
+No redesign of proof page.
+No change to existing verification model.
+Success Criteria
+Page feels engineered and cohesive.
+Identity-only accounts look intentional, not incomplete.
+FULL_ARCHIVE accounts retain existing functionality.
+No measurable increase in ingestion or API costs.
+Default page load remains fast.
+Architecture is ready to scale once custom ingestion “lifehack” is complete.
