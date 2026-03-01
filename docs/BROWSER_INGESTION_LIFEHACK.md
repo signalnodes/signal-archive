@@ -201,6 +201,67 @@ One username per line. `@` prefix optional. `#` lines are comments and ignored.
 
 ---
 
+## Setup Status & Next Steps (as of 2026-02-28)
+
+### What's done
+
+- Script fully built: `scripts/browser-ingest.ts`
+- Playwright Chromium installed on WSL (`~/.cache/ms-playwright/chromium-1208`)
+- `npx playwright install-deps chromium` completed (missing `libnspr4.so` fixed)
+- `--cdp` flag added to script: connects to an already-running Windows browser via Chrome DevTools Protocol instead of launching Playwright's own Chromium (which X blocks immediately)
+- Playwright Chromium login abandoned — X's bot detection blocks it before the password screen
+
+### Why CDP / Windows Brave
+
+X flags the Playwright Chromium binary hard — it won't even allow login. The solution is to use a real Windows browser (Brave or Chrome) with a fresh profile for the dummy X account, then connect to it from WSL via CDP.
+
+### Blocked on: WSL → Windows port forwarding
+
+CDP requires connecting to `localhost:9222` on Windows, but WSL2 can't reach Windows `127.0.0.1` directly. The fix is a one-time PowerShell (Administrator) setup:
+
+```powershell
+# Forward WSL host IP → Windows localhost for port 9222
+netsh interface portproxy add v4tov4 listenport=9222 listenaddress=192.168.208.1 connectport=9222 connectaddress=127.0.0.1
+
+# Allow it through Windows Firewall
+netsh advfirewall firewall add rule name="WSL CDP 9222" dir=in action=allow protocol=TCP localport=9222
+```
+
+> `192.168.208.1` is the Windows host IP as seen from WSL on this machine. Verify with:
+> `cat /etc/resolv.conf | grep nameserver | awk '{print $2}'`
+
+### To resume — full sequence
+
+1. Run the two `netsh` commands above in PowerShell as Administrator (one time)
+2. Close all Brave windows completely
+3. Launch Brave with debug port and a fresh profile:
+   ```powershell
+   & "C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe" --remote-debugging-port=9222 --user-data-dir="C:\signal-archive-chrome"
+   ```
+4. Confirm the port is live: open `http://localhost:9222/json` in the Brave window — should show a JSON array
+5. Log into the dummy X account in that Brave window normally
+6. From WSL, run login confirmation:
+   ```bash
+   CDP_URL=http://192.168.208.1:9222 npx tsx --env-file=.env scripts/browser-ingest.ts --login --cdp
+   ```
+7. Dry run to validate parser:
+   ```bash
+   CDP_URL=http://192.168.208.1:9222 npx tsx --env-file=.env scripts/browser-ingest.ts --username realDonaldTrump --dry-run --cdp
+   ```
+8. Full backfill once dry run looks good:
+   ```bash
+   CDP_URL=http://192.168.208.1:9222 npx tsx --env-file=.env scripts/browser-ingest.ts --list accounts.txt --since 2025-01-01 --cdp
+   ```
+
+### Notes
+
+- The `netsh portproxy` rule persists across reboots — only need to do it once
+- The Brave launch command needs to run every session (before running the script)
+- Same `--user-data-dir` keeps the dummy account logged in between sessions
+- VPN off during runs for residential IP advantage
+
+---
+
 ## Cost Comparison (Placeholder)
 
 Goal: avoid API costs where possible by using the browser method for backfills/onboarding.
