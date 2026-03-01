@@ -26,6 +26,13 @@
  *   --dry-run              Parse and log tweets but don't write to DB or queue HCS
  *   --no-hcs               Write to DB but skip queuing HCS attestations
  *   --skip-vpn-check       Skip ProtonVPN detection (read-only check, safe to run)
+ *   --cdp                  Connect to an already-running Chrome via CDP instead of
+ *                          launching Playwright's own browser. Useful when X blocks
+ *                          the Playwright Chromium.
+ *
+ *                          Before running with --cdp, launch Chrome on Windows with:
+ *                            chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\signal-archive-chrome"
+ *                          WSL can reach it at http://localhost:9222.
  *
  * Env vars (add to .env):
  *   BROWSER_PROFILE_DIR    Chrome profile path (default: ~/.signal-archive-browser)
@@ -68,6 +75,8 @@ const DRY_RUN = hasFlag("--dry-run");
 const NO_HCS = hasFlag("--no-hcs");
 const LOGIN_MODE = hasFlag("--login");
 const SKIP_VPN_CHECK = hasFlag("--skip-vpn-check");
+const USE_CDP = hasFlag("--cdp");
+const CDP_URL = process.env.CDP_URL ?? "http://localhost:9222";
 
 const SINCE: Date | null = SINCE_RAW ? new Date(SINCE_RAW) : null;
 const PROFILE_DIR =
@@ -501,7 +510,11 @@ async function main() {
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("  Signal Archive — Browser Ingest");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-  console.log(`  Profile dir : ${PROFILE_DIR}`);
+  if (USE_CDP) {
+    console.log(`  Browser     : Windows Chrome via CDP (${CDP_URL})`);
+  } else {
+    console.log(`  Profile dir : ${PROFILE_DIR}`);
+  }
   console.log(`  Since       : ${SINCE_RAW ?? "no limit (full backfill)"}`);
   console.log(`  Mode        : ${DRY_RUN ? "DRY RUN" : "LIVE"}`);
   console.log(`  HCS queue   : ${NO_HCS || DRY_RUN ? "disabled" : "enabled"}`);
@@ -532,29 +545,52 @@ async function main() {
   }
 
   console.log();
-  await waitForEnter("  Press Enter when ready to open the browser and start… ");
+  if (USE_CDP) {
+    console.log("  Make sure Chrome is running with --remote-debugging-port=9222");
+    console.log("  then press Enter to connect.");
+  }
+  await waitForEnter("  Press Enter when ready to start… ");
   console.log();
 
-  const browser = await chromium.launchPersistentContext(PROFILE_DIR, {
-    headless: false,
-    args: [
-      "--no-sandbox",
-      "--disable-blink-features=AutomationControlled",
-    ],
-    viewport: { width: 1280, height: 900 },
-  });
+  let browser: import("playwright").BrowserContext;
+  let page: import("playwright").Page;
 
-  const page = await browser.newPage();
+  if (USE_CDP) {
+    // Connect to an already-running Chrome via CDP (e.g. Windows Chrome from WSL)
+    const cdpBrowser = await chromium.connectOverCDP(CDP_URL);
+    const contexts = cdpBrowser.contexts();
+    browser = contexts[0] ?? await cdpBrowser.newContext();
+    const pages = browser.pages();
+    page = pages[0] ?? await browser.newPage();
+  } else {
+    // Launch Playwright's own Chromium with a persistent profile
+    browser = await chromium.launchPersistentContext(PROFILE_DIR, {
+      headless: false,
+      args: [
+        "--no-sandbox",
+        "--disable-blink-features=AutomationControlled",
+      ],
+      viewport: { width: 1280, height: 900 },
+    });
+    page = await browser.newPage();
+  }
 
-  // Login mode — just open x.com and wait for the user to log in, then exit
+  // Login mode — navigate to x.com/login, let user log in, then exit
   if (LOGIN_MODE) {
-    console.log(
-      "\n[browser-ingest] LOGIN MODE — log into your X account in the browser window, then close the window."
-    );
-    await page.goto("https://x.com/login");
-    // Wait until the browser is closed
-    await new Promise<void>((resolve) => browser.on("disconnected", resolve));
-    console.log("[browser-ingest] Browser closed. Session saved to:", PROFILE_DIR);
+    if (USE_CDP) {
+      console.log("\n[browser-ingest] LOGIN MODE (CDP) — logging into X in the connected Chrome window.");
+      console.log("  Log in to your dummy X account, then come back here and press Enter.");
+      await page.goto("https://x.com/login");
+      await waitForEnter("\n  Press Enter once you're logged in… ");
+      console.log("[browser-ingest] Done. Session is saved in your Chrome profile.");
+    } else {
+      console.log(
+        "\n[browser-ingest] LOGIN MODE — log into your X account in the browser window, then close the window."
+      );
+      await page.goto("https://x.com/login");
+      await new Promise<void>((resolve) => browser.on("disconnected", resolve));
+      console.log("[browser-ingest] Browser closed. Session saved to:", PROFILE_DIR);
+    }
     return;
   }
 
@@ -590,7 +626,10 @@ async function main() {
     }
   }
 
-  await browser.close();
+  // In CDP mode we connected to an existing browser — don't close it
+  if (!USE_CDP) {
+    await browser.close();
+  }
 
   if (redis) await redis.quit();
 
