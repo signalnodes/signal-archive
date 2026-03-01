@@ -309,6 +309,18 @@ These constraints apply to every step of the implementation.
 - Do not expand per-request aggregates. Do not add new count queries.
 - Prefer lazy-loading counts where possible.
 
+### Identity-Only Account UX
+
+When IDENTITY_ONLY accounts are introduced, disabled tabs must look intentional — not broken.
+
+- **Statements** and **Deletions** tabs render with muted/disabled styling and are not clickable
+- A tooltip or inline note explains why: e.g., "Statement archival not enabled for this account"
+- Never show a loading spinner that never resolves
+- Never show an empty panel with no explanation
+- Activity, Identity, and Attestations tabs remain fully active
+- No tweet/deletion stats shown in the account header for these accounts
+- The account page as a whole should feel complete and purposeful, not like something failed to load
+
 ### Non-Negotiables
 
 - No new ingestion
