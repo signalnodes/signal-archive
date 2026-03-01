@@ -19,6 +19,13 @@ const CONFIRMED_IDS: Record<string, string> = {
   SebGorka:        "2417586104",
   PressSec:        "1879670389057474560",
   SenLummis:       "22831059",
+  // Fixed: was placeholder 0500000003
+  SECGov:          "18479955",
+};
+
+// Handle corrections: { oldUsername -> newUsername }
+const HANDLE_CORRECTIONS: Record<string, string> = {
+  justinsuntron: "justinsun",
 };
 
 async function main() {
@@ -26,14 +33,32 @@ async function main() {
   console.log("Updating confirmed Twitter IDs...\n");
 
   for (const [username, twitterId] of Object.entries(CONFIRMED_IDS)) {
-    await db
-      .update(trackedAccounts)
-      .set({ twitterId, updatedAt: new Date() })
-      .where(eq(trackedAccounts.username, username));
-    console.log(`  [ok] @${username} → ${twitterId}`);
+    try {
+      await db
+        .update(trackedAccounts)
+        .set({ twitterId, updatedAt: new Date() })
+        .where(eq(trackedAccounts.username, username));
+      console.log(`  [ok] @${username} → ${twitterId}`);
+    } catch (err: any) {
+      if (err?.code === "23505") {
+        console.log(`  [skip] @${username} — ID already applied`);
+      } else {
+        throw err;
+      }
+    }
   }
 
-  console.log(`\nDone: ${Object.keys(CONFIRMED_IDS).length} accounts updated`);
+  console.log("\nApplying handle corrections...\n");
+
+  for (const [oldUsername, newUsername] of Object.entries(HANDLE_CORRECTIONS)) {
+    await db
+      .update(trackedAccounts)
+      .set({ username: newUsername, updatedAt: new Date() })
+      .where(eq(trackedAccounts.username, oldUsername));
+    console.log(`  [ok] @${oldUsername} → @${newUsername}`);
+  }
+
+  console.log(`\nDone.`);
   process.exit(0);
 }
 
