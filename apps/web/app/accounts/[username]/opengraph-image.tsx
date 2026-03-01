@@ -152,7 +152,7 @@ export default async function Image({
               {archived.toLocaleString()}
             </span>
             <span style={{ color: "#52525b", fontSize: "15px" }}>
-              tweets archived
+              statements archived
             </span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>

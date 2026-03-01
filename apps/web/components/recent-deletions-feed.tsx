@@ -26,9 +26,17 @@ export interface DeletionRow {
 export function RecentDeletionsFeed({ deletions }: { deletions: DeletionRow[] }) {
   if (deletions.length === 0) {
     return (
-      <p className="text-muted-foreground text-sm py-8 text-center">
-        No deletions recorded yet.
-      </p>
+      <div className="py-10 text-center">
+        <p className="text-sm text-muted-foreground">No deletions recorded yet.</p>
+        <p className="text-xs text-muted-foreground/70 mt-2">
+          Deletions appear after a statement is captured and later removed.
+        </p>
+        <p className="text-xs mt-3">
+          <a href="/about" className="text-muted-foreground underline underline-offset-2 hover:text-foreground">
+            How detection works
+          </a>
+        </p>
+      </div>
     );
   }
   return (

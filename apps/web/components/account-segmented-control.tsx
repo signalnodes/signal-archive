@@ -41,18 +41,22 @@ export function AccountSegmentedControl({ account }: AccountSegmentedControlProp
               key={key}
               disabled={disabled}
               onClick={() => !disabled && setActiveTab(key)}
-              title={disabled ? "Not tracked for this account's mode." : undefined}
+              title={disabled ? "Not available for this account type" : undefined}
+              aria-disabled={disabled}
               className={[
                 "px-4 py-2 text-sm whitespace-nowrap border-b-2 transition-colors",
                 active
                   ? "border-foreground text-foreground font-medium"
                   : "border-transparent",
                 disabled
-                  ? "text-muted-foreground/40 cursor-not-allowed"
+                  ? "text-muted-foreground/50 cursor-not-allowed select-none"
                   : "text-muted-foreground hover:text-foreground cursor-pointer",
               ].join(" ")}
             >
               {label}
+              {disabled && (
+                <span className="ml-1 text-muted-foreground/40 text-[10px]">—</span>
+              )}
             </button>
           );
         })}

@@ -63,7 +63,7 @@ export function StatementsTab({ username }: StatementsTabProps) {
   }
 
   if (tweets.length === 0) {
-    return <p className="text-sm text-muted-foreground py-8 text-center">No archived tweets yet.</p>;
+    return <p className="text-sm text-muted-foreground py-8 text-center">No statements archived yet.</p>;
   }
 
   return (
