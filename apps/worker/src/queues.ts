@@ -19,9 +19,7 @@ function parseRedisConnection(url: string) {
 
 export const connection = new Redis(parseRedisConnection(redisUrl));
 
-export const ingestionPriorityQueue = new Queue(QUEUE_NAMES.INGESTION_PRIORITY, { connection });
-export const ingestionStandardQueue = new Queue(QUEUE_NAMES.INGESTION_STANDARD, { connection });
-export const ingestionLowQueue = new Queue(QUEUE_NAMES.INGESTION_LOW, { connection });
+export const ingestionQueue = new Queue(QUEUE_NAMES.INGESTION, { connection });
 export const deletionCheckQueue = new Queue(QUEUE_NAMES.DELETION_CHECK, { connection });
 export const hcsSubmitQueue = new Queue(QUEUE_NAMES.HCS_SUBMIT, { connection });
 export const mediaArchiveQueue = new Queue(QUEUE_NAMES.MEDIA_ARCHIVE, { connection });

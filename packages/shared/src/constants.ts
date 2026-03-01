@@ -23,13 +23,18 @@ export const DELETION_CHECK_THRESHOLDS = {
 
 /** BullMQ queue names */
 export const QUEUE_NAMES = {
-  INGESTION_PRIORITY: "ingestion-priority",
-  INGESTION_STANDARD: "ingestion-standard",
-  INGESTION_LOW: "ingestion-low",
+  INGESTION: "ingestion",
   DELETION_CHECK: "deletion-check",
   HCS_SUBMIT: "hcs-submit",
   MEDIA_ARCHIVE: "media-archive",
 } as const;
+
+/** BullMQ job priorities per tracking tier (lower number = higher priority) */
+export const TIER_PRIORITIES: Record<TrackingTier, number> = {
+  priority: 1,
+  standard: 5,
+  low: 10,
+};
 
 /** Jitter factor for anti-detection (±30%) */
 export const JITTER_FACTOR = 0.3;

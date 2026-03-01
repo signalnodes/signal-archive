@@ -1,4 +1,4 @@
-import { createIngestionWorkers } from "./jobs/ingest";
+import { createIngestionWorker } from "./jobs/ingest";
 import { createDeletionCheckWorker } from "./jobs/check-deletions";
 import { createHcsSubmitWorker } from "./jobs/submit-hcs";
 import { createMediaArchiveWorker } from "./jobs/archive-media";
@@ -12,7 +12,7 @@ const provider = createProvider();
 const checker = createDeletionChecker();
 
 const workers = [
-  ...createIngestionWorkers(provider),
+  createIngestionWorker(provider),
   createDeletionCheckWorker(checker),
   createHcsSubmitWorker(),
   createMediaArchiveWorker(),

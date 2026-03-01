@@ -120,19 +120,10 @@ async function processIngestion(
   );
 }
 
-export function createIngestionWorkers(provider: TweetProvider) {
-  const tiers: Array<{ queue: string; concurrency: number }> = [
-    { queue: QUEUE_NAMES.INGESTION_PRIORITY, concurrency: 3 },
-    { queue: QUEUE_NAMES.INGESTION_STANDARD, concurrency: 5 },
-    { queue: QUEUE_NAMES.INGESTION_LOW, concurrency: 2 },
-  ];
-
-  return tiers.map(
-    ({ queue, concurrency }) =>
-      new Worker(
-        queue,
-        (job: Job<IngestJobData>) => processIngestion(job, provider),
-        { connection, concurrency }
-      )
+export function createIngestionWorker(provider: TweetProvider) {
+  return new Worker(
+    QUEUE_NAMES.INGESTION,
+    (job: Job<IngestJobData>) => processIngestion(job, provider),
+    { connection, concurrency: 5 }
   );
 }
