@@ -162,7 +162,6 @@ interface ParsedTweet {
   postedAt: Date;
   tweetType: TweetType;
   mediaUrls: string[];
-  engagement: { likes: number; retweets: number; replies: number; views: number };
 }
 
 function detectTweetType(legacy: Record<string, unknown>): TweetType {
@@ -245,10 +244,6 @@ function parseTweetsFromResponse(body: unknown): ParsedTweet[] {
         const postedAt = new Date(createdAt);
         if (isNaN(postedAt.getTime())) continue;
 
-        // Views count lives outside legacy
-        const viewsRaw = (tweetObj.views as Record<string, unknown>)?.count;
-        const views = viewsRaw ? parseInt(viewsRaw as string, 10) : 0;
-
         results.push({
           tweetId,
           authorId,
@@ -256,12 +251,6 @@ function parseTweetsFromResponse(body: unknown): ParsedTweet[] {
           postedAt,
           tweetType: detectTweetType(legacy),
           mediaUrls: extractMedia(legacy),
-          engagement: {
-            likes: (legacy.favorite_count as number) ?? 0,
-            retweets: (legacy.retweet_count as number) ?? 0,
-            replies: (legacy.reply_count as number) ?? 0,
-            views: isNaN(views) ? 0 : views,
-          },
         });
       }
     }
@@ -455,7 +444,6 @@ async function ingestAccount(
         rawJson: tweet,
         tweetType: tweet.tweetType,
         mediaUrls: tweet.mediaUrls,
-        engagement: tweet.engagement,
         postedAt: tweet.postedAt,
         contentHash,
       })
