@@ -12,10 +12,6 @@ interface SocialDataTweet {
     id_str: string;
     screen_name: string;
   };
-  favorite_count: number;
-  retweet_count: number;
-  reply_count: number;
-  views_count?: number;
   retweeted_status?: unknown;
   in_reply_to_status_id_str: string | null;
   is_quote_status: boolean;
@@ -48,12 +44,6 @@ function normalize(tweet: SocialDataTweet): ScrapedTweet {
     postedAt: new Date(tweet.tweet_created_at),
     tweetType: deriveTweetType(tweet),
     mediaUrls: extractMediaUrls(tweet),
-    engagement: {
-      likes: tweet.favorite_count,
-      retweets: tweet.retweet_count,
-      replies: tweet.reply_count,
-      views: tweet.views_count ?? 0,
-    },
   };
 }
 

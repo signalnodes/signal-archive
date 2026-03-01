@@ -10,12 +10,6 @@ export interface ScrapedTweet {
   postedAt: Date;
   tweetType: TweetType;
   mediaUrls: string[];
-  engagement: {
-    likes: number;
-    retweets: number;
-    replies: number;
-    views: number;
-  };
 }
 
 export interface TweetProvider {
@@ -31,10 +25,6 @@ const TweetExtractionSchema = z.object({
       postedAt: z.string(),
       tweetType: z.enum(["tweet", "reply", "retweet", "quote"]),
       mediaUrls: z.array(z.string()),
-      likes: z.number(),
-      retweets: z.number(),
-      replies: z.number(),
-      views: z.number(),
     })
   ),
 });
@@ -98,7 +88,7 @@ function createStagehandProvider(): TweetProvider {
           );
         }
 
-        const extractInstruction = `Extract all visible tweets from this X/Twitter profile page for @${username}. For each tweet get: the tweet ID from the link URL, the author's numeric ID if visible (otherwise use the username), the text content, the posted time, whether it's a tweet/reply/retweet/quote, any media URLs, and engagement counts (likes, retweets, replies, views). Use 0 for missing counts.`;
+        const extractInstruction = `Extract all visible tweets from this X/Twitter profile page for @${username}. For each tweet get: the tweet ID from the link URL, the author's numeric ID if visible (otherwise use the username), the text content, the posted time, whether it's a tweet/reply/retweet/quote, and any media URLs.`;
 
         // Schema cast needed: Stagehand v3 bundles Zod 4 but accepts Zod 3
         // schemas at runtime via its zod/v3 compat layer
@@ -115,12 +105,6 @@ function createStagehandProvider(): TweetProvider {
           postedAt: parseTwitterDate(t.postedAt),
           tweetType: t.tweetType,
           mediaUrls: t.mediaUrls,
-          engagement: {
-            likes: t.likes,
-            retweets: t.retweets,
-            replies: t.replies,
-            views: t.views,
-          },
         }));
       } finally {
         await stagehand.close();

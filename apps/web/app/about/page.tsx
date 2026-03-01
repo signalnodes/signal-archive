@@ -53,7 +53,7 @@ export default function AboutPage() {
             {
               step: "1. Continuous monitoring",
               detail:
-                "We poll tracked accounts at regular intervals: every 30 minutes for high-priority accounts, every 2-6 hours for others. Each poll captures the full tweet text, metadata, and engagement counts at time of capture.",
+                "We poll tracked accounts at regular intervals: every 30 minutes for high-priority accounts, every 2-6 hours for others. Each poll captures the full tweet text and metadata at time of capture.",
             },
             {
               step: "2. Cryptographic hashing",

@@ -88,7 +88,6 @@ async function processIngestion(
         rawJson: tweet,
         tweetType: tweet.tweetType,
         mediaUrls: tweet.mediaUrls,
-        engagement: tweet.engagement,
         postedAt: tweet.postedAt,
         contentHash,
       })

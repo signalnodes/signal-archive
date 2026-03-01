@@ -75,12 +75,6 @@ export function createMockProvider(): TweetProvider {
           postedAt,
           tweetType,
           mediaUrls,
-          engagement: {
-            likes: Math.floor(rng() * 50000),
-            retweets: Math.floor(rng() * 10000),
-            replies: Math.floor(rng() * 5000),
-            views: Math.floor(rng() * 5000000),
-          },
         });
       }
 
