@@ -20,6 +20,12 @@ const workers = [
 
 console.log(`[worker] ${workers.length} workers registered`);
 
+for (const worker of workers) {
+  worker.on("failed", (job, err) => {
+    console.error(`[worker] job failed — queue=${worker.name} id=${job?.id} err=${err?.message}`);
+  });
+}
+
 registerScheduledJobs()
   .then(() => console.log("[worker] Scheduler ready"))
   .catch((err) => {

@@ -57,6 +57,8 @@ async function processHcsSubmission(job: Job<SubmitHcsJobData>) {
     return;
   }
 
+  console.log(`[submit-hcs] Processing ${type} for tweet ${tweetId} (@${username})`);
+
   const topicId = getTopicId();
   const client = getHederaClient();
 
