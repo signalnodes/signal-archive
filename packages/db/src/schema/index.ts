@@ -6,3 +6,4 @@ export { engagementSnapshots } from "./engagement-snapshots";
 export { trackingRequests } from "./tracking-requests";
 export { donations } from "./donations";
 export { supporters } from "./supporters";
+export { trackedWallets } from "./tracked-wallets";

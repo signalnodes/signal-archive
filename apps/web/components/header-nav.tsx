@@ -4,17 +4,19 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { WalletButton } from "@/components/wallet-button";
+import { useWallet } from "@/lib/wallet/context";
 
 const NAV_LINKS = [
   { href: "/deletions", label: "Deletions" },
   { href: "/accounts", label: "Accounts" },
   { href: "/verify", label: "Verify" },
   { href: "/about", label: "About" },
-  { href: "/donate", label: "Donate" },
+  { href: "/support", label: "Support" },
 ];
 
 export function HeaderNav() {
   const [open, setOpen] = useState(false);
+  const { isSupporter } = useWallet();
 
   return (
     <>
@@ -29,6 +31,14 @@ export function HeaderNav() {
             {link.label}
           </Link>
         ))}
+        {isSupporter && (
+          <Link
+            href="/research"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Research
+          </Link>
+        )}
         <WalletButton />
       </nav>
 
@@ -55,6 +65,15 @@ export function HeaderNav() {
               {link.label}
             </Link>
           ))}
+          {isSupporter && (
+            <Link
+              href="/research"
+              className="text-sm py-2 text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setOpen(false)}
+            >
+              Research
+            </Link>
+          )}
           <div className="pt-2 mt-1 border-t border-border">
             <WalletButton />
           </div>

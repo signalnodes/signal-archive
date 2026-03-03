@@ -1,15 +1,20 @@
-export const dynamic = "force-dynamic";
-
-import type { Metadata } from "next";
+import { NextRequest, NextResponse } from "next/server";
 import { and, count, eq } from "drizzle-orm";
 import { getDb, trackedAccounts, tweets, deletionEvents } from "@taa/db";
-import { AccountsGrid } from "@/components/accounts-grid";
+import { isSupporter } from "@/lib/supporter-cache";
 
-export const metadata: Metadata = { title: "Tracked Accounts" };
+export async function GET(req: NextRequest) {
+  const walletAddress = req.nextUrl.searchParams.get("wallet");
+  if (!walletAddress) {
+    return NextResponse.json({ error: "Missing wallet param" }, { status: 400 });
+  }
 
-export default async function AccountsPage() {
+  const supported = await isSupporter(walletAddress);
+  if (!supported) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const db = getDb();
-
   const [accounts, tweetCounts, deletionCounts] = await Promise.all([
     db
       .select({
@@ -21,7 +26,12 @@ export default async function AccountsPage() {
         avatarUrl: trackedAccounts.avatarUrl,
       })
       .from(trackedAccounts)
-      .where(and(eq(trackedAccounts.isActive, true), eq(trackedAccounts.donorOnly, false)))
+      .where(
+        and(
+          eq(trackedAccounts.isActive, true),
+          eq(trackedAccounts.donorOnly, true)
+        )
+      )
       .orderBy(trackedAccounts.category, trackedAccounts.username),
     db
       .select({ accountId: tweets.accountId, count: count() })
@@ -42,15 +52,5 @@ export default async function AccountsPage() {
     deletionCount: deletionMap.get(a.id) ?? 0,
   }));
 
-  const categoryCount = new Set(accounts.map((a) => a.category)).size;
-
-  return (
-    <div className="container mx-auto max-w-screen-xl px-4 py-8">
-      <h1 className="text-2xl font-bold mb-1">Tracked Accounts</h1>
-      <p className="text-muted-foreground mb-6">
-        {accounts.length} active accounts across {categoryCount} categories
-      </p>
-      <AccountsGrid accounts={enriched} />
-    </div>
-  );
+  return NextResponse.json({ accounts: enriched });
 }

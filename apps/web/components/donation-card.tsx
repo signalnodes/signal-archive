@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ExternalLink, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import {
   Card,
@@ -32,13 +32,26 @@ function hashscanAccountUrl(accountId: string) {
 }
 
 export function DonationCard() {
-  const { accountId, connect, refreshSupporterStatus } = useWallet();
+  const { accountId, connect, refreshSupporterStatus, isSupporter } = useWallet();
 
   const [asset, setAsset] = useState<Asset>("hbar");
   const [selectedPreset, setSelectedPreset] = useState<number | null>(50);
   const [customAmount, setCustomAmount] = useState("");
   const [flowState, setFlowState] = useState<FlowState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+
+  // If the mirror node was slow and all verifyWithRetries attempts were exhausted,
+  // the supporter row might not exist yet when we show the success screen.
+  // Poll a few more times in the background so the Research nav link eventually appears.
+  useEffect(() => {
+    if (flowState !== "success" || isSupporter) return;
+    let attempts = 0;
+    const id = setInterval(async () => {
+      if (++attempts >= 5) { clearInterval(id); return; }
+      await refreshSupporterStatus();
+    }, 8000);
+    return () => clearInterval(id);
+  }, [flowState, isSupporter, refreshSupporterStatus]);
 
   const presets = asset === "hbar" ? HBAR_PRESETS : USDC_PRESETS;
   const effectiveAmount =

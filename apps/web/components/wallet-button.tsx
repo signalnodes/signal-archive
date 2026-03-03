@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Wallet, LogOut, ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { Wallet, LogOut, ChevronDown, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/lib/wallet/context";
 import { SupporterBadge } from "@/components/supporter-badge";
@@ -56,6 +57,16 @@ export function WalletButton() {
 
       {dropdownOpen && (
         <div className="absolute right-0 top-full mt-1 z-50 min-w-[160px] rounded-md border border-border bg-background/95 backdrop-blur p-1 shadow-md">
+          {isSupporter && (
+            <Link
+              href="/research"
+              className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              onClick={() => setDropdownOpen(false)}
+            >
+              <FlaskConical className="size-4" />
+              Research
+            </Link>
+          )}
           <button
             className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             onClick={async () => {

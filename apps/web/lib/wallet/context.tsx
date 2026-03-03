@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
   type ReactNode,
 } from "react";
 
@@ -81,6 +82,29 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       await refreshSupporterStatus(accountId);
     }
   }, [accountId, refreshSupporterStatus]);
+
+  // Restore an existing WalletConnect session on page load.
+  // connector.init() hydrates signers from localStorage — we just need to
+  // read them back into React state so the nav updates without a manual reconnect.
+  useEffect(() => {
+    async function restoreSession() {
+      try {
+        const { getConnector } = await import("./connector");
+        const connector = await getConnector();
+        const signers = connector.signers;
+        if (signers && signers.length > 0) {
+          const acctId = signers[0].getAccountId().toString();
+          if (acctId) {
+            setAccountId(acctId);
+            await refreshSupporterStatus(acctId);
+          }
+        }
+      } catch {
+        // No existing session — normal for first-time visitors
+      }
+    }
+    restoreSession();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <WalletContext.Provider
