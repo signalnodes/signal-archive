@@ -17,7 +17,7 @@ import {
   PrivateKey,
 } from "@hashgraph/sdk";
 import { getDb, tweets, trackedAccounts, hcsAttestations } from "@taa/db";
-import { eq } from "drizzle-orm";
+import { eq, notExists } from "drizzle-orm";
 
 const operatorId = process.env.HEDERA_OPERATOR_ID;
 const operatorKey = process.env.HEDERA_OPERATOR_KEY;
@@ -50,17 +50,7 @@ async function sleep(ms: number) {
 async function main() {
   const db = getDb();
 
-  // 1. Count existing testnet attestations
-  const allAttestations = await db.select({ id: hcsAttestations.id }).from(hcsAttestations);
-  console.log(`Found ${allAttestations.length} existing attestation records (testnet).`);
-
-  if (allAttestations.length > 0) {
-    console.log("Clearing testnet attestations...");
-    await db.delete(hcsAttestations);
-    console.log("  Cleared.\n");
-  }
-
-  // 2. Fetch all tweets with account username
+  // 1. Find tweets that don't yet have an HCS attestation — skip already-attested ones
   const tweetRows = await db
     .select({
       id: tweets.id,
@@ -72,9 +62,25 @@ async function main() {
     })
     .from(tweets)
     .leftJoin(trackedAccounts, eq(tweets.accountId, trackedAccounts.id))
+    .where(
+      notExists(
+        db.select({ id: hcsAttestations.id })
+          .from(hcsAttestations)
+          .where(eq(hcsAttestations.tweetId, tweets.id))
+      )
+    )
     .orderBy(tweets.postedAt);
 
-  console.log(`Attesting ${tweetRows.length} tweets to mainnet topic ${topicId}...\n`);
+  const totalAttested = await db.select({ id: hcsAttestations.id }).from(hcsAttestations);
+  console.log(`Already attested: ${totalAttested.length} tweets`);
+  console.log(`Pending attestation: ${tweetRows.length} tweets`);
+
+  if (tweetRows.length === 0) {
+    console.log("Nothing to attest — all tweets already have attestations.");
+    process.exit(0);
+  }
+
+  console.log(`\nAttesting ${tweetRows.length} tweets to mainnet topic ${topicId}...\n`);
 
   let success = 0;
   let failed = 0;

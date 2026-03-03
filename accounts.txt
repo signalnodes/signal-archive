@@ -1,0 +1,49 @@
+# Signal Archive — browser-ingest account list
+# Generated: 2026-03-02T19:37:36.640Z
+# priority tier first, then standard, then low
+
+# --- priority ---
+ChaseHerro
+DonaldJTrumpJr
+EricTrump
+IvankaTrump
+JaredKushner
+Kash_Patel
+LaraLeaTrump
+MELANIATRUMP
+PamBondi
+PeteHegseth
+RobertKennedyJr
+SebGorka
+TiffanyATrump
+TulsiGabbard
+ZachWitkoff
+ZakFolkman
+elonmusk
+realDonaldTrump
+worldlibertyfi
+
+# --- standard ---
+ChrisMurphyCT
+FBI
+POTUS
+PressSec
+RepMaxineWaters
+RepRoKhanna
+RepTomEmmer
+SECGov
+SenLummis
+SenTedCruz
+SenWarren
+SenatorHagerty
+StateDept
+StephenM
+SteveWitkoff
+TheJusticeDept
+USTreasury
+VP
+WhiteHouse
+ZachXBT
+justinsun
+
+# --- low ---

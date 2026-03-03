@@ -99,6 +99,11 @@ function randomBetween(minMs: number, maxMs: number): number {
   return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
 }
 
+/** Timestamp prefix for log lines: [HH:MM:SS] */
+function ts(): string {
+  return '[' + new Date().toTimeString().slice(0, 8) + ']';
+}
+
 /**
  * Wait for a duration while making small randomized mouse movements to mimic
  * a human idly moving their cursor. Splits the total wait into ~800ms steps.
@@ -197,8 +202,10 @@ function parseTweetsFromResponse(body: unknown): ParsedTweet[] {
   try {
     const data = (body as Record<string, unknown>).data as Record<string, unknown>;
     const user = (data?.user as Record<string, unknown>)?.result as Record<string, unknown>;
+    // X has used both "timeline_v2" and "timeline" as the key — try both
+    const timelineRoot = (user?.timeline_v2 ?? user?.timeline) as Record<string, unknown>;
     const timeline = (
-      (user?.timeline_v2 as Record<string, unknown>)?.timeline as Record<string, unknown>
+      timelineRoot?.timeline as Record<string, unknown>
     )?.instructions as Array<Record<string, unknown>>;
 
     if (!Array.isArray(timeline)) return results;
@@ -292,13 +299,22 @@ function buildRedisConnection(url: string) {
 // Core ingestion logic
 // ---------------------------------------------------------------------------
 
+// CDP capture state — populated in main() when --cdp is active.
+// Passed into ingestAccount so drainResponses can read from Node.js land
+// instead of window.__xResponses (which service workers bypass).
+interface CdpCapture {
+  bodies: Array<Record<string, unknown>>;   // GraphQL response bodies
+  endpoints: string[];                       // /graphql/ endpoint names seen
+}
+
 async function ingestAccount(
   username: string,
   page: import("playwright").Page,
   hcsQueue: Queue | null,
-  db: ReturnType<typeof getDb>
+  db: ReturnType<typeof getDb>,
+  cdpCapture?: CdpCapture
 ): Promise<void> {
-  console.log(`\n[browser-ingest] Starting @${username}`);
+  console.log('\n' + ts() + ' [browser-ingest] Starting @' + username);
 
   // Look up account in DB
   const [accountRow] = await db
@@ -321,51 +337,105 @@ async function ingestAccount(
   let scrollCount = 0;
   let hitCutoff = false;
 
-  // Intercept UserTweets and UserTweetsAndReplies GraphQL responses
-  const responseHandler = async (response: import("playwright").Response) => {
-    const url = response.url();
-    if (
-      !url.includes("/graphql/") ||
-      (!url.includes("UserTweets") && !url.includes("UserTweetsAndReplies"))
-    ) {
-      return;
+  // Helper: drain captured GraphQL responses.
+  // CDP mode: drains from the Node.js capturedBodies array (populated via CDP Network events).
+  // Regular mode: drains from window.__xResponses (populated by the init script fetch/XHR patch).
+  const drainResponses = async (): Promise<number> => {
+    let bodies: Array<Record<string, unknown>>;
+
+    if (cdpCapture) {
+      // Splice in-place so we don't re-process the same response twice
+      bodies = cdpCapture.bodies.splice(0);
+    } else {
+      const items = await page.evaluate(() => {
+        const data = (window as any).__xResponses ?? [];
+        (window as any).__xResponses = [];
+        return data;
+      });
+      // Each item is { url, body } from the init script
+      bodies = items.map((item: any) => item?.body ?? item);
     }
 
-    try {
-      const body = await response.json().catch(() => null);
-      if (!body) return;
-      const parsed = parseTweetsFromResponse(body);
-      let newThisResponse = 0;
-      for (const t of parsed) {
-        if (!seenIds.has(t.tweetId)) {
-          seenIds.add(t.tweetId);
-          collectedTweets.push(t);
-          newThisResponse++;
+    let count = 0;
+    for (const body of bodies) {
+      try {
+        const parsed = parseTweetsFromResponse(body);
+        for (const t of parsed) {
+          if (!seenIds.has(t.tweetId)) {
+            seenIds.add(t.tweetId);
+            collectedTweets.push(t);
+            count++;
+          }
         }
-      }
-      if (newThisResponse > 0) {
-        process.stdout.write(`  intercepted ${newThisResponse} tweets (total: ${collectedTweets.length})\r`);
-      }
-    } catch {
-      // Ignore parse errors for non-JSON responses
+      } catch { /* ignore unparseable responses */ }
     }
+    return count;
   };
 
-  page.on("response", responseHandler);
+  // Clear stale state from previous account
+  if (cdpCapture) {
+    cdpCapture.bodies.splice(0);
+  } else {
+    await page.evaluate(() => { (window as any).__xResponses = []; });
+  }
 
   try {
     await page.goto(`https://x.com/${username}`, { waitUntil: "domcontentloaded" });
-    await humanizeWait(page, applyJitter(3000));
+    await page.waitForTimeout(applyJitter(3000));
+
+    // Diagnostic: log interceptor/capture state and inspect the first buffered response
+    let debug: Record<string, unknown>;
+    if (cdpCapture) {
+      // CDP mode: data lives in Node.js — no page.evaluate needed
+      const first = cdpCapture.bodies[0] ?? null;
+      debug = {
+        mode: "CDP Network events",
+        graphqlEndpoints: cdpCapture.endpoints,
+        responsesBuffered: cdpCapture.bodies.length,
+        firstTopKeys: first ? Object.keys(first) : [],
+        firstDataKeys: (first as any)?.data ? Object.keys((first as any).data) : [],
+        firstDataUserKeys: (first as any)?.data?.user ? Object.keys((first as any).data.user) : [],
+        firstDataUserResultKeys: (first as any)?.data?.user?.result
+          ? Object.keys((first as any).data.user.result) : [],
+        hasUserByScreenName: !!(first as any)?.data?.user_by_screen_name,
+      };
+    } else {
+      // Regular Playwright mode: data lives in window.__xResponses
+      debug = await page.evaluate(() => {
+        const responses: any[] = (window as any).__xResponses ?? [];
+        const graphqlUrls: string[] = (window as any).__xGraphqlUrls ?? [];
+        const firstItem = responses[0];
+        const first = firstItem?.body ?? firstItem;
+        return {
+          mode: "init-script (fetch/XHR patch)",
+          interceptorReady: !!(window as any).__xInterceptorReady,
+          responsesBuffered: responses.length,
+          fetchCalls: (window as any).__fetchCallCount ?? 0,
+          xhrCalls: (window as any).__xhrCallCount ?? 0,
+          graphqlEndpoints: graphqlUrls,
+          firstTopKeys: first ? Object.keys(first) : [],
+          firstDataKeys: first?.data ? Object.keys(first.data) : [],
+          firstDataUserKeys: first?.data?.user ? Object.keys(first.data.user) : [],
+          firstDataUserResultKeys: first?.data?.user?.result
+            ? Object.keys(first.data.user.result) : [],
+          hasUserByScreenName: !!(first?.data?.user_by_screen_name),
+        };
+      });
+    }
+    console.log(`[browser-ingest] Debug: ${JSON.stringify(debug, null, 2)}`);
+
+    // Collect tweets that loaded during the initial page load
+    const initialCount = await drainResponses();
+    if (initialCount > 0) {
+      process.stdout.write(`  intercepted ${initialCount} tweets from initial load (total: ${collectedTweets.length})\r`);
+    }
 
     // Scroll loop
     while (scrollCount < MAX_SCROLLS && !hitCutoff) {
-      const countBefore = collectedTweets.length;
-
       await page.evaluate(() => window.scrollBy(0, window.innerHeight * 3));
-      await humanizeWait(page, applyJitter(SCROLL_DELAY_MS));
+      await page.waitForTimeout(applyJitter(SCROLL_DELAY_MS));
 
-      const countAfter = collectedTweets.length;
-      const newThisScroll = countAfter - countBefore;
+      const newThisScroll = await drainResponses();
       scrollCount++;
 
       if (newThisScroll === 0) {
@@ -376,6 +446,7 @@ async function ingestAccount(
         }
       } else {
         emptyScrollCount = 0;
+        process.stdout.write(`  intercepted ${newThisScroll} tweets (total: ${collectedTweets.length})\r`);
       }
 
       // Check date cutoff against oldest tweet seen so far
@@ -389,18 +460,14 @@ async function ingestAccount(
         }
       }
     }
-  } finally {
-    page.off("response", responseHandler);
-  }
+  } finally { /* fetch interceptor lives in the page, no listener to remove */ }
 
   // Filter by cutoff
   const toProcess = SINCE
     ? collectedTweets.filter((t) => t.postedAt >= SINCE)
     : collectedTweets;
 
-  console.log(
-    `\n[browser-ingest] @${username}: ${collectedTweets.length} scraped, ${toProcess.length} within date range`
-  );
+  console.log('\n' + ts() + ' [browser-ingest] @' + username + ': ' + collectedTweets.length + ' scraped, ' + toProcess.length + ' within date range');
 
   if (DRY_RUN) {
     console.log(`[browser-ingest] DRY RUN — not writing to DB`);
@@ -474,9 +541,7 @@ async function ingestAccount(
     }
   }
 
-  console.log(
-    `[browser-ingest] @${username} done — ${newCount} new, ${dupeCount} already in DB`
-  );
+  console.log(ts() + ' [browser-ingest] @' + username + ' done — ' + newCount + ' new, ' + dupeCount + ' already in DB');
 }
 
 // ---------------------------------------------------------------------------
@@ -555,6 +620,8 @@ async function main() {
   let browser: import("playwright").BrowserContext;
   let page: import("playwright").Page;
 
+  let cdpCapture: CdpCapture | undefined;
+
   if (USE_CDP) {
     // Connect to an already-running Chrome via CDP (e.g. Windows Chrome from WSL)
     const cdpBrowser = await chromium.connectOverCDP(CDP_URL);
@@ -562,6 +629,45 @@ async function main() {
     browser = contexts[0] ?? await cdpBrowser.newContext();
     const pages = browser.pages();
     page = pages[0] ?? await browser.newPage();
+
+    // In CDP mode, X's service worker handles all GraphQL requests, so
+    // window.fetch/XHR patches never see the traffic. Instead we use CDP
+    // Network events which fire at the browser level regardless of context.
+    const cdpSession = await browser.newCDPSession(page);
+    await cdpSession.send("Network.enable");
+
+    cdpCapture = { bodies: [], endpoints: [] };
+    const pendingRequests = new Map<string, string>(); // requestId → endpoint name
+
+    cdpSession.on("Network.requestWillBeSent", (params: any) => {
+      const url: string = params.request?.url ?? "";
+      if (!url.includes("/graphql/")) return;
+      const name = url.split("?")[0].split("/").pop() ?? url;
+      if (!cdpCapture!.endpoints.includes(name)) cdpCapture!.endpoints.push(name);
+      if (
+        url.includes("UserTweets") ||
+        url.includes("UserTweetsAndReplies") ||
+        url.includes("UserTimeline")
+      ) {
+        pendingRequests.set(params.requestId, name);
+      }
+    });
+
+    cdpSession.on("Network.loadingFinished", async (params: any) => {
+      if (!pendingRequests.has(params.requestId)) return;
+      const name = pendingRequests.get(params.requestId)!;
+      pendingRequests.delete(params.requestId);
+      try {
+        const result = await cdpSession.send("Network.getResponseBody", {
+          requestId: params.requestId,
+        });
+        const body = JSON.parse(result.body);
+        cdpCapture!.bodies.push(body);
+        console.log(`[cdp] Captured ${name} (${result.body.length} chars)`);
+      } catch (err) {
+        console.warn(`[cdp] Failed to get response body for ${name}: ${err}`);
+      }
+    });
   } else {
     // Launch Playwright's own Chromium with a persistent profile
     browser = await chromium.launchPersistentContext(PROFILE_DIR, {
@@ -594,6 +700,74 @@ async function main() {
     return;
   }
 
+  // In CDP mode, we use Network events (set up above) — addInitScript is not needed.
+  // In regular Playwright mode, inject fetch/XHR patches to capture GraphQL responses.
+  if (!USE_CDP) await page.addInitScript(() => {
+    // __xResponses: array of { url, body } for matched GraphQL responses
+    (window as any).__xResponses = [];
+    // __xGraphqlUrls: ALL /graphql/ URLs seen (for diagnostics — helps find correct endpoint)
+    (window as any).__xGraphqlUrls = [];
+    (window as any).__xInterceptorReady = true;
+    (window as any).__fetchCallCount = 0;
+    (window as any).__xhrCallCount = 0;
+
+    function recordGraphqlUrl(url: string) {
+      // Extract just the endpoint name (after last /) for readability
+      const name = url.split("?")[0].split("/").pop() ?? url;
+      const seen: string[] = (window as any).__xGraphqlUrls;
+      if (!seen.includes(name)) seen.push(name);
+    }
+
+    function isTweetTimeline(url: string): boolean {
+      return url.includes("/graphql/") && (
+        url.includes("UserTweets") ||
+        url.includes("UserTweetsAndReplies") ||
+        url.includes("UserTimeline")
+      );
+    }
+
+    // Patch fetch
+    const origFetch = window.fetch;
+    window.fetch = async function (...args: any[]) {
+      (window as any).__fetchCallCount++;
+      const response = await origFetch.apply(this, args);
+      const url: string = typeof args[0] === "string" ? args[0] : (args[0] as any)?.url ?? "";
+      if (url.includes("/graphql/")) {
+        recordGraphqlUrl(url);
+        if (isTweetTimeline(url)) {
+          response.clone().json().then((data: any) => {
+            (window as any).__xResponses.push({ url, body: data });
+          }).catch(() => {});
+        }
+      }
+      return response;
+    };
+
+    // Patch XHR
+    const origOpen = XMLHttpRequest.prototype.open;
+    const origSend = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.open = function (method: string, url: string, ...rest: any[]) {
+      (this as any).__xUrl = url;
+      return origOpen.apply(this, [method, url, ...rest] as any);
+    };
+    XMLHttpRequest.prototype.send = function (...args: any[]) {
+      (window as any).__xhrCallCount++;
+      const url: string = (this as any).__xUrl ?? "";
+      if (url.includes("/graphql/")) {
+        recordGraphqlUrl(url);
+        if (isTweetTimeline(url)) {
+          this.addEventListener("load", function () {
+            try {
+              const data = JSON.parse((this as any).responseText);
+              (window as any).__xResponses.push({ url, body: data });
+            } catch { /* not JSON */ }
+          });
+        }
+      }
+      return origSend.apply(this, args);
+    };
+  }); // end addInitScript (non-CDP only)
+
   // Set up DB and HCS queue
   const db = getDb();
 
@@ -611,7 +785,7 @@ async function main() {
   for (let i = 0; i < usernames.length; i++) {
     const username = usernames[i];
     try {
-      await ingestAccount(username, page, hcsQueue, db);
+      await ingestAccount(username, page, hcsQueue, db, cdpCapture);
     } catch (err) {
       console.error(`[browser-ingest] Error on @${username}:`, (err as Error).message);
     }
@@ -619,10 +793,9 @@ async function main() {
     // Delay between accounts (skip after last)
     if (i < usernames.length - 1) {
       const delay = randomBetween(ACCOUNT_DELAY_MIN_MS, ACCOUNT_DELAY_MAX_MS);
-      console.log(
-        `[browser-ingest] Waiting ${Math.round(delay / 1000)}s before next account…`
-      );
-      await humanizeWait(page, delay);
+      const resumeAt = new Date(Date.now() + delay).toTimeString().slice(0, 8);
+      console.log(ts() + ' [browser-ingest] Waiting ' + Math.round(delay / 1000) + 's before next account (resumes ~' + resumeAt + ')…');
+      await page.waitForTimeout(delay);
     }
   }
 
