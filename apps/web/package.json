@@ -12,6 +12,7 @@
   "dependencies": {
     "@hashgraph/hedera-wallet-connect": "^2.0.6",
     "@hashgraph/sdk": "^2.80.0",
+    "@hiero-ledger/proto": "^2.25.0",
     "@taa/db": "*",
     "@taa/shared": "*",
     "class-variance-authority": "^0.7.1",
