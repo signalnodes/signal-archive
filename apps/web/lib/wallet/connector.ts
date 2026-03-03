@@ -1,6 +1,13 @@
 import { DAppConnector } from "@hashgraph/hedera-wallet-connect";
+import { WalletConnectModal } from "@walletconnect/modal";
 import { LedgerId } from "@hashgraph/sdk";
 import { WALLETCONNECT_PROJECT_ID, HEDERA_NETWORK } from "./constants";
+
+// WalletConnect Explorer IDs for Hedera-native wallets
+const HASHPACK_WC_ID =
+  "a29498d225fa4b13468ff4d6cf4ae0ea4adcbd95f07ce8a843a1dee10b632f3f";
+const KABILA_WC_ID =
+  "c40c24b39500901a330a025938552d70def4890fffe9bd315046bd33a2ece24d";
 
 let connector: DAppConnector | null = null;
 
@@ -22,6 +29,12 @@ export async function getConnector(): Promise<DAppConnector> {
     network,
     WALLETCONNECT_PROJECT_ID,
   );
+
+  // Override the internal modal to feature Hedera-native wallets at the top
+  connector.walletConnectModal = new WalletConnectModal({
+    projectId: WALLETCONNECT_PROJECT_ID,
+    explorerRecommendedWalletIds: [HASHPACK_WC_ID, KABILA_WC_ID],
+  });
 
   await connector.init();
   return connector;
