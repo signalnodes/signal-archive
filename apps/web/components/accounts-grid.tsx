@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { CategoryBadge, TierBadge } from "@/components/category-badge";
-import { LetterAvatar } from "@/components/letter-avatar";
+import { AccountAvatar } from "@/components/account-avatar";
 import { CATEGORY_LABELS } from "@/lib/category";
 import { formatNumber } from "@/lib/format";
 import type { AccountCategory } from "@taa/shared";
@@ -17,6 +17,7 @@ export interface AccountRow {
   displayName: string | null;
   category: string;
   trackingTier: string;
+  avatarUrl: string | null;
   tweetCount: number;
   deletionCount: number;
 }
@@ -79,7 +80,7 @@ export function AccountsGrid({ accounts }: { accounts: AccountRow[] }) {
             <Card className="hover:border-border/80 transition-colors h-full cursor-pointer">
               <CardContent className="pt-4 pb-4">
                 <div className="flex items-start gap-3 mb-3">
-                  <LetterAvatar username={account.username} size="sm" />
+                  <AccountAvatar username={account.username} avatarUrl={account.avatarUrl} size="sm" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-1">
                       <div className="font-semibold text-sm">@{account.username}</div>

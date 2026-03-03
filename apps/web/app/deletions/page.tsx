@@ -38,6 +38,7 @@ export default async function DeletionsPage({ searchParams }: Props) {
         username: trackedAccounts.username,
         displayName: trackedAccounts.displayName,
         category: trackedAccounts.category,
+        avatarUrl: trackedAccounts.avatarUrl,
       },
     })
     .from(deletionEvents)

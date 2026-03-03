@@ -16,6 +16,7 @@ export const trackedAccounts = pgTable("tracked_accounts", {
   subcategory: text("subcategory"),
   trackingTier: text("tracking_tier").default("standard").notNull(),
   isActive: boolean("is_active").default(true).notNull(),
+  avatarUrl: text("avatar_url"),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

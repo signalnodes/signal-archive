@@ -18,6 +18,7 @@ export default async function AccountsPage() {
         displayName: trackedAccounts.displayName,
         category: trackedAccounts.category,
         trackingTier: trackedAccounts.trackingTier,
+        avatarUrl: trackedAccounts.avatarUrl,
       })
       .from(trackedAccounts)
       .where(eq(trackedAccounts.isActive, true))

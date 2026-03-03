@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CategoryBadge } from "@/components/category-badge";
-import { LetterAvatar } from "@/components/letter-avatar";
+import { AccountAvatar } from "@/components/account-avatar";
 import { Timestamp } from "@/components/timestamp";
 import { formatTweetAge } from "@/lib/format";
 
@@ -20,6 +20,7 @@ export interface DeletionRow {
     username: string;
     displayName: string | null;
     category: string;
+    avatarUrl?: string | null;
   } | null;
 }
 
@@ -56,7 +57,7 @@ function DeletionCard({ row }: { row: DeletionRow }) {
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-2">
-              {account && <LetterAvatar username={account.username} size="sm" />}
+              {account && <AccountAvatar username={account.username} avatarUrl={account.avatarUrl} size="sm" />}
               {account && (
                 <Link
                   href={`/accounts/${account.username}`}

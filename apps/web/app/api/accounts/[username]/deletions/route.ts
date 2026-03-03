@@ -18,7 +18,7 @@ export async function GET(
   const db = getDb();
 
   const [account] = await db
-    .select({ id: trackedAccounts.id, username: trackedAccounts.username, displayName: trackedAccounts.displayName, category: trackedAccounts.category })
+    .select({ id: trackedAccounts.id, username: trackedAccounts.username, displayName: trackedAccounts.displayName, category: trackedAccounts.category, avatarUrl: trackedAccounts.avatarUrl })
     .from(trackedAccounts)
     .where(eq(trackedAccounts.username, username))
     .limit(1);
@@ -50,6 +50,7 @@ export async function GET(
       username: account.username,
       displayName: account.displayName,
       category: account.category,
+      avatarUrl: account.avatarUrl,
     },
   }));
 

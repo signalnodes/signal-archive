@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CategoryBadge, TierBadge } from "@/components/category-badge";
 import { Separator } from "@/components/ui/separator";
 import { formatNumber } from "@/lib/format";
-import { LetterAvatar } from "@/components/letter-avatar";
+import { AccountAvatar } from "@/components/account-avatar";
 
 interface AccountHeaderProps {
   account: {
@@ -10,6 +10,7 @@ interface AccountHeaderProps {
     displayName: string | null;
     category: string;
     trackingTier: string;
+    avatarUrl?: string | null;
   };
   stats?: {
     totalTweets: number;
@@ -31,7 +32,7 @@ export function AccountHeader({ account, stats, trackingMode = "FULL_ARCHIVE" }:
     <div className="mb-6">
       <div className="flex items-start justify-between flex-wrap gap-6">
         <div className="flex items-start gap-4">
-          <LetterAvatar username={account.username} size="lg" />
+          <AccountAvatar username={account.username} avatarUrl={account.avatarUrl} size="lg" />
           <div>
             <h1 className="text-3xl font-bold">@{account.username}</h1>
             {account.displayName && (

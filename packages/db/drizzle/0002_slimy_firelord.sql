@@ -1,0 +1,1 @@
+ALTER TABLE "tracked_accounts" ADD COLUMN "avatar_url" text;
