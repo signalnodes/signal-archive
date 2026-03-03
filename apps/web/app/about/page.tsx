@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
+import { Heart } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "About",
@@ -180,6 +181,22 @@ export default function AboutPage() {
             </a>
           </div>
         </div>
+      </section>
+
+      <section className="mb-10">
+        <h2 className="text-xl font-semibold mb-3">Support this project</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+          Signal Archive is independently built and funded. If you find it useful, you can
+          support it directly with HBAR or USDC via your Hedera wallet. Donations go toward
+          Hedera network fees, infrastructure, and ongoing development.
+        </p>
+        <Link
+          href="/donate"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+        >
+          <Heart className="size-4" />
+          Donate to Signal Archive
+        </Link>
       </section>
 
       <Separator className="mb-10" />

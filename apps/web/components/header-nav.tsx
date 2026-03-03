@@ -3,12 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { WalletButton } from "@/components/wallet-button";
 
 const NAV_LINKS = [
   { href: "/deletions", label: "Deletions" },
   { href: "/accounts", label: "Accounts" },
   { href: "/verify", label: "Verify" },
   { href: "/about", label: "About" },
+  { href: "/donate", label: "Donate" },
 ];
 
 export function HeaderNav() {
@@ -27,6 +29,7 @@ export function HeaderNav() {
             {link.label}
           </Link>
         ))}
+        <WalletButton />
       </nav>
 
       {/* Mobile hamburger */}
@@ -52,6 +55,9 @@ export function HeaderNav() {
               {link.label}
             </Link>
           ))}
+          <div className="pt-2 mt-1 border-t border-border">
+            <WalletButton />
+          </div>
           <div className="pt-2 mt-1 border-t border-border">
             <form method="GET" action="/search">
               <input

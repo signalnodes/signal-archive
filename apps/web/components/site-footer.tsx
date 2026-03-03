@@ -13,6 +13,12 @@ export function SiteFooter() {
           >
             About
           </Link>
+          <Link
+            href="/donate"
+            className="underline underline-offset-2 hover:text-foreground transition-colors"
+          >
+            Support
+          </Link>
         </div>
         <div className="flex items-center gap-4">
           <p>
