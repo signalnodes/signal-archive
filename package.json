@@ -20,5 +20,8 @@
     "playwright": "^1.58.2",
     "turbo": "^2.4.0",
     "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "@hiero-ledger/proto": "^2.25.0"
   }
 }
