@@ -186,6 +186,40 @@ CREATE INDEX idx_deletions_account ON deletion_events (account_id, detected_at D
 CREATE INDEX idx_deletions_severity ON deletion_events (severity_score DESC);
 ```
 
+**Additional tables:**
+
+```sql
+-- Supporters (donors who have met the minimum threshold)
+CREATE TABLE supporters (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    wallet_address  TEXT UNIQUE NOT NULL,   -- Hedera account ID e.g. 0.0.XXXXX
+    total_donated_usd NUMERIC(12,2) DEFAULT 0,
+    first_donation_at TIMESTAMPTZ NOT NULL,
+    last_donation_at  TIMESTAMPTZ NOT NULL,
+    created_at      TIMESTAMPTZ DEFAULT now()
+);
+
+-- Donor-only tracked crypto wallets (Wallet Watch)
+CREATE TABLE tracked_wallets (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    address     TEXT NOT NULL,
+    chain       TEXT NOT NULL,      -- "hedera" | "ethereum" | "solana" etc.
+    label       TEXT NOT NULL,      -- display name
+    category    TEXT NOT NULL,      -- "scammer" | "person_of_interest" etc.
+    notes       TEXT,
+    explorer_url TEXT,
+    created_at  TIMESTAMPTZ DEFAULT now()
+);
+```
+
+**Schema additions:**
+- `tracked_accounts.donor_only BOOLEAN DEFAULT false` — excludes account from public /accounts grid; included in /research for supporters only
+
+**Supporter gating:**
+- Minimum donation to qualify: **50 HBAR** or **5 USDC** per transaction
+- Supporter status checked via in-process cache (`apps/web/lib/supporter-cache.ts`) — 1hr TTL for supporters, 60s for non-supporters
+- API routes `/api/research/wallets` and `/api/research/accounts` verify supporter status server-side via wallet address query param
+
 > **Note:** An `engagement_snapshots` table exists in the schema file but is not populated and is not used. It is effectively abandoned.
 
 ---
@@ -248,9 +282,10 @@ Keys are sorted deterministically before SHA-256 hashing. This hash is independe
 ### 2. HCS Attestation Service
 
 **Topic Structure:**
-- Single HCS topic for all attestations: `0.0.10301350` (Hedera Mainnet)
-- Topic created via `scripts/create-hcs-topic.ts`, submit-key locked to operator key
-- Read-only to the public via [HashScan](https://hashscan.io/mainnet/topic/0.0.10301350)
+- Public tweet attestations: `0.0.10301350` (Hedera Mainnet) — created via `scripts/create-hcs-topic.ts`
+- Research attestations: `0.0.10307943` (Hedera Mainnet) — created via `scripts/create-research-topic.ts`
+  - Types: `wallet_flagged` (wallet watch additions), `account_flagged` (donor-only account additions)
+- Both topics: submit-key locked to operator key, read-only to the public via HashScan
 
 **Message Format (submitted to HCS):**
 ```json
@@ -313,13 +348,15 @@ When a deletion is detected, submit a second HCS message:
 | Route | Description |
 |-------|-------------|
 | `/` | Landing page — recent notable deletions, stats, mission statement |
-| `/accounts` | Grid of tracked accounts — category filter, live text search |
+| `/accounts` | Grid of tracked accounts — category filter, live text search (donor_only accounts excluded) |
 | `/accounts/[username]` | Account profile — ReceiptCard, 5-tab interface (Activity, Statements, Deletions, Identity, Attestations) |
 | `/deletions` | Deletion feed — filterable by category, reverse chronological, paginated |
 | `/tweet/[id]` | Individual tweet — content, HCS proof panel, meta panel |
 | `/verify/[hash]` | Public verification — enter any SHA-256 hash, shows Hedera attestation + HashScan link |
 | `/search` | Full-text search — supports `"exact phrase"`, `-exclude`, `from:username` |
 | `/about` | Mission, methodology, transparency section (HCS topic ID, HashScan link) |
+| `/support` | Donation page — "what you unlock" section + DonationCard. `/donate` 301-redirects here. |
+| `/research` | Supporter-gated — Wallet Watch table + donor-only account grid. Client-side gate via useWallet isSupporter. |
 | `/rss.xml` | RSS 2.0 feed — last 50 deletions, 15-min cache |
 | `/sitemap.xml` | Dynamic sitemap — all accounts + all tweets |
 
@@ -500,8 +537,9 @@ External services:
 |------|----------|
 | Twitter/X bot auto-posting deletions | High — biggest growth lever |
 | Mass deletion event detection | High — newsworthy, automatic flagging |
+| Research: admin scripts to add wallets + donor-only accounts (with HCS attestation to `0.0.10307943`) | High — research topic exists but nothing writes to it yet |
+| Fix donation verify flow — donations not recording to DB in production | High — supporters table only populated manually for now |
 | Media archival to Cloudflare R2 | Medium — images die when tweets deleted |
-| Email/webhook alerts | Medium |
 | Phase 2: Congress bulk onboarding (~535 accounts) | Medium |
 | Worker health monitoring (Better Stack) | Medium |
 | AI severity scoring | Phase 3 |
