@@ -61,63 +61,10 @@ function parseTwitterDate(raw: string): Date {
   return now;
 }
 
-function createStagehandProvider(): TweetProvider {
-  return {
-    async fetchTweets(username: string, _twitterId: string) {
-      const { Stagehand } = await import("@browserbasehq/stagehand");
-      const stagehand = new Stagehand({
-        env: (process.env.STAGEHAND_ENV as "LOCAL" | "BROWSERBASE") || "LOCAL",
-        apiKey: process.env.ANTHROPIC_API_KEY,
-        browserbaseSessionCreateParams:
-          process.env.STAGEHAND_ENV === "BROWSERBASE"
-            ? {
-                projectId: process.env.BROWSERBASE_PROJECT_ID!,
-              }
-            : undefined,
-      });
-
-      try {
-        await stagehand.init();
-        await stagehand.act(`Navigate to https://x.com/${username}`);
-
-        // Scroll 3 times to load more tweets
-        for (let pass = 0; pass < 3; pass++) {
-          await stagehand.act("Scroll down the page to load more tweets");
-          await new Promise((r) =>
-            setTimeout(r, applyJitter(2000))
-          );
-        }
-
-        const extractInstruction = `Extract all visible tweets from this X/Twitter profile page for @${username}. For each tweet get: the tweet ID from the link URL, the author's numeric ID if visible (otherwise use the username), the text content, the posted time, whether it's a tweet/reply/retweet/quote, and any media URLs.`;
-
-        // Schema cast needed: Stagehand v3 bundles Zod 4 but accepts Zod 3
-        // schemas at runtime via its zod/v3 compat layer
-        const result = await stagehand.extract(
-          extractInstruction,
-          TweetExtractionSchema as any,
-        );
-
-        const parsed = result as z.infer<typeof TweetExtractionSchema>;
-        return parsed.tweets.map((t) => ({
-          tweetId: t.tweetId,
-          authorId: t.authorId,
-          content: t.content,
-          postedAt: parseTwitterDate(t.postedAt),
-          tweetType: t.tweetType,
-          mediaUrls: t.mediaUrls,
-        }));
-      } finally {
-        await stagehand.close();
-      }
-    },
-  };
-}
-
 export function createProvider(): TweetProvider {
   const useMock = process.env.MOCK_INGESTION === "true";
 
   if (useMock) {
-    // Lazy import to avoid loading mock code in production
     return {
       async fetchTweets(username, twitterId) {
         const { createMockProvider } = await import("./mock-provider");
@@ -131,12 +78,8 @@ export function createProvider(): TweetProvider {
     return createSocialDataProvider();
   }
 
-  // Legacy: Stagehand browser automation fallback
-  if (process.env.ANTHROPIC_API_KEY) {
-    return createStagehandProvider();
-  }
-
-  throw new Error(
-    "SOCIALDATA_API_KEY (or ANTHROPIC_API_KEY for legacy Stagehand mode) is required when MOCK_INGESTION is not enabled"
-  );
+  throw new Error("SOCIALDATA_API_KEY is required. For local backfill use scripts/browser-ingest.ts instead.");
 }
+
+// Re-export schema and types used by socialdata-provider
+export { TweetExtractionSchema, parseTwitterDate, applyJitter };

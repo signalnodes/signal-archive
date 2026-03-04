@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { applyJitter } from "@taa/shared";
 
 export interface DeletionChecker {
   checkTweets(tweetIds: string[]): Promise<Map<string, boolean>>;
@@ -8,52 +7,6 @@ export interface DeletionChecker {
 const TweetStatusSchema = z.object({
   exists: z.boolean(),
 });
-
-function createStagehandDeletionChecker(): DeletionChecker {
-  return {
-    async checkTweets(tweetIds: string[]) {
-      const results = new Map<string, boolean>();
-
-      const { Stagehand } = await import("@browserbasehq/stagehand");
-      const stagehand = new Stagehand({
-        env:
-          (process.env.STAGEHAND_ENV as "LOCAL" | "BROWSERBASE") || "LOCAL",
-        apiKey: process.env.ANTHROPIC_API_KEY,
-        browserbaseSessionCreateParams:
-          process.env.STAGEHAND_ENV === "BROWSERBASE"
-            ? { projectId: process.env.BROWSERBASE_PROJECT_ID! }
-            : undefined,
-      });
-
-      try {
-        await stagehand.init();
-
-        for (const tweetId of tweetIds) {
-          try {
-            const url = `https://x.com/i/status/${tweetId}`;
-            await stagehand.act(`Navigate to ${url}`);
-            await new Promise((r) => setTimeout(r, applyJitter(1500)));
-
-            const result = await stagehand.extract(
-              'Does this page show an actual tweet with content? Set exists=true if a tweet is visible. Set exists=false if the page shows "this post is unavailable", "this page doesn\'t exist", "this account has been suspended", "this post was deleted", or any other error/removal message.',
-              TweetStatusSchema as any
-            );
-
-            const parsed = result as z.infer<typeof TweetStatusSchema>;
-            results.set(tweetId, parsed.exists);
-          } catch {
-            // If navigation fails, assume tweet still exists to avoid false positives
-            results.set(tweetId, true);
-          }
-        }
-      } finally {
-        await stagehand.close();
-      }
-
-      return results;
-    },
-  };
-}
 
 function seededRandom(seed: string): () => number {
   let h = 0;
@@ -102,12 +55,8 @@ export function createDeletionChecker(): DeletionChecker {
     return createSocialDataDeletionChecker();
   }
 
-  // Legacy: Stagehand browser automation fallback
-  if (process.env.ANTHROPIC_API_KEY) {
-    return createStagehandDeletionChecker();
-  }
-
-  throw new Error(
-    "SOCIALDATA_API_KEY (or ANTHROPIC_API_KEY for legacy Stagehand mode) is required when MOCK_INGESTION is not enabled"
-  );
+  throw new Error("SOCIALDATA_API_KEY is required for deletion checking.");
 }
+
+// Keep schema export in case it's referenced elsewhere
+export { TweetStatusSchema };
