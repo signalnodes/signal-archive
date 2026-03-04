@@ -1,4 +1,3 @@
-import { Stagehand } from "@browserbasehq/stagehand";
 import { z } from "zod";
 import { applyJitter } from "@taa/shared";
 import type { TweetType } from "@taa/shared";
@@ -65,6 +64,7 @@ function parseTwitterDate(raw: string): Date {
 function createStagehandProvider(): TweetProvider {
   return {
     async fetchTweets(username: string, _twitterId: string) {
+      const { Stagehand } = await import("@browserbasehq/stagehand");
       const stagehand = new Stagehand({
         env: (process.env.STAGEHAND_ENV as "LOCAL" | "BROWSERBASE") || "LOCAL",
         apiKey: process.env.ANTHROPIC_API_KEY,

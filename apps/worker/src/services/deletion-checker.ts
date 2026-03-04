@@ -1,4 +1,3 @@
-import { Stagehand } from "@browserbasehq/stagehand";
 import { z } from "zod";
 import { applyJitter } from "@taa/shared";
 
@@ -15,6 +14,7 @@ function createStagehandDeletionChecker(): DeletionChecker {
     async checkTweets(tweetIds: string[]) {
       const results = new Map<string, boolean>();
 
+      const { Stagehand } = await import("@browserbasehq/stagehand");
       const stagehand = new Stagehand({
         env:
           (process.env.STAGEHAND_ENV as "LOCAL" | "BROWSERBASE") || "LOCAL",

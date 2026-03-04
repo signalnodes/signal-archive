@@ -9,7 +9,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@browserbasehq/stagehand": "^3.0.0",
     "@hashgraph/sdk": "^2.80.0",
     "@taa/db": "*",
     "@taa/shared": "*",
