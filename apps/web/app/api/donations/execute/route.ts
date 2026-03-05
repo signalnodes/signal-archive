@@ -200,36 +200,29 @@ export async function POST(request: Request) {
     const response = await batchTx.execute(client);
     const batchTransactionId = normalizeTxId(response.transactionId.toString());
 
-    // Get receipt — this confirms consensus. Distinguish real failures from
-    // timeouts: a ReceiptStatusError means the batch was rejected at consensus.
+    // Get receipt — this confirms consensus.
     let receiptConfirmed = false;
+    let batchError: string | null = null;
     try {
       await response.getReceipt(client);
       receiptConfirmed = true;
     } catch (receiptErr) {
-      const errMsg = receiptErr instanceof Error ? receiptErr.message : String(receiptErr);
-      // If the error contains a status code it's a consensus failure, not a timeout
-      if (errMsg.includes("status") || errMsg.toLowerCase().includes("failed")) {
-        console.error(`[donate/execute] Batch receipt FAILED for ${batchTransactionId}:`, receiptErr);
-      } else {
-        console.warn(`[donate/execute] Batch receipt timeout for ${batchTransactionId}:`, errMsg);
-      }
+      batchError = receiptErr instanceof Error ? receiptErr.message : String(receiptErr);
+      console.error(`[donate/execute] Batch receipt failed for ${batchTransactionId}: ${batchError}`, receiptErr);
     }
 
-    // Get actual mint serial from the mint receipt
+    // Get actual mint serial — only when batch confirmed.
+    // Do NOT fall back to predictedSerial: writing an unconfirmed serial to the
+    // DB causes alreadyHasBadge() to return true, permanently blocking template B.
     let actualSerial: number | null = null;
-    if (entry.template === "B") {
-      if (receiptConfirmed && mintTx?.transactionId) {
-        try {
-          const mintReceipt = await new TransactionReceiptQuery()
-            .setTransactionId(mintTx.transactionId)
-            .execute(client);
-          actualSerial = mintReceipt.serials?.[0]?.toNumber() ?? predictedSerial;
-        } catch {
-          actualSerial = predictedSerial;
-        }
-      } else {
-        actualSerial = predictedSerial;
+    if (receiptConfirmed && entry.template === "B" && mintTx?.transactionId) {
+      try {
+        const mintReceipt = await new TransactionReceiptQuery()
+          .setTransactionId(mintTx.transactionId)
+          .execute(client);
+        actualSerial = mintReceipt.serials?.[0]?.toNumber() ?? null;
+      } catch (e) {
+        console.error("[donate/execute] Failed to fetch mint receipt serials:", e);
       }
     }
 
@@ -313,6 +306,8 @@ export async function POST(request: Request) {
       template: entry.template,
       badgeSerial: actualSerial,
       amountUsd: entry.amountUsd,
+      // Included for debugging; null when batch succeeded
+      batchError: batchError ?? undefined,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
