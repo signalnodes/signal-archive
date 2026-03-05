@@ -13,4 +13,8 @@ export const supporters = pgTable("supporters", {
   firstDonationAt: timestamp("first_donation_at", { withTimezone: true }).notNull(),
   lastDonationAt: timestamp("last_donation_at", { withTimezone: true }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  // NFT badge fields (HIP-551 atomic batch)
+  badgeTokenId: text("badge_token_id"),
+  badgeSerial: numeric("badge_serial", { precision: 18, scale: 0 }),
+  badgeAwardedAt: timestamp("badge_awarded_at", { withTimezone: true }),
 });

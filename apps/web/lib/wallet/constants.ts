@@ -9,3 +9,6 @@ export const DONATION_ACCOUNT_ID =
 
 export const USDC_TOKEN_ID =
   process.env.NEXT_PUBLIC_USDC_TOKEN_ID ?? "0.0.456858";
+
+export const BADGE_TOKEN_ID =
+  process.env.NEXT_PUBLIC_BADGE_TOKEN_ID ?? "";

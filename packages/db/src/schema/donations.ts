@@ -16,4 +16,10 @@ export const donations = pgTable("donations", {
   status: text("status").default("pending").notNull(),
   confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  // Atomic batch fields (HIP-551)
+  hbarRate: numeric("hbar_rate", { precision: 12, scale: 8 }),
+  template: text("template"),
+  badgeSerial: numeric("badge_serial", { precision: 18, scale: 0 }),
+  batchTransactionId: text("batch_transaction_id"),
+  preparedAt: timestamp("prepared_at", { withTimezone: true }),
 });
