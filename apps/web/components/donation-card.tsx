@@ -13,12 +13,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/lib/wallet/context";
 import { SupporterBadge } from "@/components/supporter-badge";
-import { DONATION_ACCOUNT_ID } from "@/lib/wallet/constants";
+import { DONATION_ACCOUNT_ID, HEDERA_NETWORK } from "@/lib/wallet/constants";
+import type { AtomicDonationResult } from "@/lib/wallet/donate";
 
 type Asset = "hbar" | "usdc";
 type FlowState =
   | "idle"
   | "connecting"
+  | "preparing"
+  | "associating"
   | "signing"
   | "confirming"
   | "success"
@@ -39,6 +42,7 @@ export function DonationCard() {
   const [customAmount, setCustomAmount] = useState("");
   const [flowState, setFlowState] = useState<FlowState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [donationResult, setDonationResult] = useState<AtomicDonationResult | null>(null);
 
   // If the mirror node was slow and all verifyWithRetries attempts were exhausted,
   // the supporter row might not exist yet when we show the success screen.
@@ -85,12 +89,17 @@ export function DonationCard() {
       return;
     }
 
-    setFlowState("signing");
     setErrorMsg("");
+    setDonationResult(null);
 
     try {
-      const { submitDonation } = await import("@/lib/wallet/donate");
-      const result = await submitDonation(accountId, asset, effectiveAmount);
+      const { submitAtomicDonation } = await import("@/lib/wallet/donate");
+      const result = await submitAtomicDonation(
+        accountId,
+        asset,
+        effectiveAmount,
+        (state) => setFlowState(state),
+      );
 
       if (!result.success) {
         setErrorMsg(result.error ?? "Transaction failed");
@@ -98,9 +107,7 @@ export function DonationCard() {
         return;
       }
 
-      setFlowState("confirming");
-      // A brief delay to let the confirm animation show
-      await new Promise((r) => setTimeout(r, 1000));
+      setDonationResult(result);
       await refreshSupporterStatus();
       setFlowState("success");
     } catch (err) {
@@ -110,6 +117,7 @@ export function DonationCard() {
   }
 
   if (flowState === "success") {
+    const awardedBadge = donationResult?.template === "B";
     return (
       <Card>
         <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
@@ -117,17 +125,42 @@ export function DonationCard() {
           <div>
             <p className="font-semibold text-lg">Thank you for supporting the Archive.</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Your donation helps keep Signal Archive running.
+              Your donation was recorded atomically on Hedera.
             </p>
           </div>
           <SupporterBadge />
-          <p className="text-xs text-muted-foreground">
-            You&apos;re now a Signal Archive supporter.
-          </p>
+          {awardedBadge ? (
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-xs text-muted-foreground">
+                You&apos;re now a Signal Archive supporter.
+              </p>
+              <p className="text-xs text-emerald-400">
+                Supporter badge NFT minted
+                {donationResult?.badgeSerial != null
+                  ? ` (serial #${donationResult.badgeSerial})`
+                  : ""}
+                {" "}and transferred to your wallet.
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              You&apos;re now a Signal Archive supporter.
+            </p>
+          )}
+          {donationResult?.transactionId && (
+            <a
+              href={`https://hashscan.io/${HEDERA_NETWORK}/transaction/${donationResult.transactionId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              View on HashScan <ExternalLink className="size-3" />
+            </a>
+          )}
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setFlowState("idle")}
+            onClick={() => { setFlowState("idle"); setDonationResult(null); }}
           >
             Donate again
           </Button>
@@ -138,13 +171,17 @@ export function DonationCard() {
 
   const isBusy =
     flowState === "connecting" ||
+    flowState === "preparing" ||
+    flowState === "associating" ||
     flowState === "signing" ||
     flowState === "confirming";
 
   const ctaLabel = (() => {
     if (flowState === "connecting") return "Connecting…";
+    if (flowState === "preparing") return "Preparing transaction…";
+    if (flowState === "associating") return "Associating badge token…";
     if (flowState === "signing") return "Waiting for signature…";
-    if (flowState === "confirming") return "Confirming…";
+    if (flowState === "confirming") return "Submitting to Hedera…";
     if (!accountId) return "Connect Wallet & Donate";
     return `Donate ${effectiveAmount ? `${effectiveAmount} ${asset.toUpperCase()}` : ""}`;
   })();
