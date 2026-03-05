@@ -69,13 +69,14 @@ export async function submitAtomicDonation(
         signerAccountId,
         transactionList: transactionToBase64String(associateTx),
       });
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Token association failed";
-      return { success: false, error: message };
+    } catch {
+      // signAndExecuteTransaction often throws even when the tx succeeds on-chain
+      // (WalletConnect response parsing). Fall through and retry prepare — if the
+      // association went through, prepare will return Template B. If not, it will
+      // return needsAssociation: true again and we surface the error then.
     }
 
-    // Retry prepare now that the token is associated
+    // Always retry prepare after attempting association
     onStateChange("preparing");
     const retryRes = await fetch("/api/donations/prepare", {
       method: "POST",
@@ -90,7 +91,7 @@ export async function submitAtomicDonation(
 
     const retryData = await retryRes.json();
     if (retryData.needsAssociation) {
-      return { success: false, error: "Token association did not complete" };
+      return { success: false, error: "Token association did not complete. Please try again." };
     }
     Object.assign(prepareData, retryData);
   }

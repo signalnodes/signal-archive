@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   TransferTransaction,
+  TransactionId,
   Hbar,
   HbarUnit,
   AccountId,
@@ -140,8 +141,13 @@ export async function POST(request: Request) {
         );
     }
 
-    // Set batch key and freeze — client will sign with their wallet
-    transferTx.setBatchKey(operatorKey.publicKey).freezeWith(client);
+    // Set user as payer (transactionId) before freezing — if we let the server
+    // client auto-generate the ID it uses the operator, causing a payer mismatch
+    // in the execute endpoint's verification check.
+    transferTx
+      .setTransactionId(TransactionId.generate(AccountId.fromString(walletAddress)))
+      .setBatchKey(operatorKey.publicKey)
+      .freezeWith(client);
     const transactionBytes = Buffer.from(transferTx.toBytes()).toString(
       "base64",
     );
