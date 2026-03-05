@@ -57,6 +57,16 @@ export async function POST(request: Request) {
       );
     }
 
+    // Pre-flight: catch missing env vars early with a clear message
+    if (!process.env.HEDERA_OPERATOR_ID || !process.env.HEDERA_OPERATOR_KEY) {
+      console.error("[donate/execute] Missing HEDERA_OPERATOR_ID or HEDERA_OPERATOR_KEY");
+      return NextResponse.json({ error: "Server misconfigured: missing operator credentials" }, { status: 503 });
+    }
+    if (!DONATION_TOPIC_ID) {
+      console.error("[donate/execute] Missing HEDERA_DONATION_TOPIC_ID");
+      return NextResponse.json({ error: "Server misconfigured: missing donation topic" }, { status: 503 });
+    }
+
     // --- Look up batch entry ---
     const entry = getBatchEntry(batchId);
     if (!entry) {
@@ -253,9 +263,10 @@ export async function POST(request: Request) {
       amountUsd: entry.amountUsd,
     });
   } catch (err) {
-    console.error("Donation execute error:", err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Donation execute error:", message, err);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: message || "Internal server error" },
       { status: 500 },
     );
   }
