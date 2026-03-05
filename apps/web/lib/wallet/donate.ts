@@ -133,11 +133,14 @@ export async function submitAtomicDonation(
       transactionList: transactionToBase64String(transferTx),
     });
 
-    const txId = result.result?.transactionId;
+    // WalletConnect SignClient unwraps the JSON-RPC envelope and returns the
+    // payload directly, so transactionId is at the top level of result.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const txId = (result as any).transactionId ?? result.result?.transactionId;
     if (!txId) {
       return { success: false, error: "No transaction ID returned from wallet" };
     }
-    transferTransactionId = txId;
+    transferTransactionId = String(txId);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Transaction signing failed";
     return { success: false, error: message };
@@ -211,7 +214,8 @@ export async function submitDonation(
       transactionList: transactionToBase64String(tx),
     });
 
-    const transactionId = result.result?.transactionId;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const transactionId = (result as any).transactionId ?? result.result?.transactionId;
     if (!transactionId) {
       return { success: false, error: "No transaction ID returned" };
     }
