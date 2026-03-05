@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import {
-  Transaction,
   BatchTransaction,
   TokenMintTransaction,
   TransferTransaction,
@@ -35,6 +34,48 @@ function normalizeTxId(txId: string): string {
   return `${payer}-${timestamp.replace(".", "-")}`;
 }
 
+/**
+ * Verify the user's transfer transaction landed on-chain via mirror node.
+ * Returns the normalized transaction ID on success, throws on failure.
+ */
+async function verifyTransferOnChain(
+  transferTransactionId: string,
+): Promise<string> {
+  // Mirror node expects "0.0.XXXX-seconds-nanos" format
+  const normalized = transferTransactionId.includes("@")
+    ? normalizeTxId(transferTransactionId)
+    : transferTransactionId;
+
+  const url = `${getMirrorBase()}/api/v1/transactions/${normalized}`;
+  const maxAttempts = 6;
+  const delayMs = 3000;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        const tx = data.transactions?.[0];
+        if (tx && tx.result === "SUCCESS") {
+          return normalized;
+        }
+        if (tx && tx.result && tx.result !== "SUCCESS") {
+          throw new Error(`Transfer failed on-chain: ${tx.result}`);
+        }
+      }
+    } catch (e) {
+      if (e instanceof Error && e.message.startsWith("Transfer failed")) {
+        throw e;
+      }
+      // network error — retry
+    }
+  }
+  throw new Error("Transfer not confirmed on mirror node after retries");
+}
+
 /** Query mirror node for current badge token total supply. */
 async function getBadgeTokenSupply(): Promise<number> {
   const res = await fetch(
@@ -48,9 +89,9 @@ async function getBadgeTokenSupply(): Promise<number> {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { batchId, signedTransactionBytes } = body;
+    const { batchId, transferTransactionId } = body;
 
-    if (!batchId || !signedTransactionBytes) {
+    if (!batchId || !transferTransactionId) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },
@@ -76,18 +117,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // --- Reconstruct user's signed transfer tx ---
-    const txBytes = Buffer.from(signedTransactionBytes, "base64");
-    const userTransferTx = Transaction.fromBytes(txBytes);
-
-    // Verify the payer is the expected account
-    const payerAccountId = userTransferTx.transactionId?.accountId?.toString();
-    if (payerAccountId !== entry.accountId) {
-      return NextResponse.json(
-        { error: "Transaction payer mismatch" },
-        { status: 400 },
-      );
+    // --- Verify user's transfer landed on-chain ---
+    let confirmedTransferId: string;
+    try {
+      confirmedTransferId = await verifyTransferOnChain(transferTransactionId);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return NextResponse.json({ error: `Transfer verification failed: ${msg}` }, { status: 400 });
     }
+
+    // Mark as used before executing operator batch to prevent replay.
+    markBatchEntryUsed(batchId);
 
     // --- Set up server-side Hedera client ---
     const client = getHederaServerClient();
@@ -105,6 +145,7 @@ export async function POST(request: Request) {
       asset: entry.asset,
       amount: entry.amount,
       amount_usd: entry.amountUsd,
+      transfer_tx: confirmedTransferId,
       supporter_awarded: entry.template === "B",
       badge_serial: null, // filled in DB after batch; on-chain record omits it
       threshold_usd: 5,
@@ -135,6 +176,7 @@ export async function POST(request: Request) {
             JSON.stringify({
               wallet: entry.accountId,
               type: "supporter",
+              transfer_tx: confirmedTransferId,
               minted_at: new Date().toISOString(),
             }),
           ),
@@ -154,27 +196,22 @@ export async function POST(request: Request) {
         .sign(operatorKey);
     }
 
-    // --- Assemble BatchTransaction ---
+    // --- Assemble operator-only BatchTransaction ---
     const innerTxs =
       entry.template === "B" && mintTx && nftTransferTx
-        ? [userTransferTx, mintTx, nftTransferTx, hcsTx]
-        : [userTransferTx, hcsTx];
+        ? [mintTx, nftTransferTx, hcsTx]
+        : [hcsTx];
 
     const batchTx = await new BatchTransaction()
       .setInnerTransactions(innerTxs)
       .freezeWith(client)
       .sign(operatorKey);
 
-    // --- Execute ---
-    // Mark as used before submitting to prevent replay, even if batch fails.
-    markBatchEntryUsed(batchId);
-
+    // --- Execute operator batch ---
     const response = await batchTx.execute(client);
-    // Normalize immediately — this is the canonical ID for DB + HashScan.
     const batchTransactionId = normalizeTxId(response.transactionId.toString());
 
     // Attempt to get receipt to confirm consensus, but don't fail if it times out.
-    // The transaction is submitted; consensus will happen regardless.
     let receiptConfirmed = false;
     try {
       await response.getReceipt(client);
@@ -208,7 +245,7 @@ export async function POST(request: Request) {
 
     await db.insert(donations).values({
       walletAddress: entry.accountId,
-      transactionId: batchTransactionId,
+      transactionId: confirmedTransferId,
       asset: entry.asset,
       amount: String(entry.amount),
       amountUsd: String(entry.amountUsd),
@@ -222,7 +259,7 @@ export async function POST(request: Request) {
     });
 
     // Grant supporter status if threshold met (template B always meets it).
-    // Grant optimistically even if receipt timed out — the tx is submitted.
+    // Grant optimistically even if batch receipt timed out — transfer is confirmed.
     if (entry.template === "B" || entry.amountUsd >= 5) {
       await db
         .insert(supporters)
@@ -257,7 +294,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      transactionId: batchTransactionId,
+      transactionId: confirmedTransferId,
+      batchTransactionId,
       template: entry.template,
       badgeSerial: actualSerial,
       amountUsd: entry.amountUsd,

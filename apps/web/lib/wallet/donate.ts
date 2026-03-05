@@ -5,7 +5,6 @@ import {
   HbarUnit,
   AccountId,
   TokenId,
-  Transaction,
 } from "@hiero-ledger/sdk";
 import { transactionToBase64String } from "@hashgraph/hedera-wallet-connect";
 import { DONATION_ACCOUNT_ID, USDC_TOKEN_ID, HEDERA_NETWORK } from "./constants";
@@ -25,11 +24,12 @@ export type AtomicDonationResult = {
 };
 
 /**
- * New atomic batch donation flow (HIP-551).
+ * Atomic batch donation flow (HIP-551 fallback architecture).
  *
- * prepare → (associate if needed) → sign → execute
- *
- * onStateChange is called at each phase so the UI can update.
+ * 1. prepare  — server determines template, returns batchId
+ * 2. associate — if badge token not yet associated (Template B only)
+ * 3. sign+execute — user signs and submits the transfer via wallet
+ * 4. execute  — server runs operator-only batch (HCS + badge mint)
  */
 export async function submitAtomicDonation(
   accountId: string,
@@ -39,7 +39,7 @@ export async function submitAtomicDonation(
 ): Promise<AtomicDonationResult> {
   const { getConnector } = await import("./connector");
   const connector = await getConnector();
-  const signer = connector.getSigner(AccountId.fromString(accountId));
+  const signerAccountId = `hedera:${HEDERA_NETWORK}:${accountId}`;
 
   // --- Prepare ---
   onStateChange("preparing");
@@ -64,7 +64,6 @@ export async function submitAtomicDonation(
         .setAccountId(AccountId.fromString(accountId))
         .setTokenIds([TokenId.fromString(prepareData.badgeTokenId)]);
 
-      const signerAccountId = `hedera:${HEDERA_NETWORK}:${accountId}`;
       await connector.signAndExecuteTransaction({
         signerAccountId,
         transactionList: transactionToBase64String(associateTx),
@@ -96,31 +95,60 @@ export async function submitAtomicDonation(
     Object.assign(prepareData, retryData);
   }
 
-  const { batchId, transactionBytes } = prepareData as {
-    batchId: string;
-    transactionBytes: string;
-    template: "A" | "B";
-  };
+  const { batchId } = prepareData as { batchId: string; template: "A" | "B" };
 
-  // --- Sign user's transfer transaction ---
+  // --- Build and submit the user's transfer transaction ---
   onStateChange("signing");
-  let signedBytes: string;
+
+  let transferTx: TransferTransaction;
+  if (asset === "hbar") {
+    transferTx = new TransferTransaction()
+      .addHbarTransfer(
+        AccountId.fromString(accountId),
+        Hbar.from(-amount, HbarUnit.Hbar),
+      )
+      .addHbarTransfer(
+        AccountId.fromString(DONATION_ACCOUNT_ID),
+        Hbar.from(amount, HbarUnit.Hbar),
+      );
+  } else {
+    const microAmount = Math.round(amount * 1_000_000);
+    transferTx = new TransferTransaction()
+      .addTokenTransfer(
+        TokenId.fromString(USDC_TOKEN_ID),
+        AccountId.fromString(accountId),
+        -microAmount,
+      )
+      .addTokenTransfer(
+        TokenId.fromString(USDC_TOKEN_ID),
+        AccountId.fromString(DONATION_ACCOUNT_ID),
+        microAmount,
+      );
+  }
+
+  let transferTransactionId: string;
   try {
-    const txBytes = Uint8Array.from(Buffer.from(transactionBytes, "base64"));
-    const tx = Transaction.fromBytes(txBytes);
-    const signedTx = await signer.signTransaction(tx);
-    signedBytes = Buffer.from(signedTx.toBytes()).toString("base64");
+    const result = await connector.signAndExecuteTransaction({
+      signerAccountId,
+      transactionList: transactionToBase64String(transferTx),
+    });
+
+    const txId = result.result?.transactionId;
+    if (!txId) {
+      return { success: false, error: "No transaction ID returned from wallet" };
+    }
+    transferTransactionId = txId;
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Signing failed";
+    const message = err instanceof Error ? err.message : "Transaction signing failed";
     return { success: false, error: message };
   }
 
-  // --- Execute batch ---
+  // --- Execute operator batch (HCS + optional badge mint) ---
   onStateChange("confirming");
   const executeRes = await fetch("/api/donations/execute", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ batchId, signedTransactionBytes: signedBytes }),
+    body: JSON.stringify({ batchId, transferTransactionId }),
   });
 
   if (!executeRes.ok) {

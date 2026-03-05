@@ -1,20 +1,11 @@
 import { NextResponse } from "next/server";
-import {
-  TransferTransaction,
-  TransactionId,
-  Hbar,
-  HbarUnit,
-  AccountId,
-  TokenId,
-} from "@hashgraph/sdk";
 import { getDb, supporters } from "@taa/db";
 import { eq } from "drizzle-orm";
-import { getHederaServerClient, getOperatorKey, getMirrorBase } from "@/lib/hedera-server";
+import { getMirrorBase } from "@/lib/hedera-server";
 import { getHbarUsdRate, hbarToUsd } from "@/lib/hbar-rate";
 import { createBatchEntry, type DonationTemplate } from "@/lib/batch-store";
 
 const DONATION_ACCOUNT_ID = process.env.NEXT_PUBLIC_DONATION_ACCOUNT_ID ?? "";
-const USDC_TOKEN_ID = process.env.NEXT_PUBLIC_USDC_TOKEN_ID ?? "0.0.456858";
 const BADGE_TOKEN_ID = process.env.NEXT_PUBLIC_BADGE_TOKEN_ID ?? "";
 const THRESHOLD_USD = 5;
 
@@ -111,58 +102,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // --- Build user's transfer transaction ---
-    const client = getHederaServerClient();
-    const operatorKey = getOperatorKey();
-
-    let transferTx: TransferTransaction;
-    if (asset === "hbar") {
-      transferTx = new TransferTransaction()
-        .addHbarTransfer(
-          AccountId.fromString(walletAddress),
-          Hbar.from(-amount, HbarUnit.Hbar),
-        )
-        .addHbarTransfer(
-          AccountId.fromString(DONATION_ACCOUNT_ID),
-          Hbar.from(amount, HbarUnit.Hbar),
-        );
-    } else {
-      const microAmount = Math.round(amount * 1_000_000);
-      transferTx = new TransferTransaction()
-        .addTokenTransfer(
-          TokenId.fromString(USDC_TOKEN_ID),
-          AccountId.fromString(walletAddress),
-          -microAmount,
-        )
-        .addTokenTransfer(
-          TokenId.fromString(USDC_TOKEN_ID),
-          AccountId.fromString(DONATION_ACCOUNT_ID),
-          microAmount,
-        );
-    }
-
-    // Pin to a single node before freezing.
-    //
-    // freezeWith(client) normally creates one signed-transaction copy per Hedera
-    // node. DAppSigner.signTransaction re-serializes the body via _makeTransactionBody
-    // to get bytes for the wallet to sign. If nodeAccountIds is not populated after
-    // fromBytes on the client, it signs a body without a nodeAccountId — but
-    // _signedTransactions.get(0) has the body WITH the nodeAccountId.
-    // Those two bodies differ → INVALID_SIGNATURE when Hedera validates the inner tx.
-    //
-    // Pinning to one node means there is only one copy in the TransactionList.
-    // The wallet signs exactly the body in _signedTransactions.get(0). No mismatch.
-    const network = process.env.NEXT_PUBLIC_HEDERA_NETWORK ?? "mainnet";
-    const pinnedNode = AccountId.fromString(network === "mainnet" ? "0.0.3" : "0.0.3");
-    transferTx
-      .setTransactionId(TransactionId.generate(AccountId.fromString(walletAddress)))
-      .setNodeAccountIds([pinnedNode])
-      .setBatchKey(operatorKey.publicKey)
-      .freezeWith(client);
-    const transactionBytes = Buffer.from(transferTx.toBytes()).toString(
-      "base64",
-    );
-
     // --- Store batch entry ---
     const batchId = createBatchEntry({
       accountId: walletAddress,
@@ -175,7 +114,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       batchId,
-      transactionBytes,
       template,
       amountUsd,
       needsAssociation: false,
@@ -189,4 +127,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
