@@ -181,9 +181,10 @@ export async function POST(request: Request) {
       needsAssociation: false,
     });
   } catch (err) {
-    console.error("Donation prepare error:", err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Donation prepare error:", message, err);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: message || "Internal server error" },
       { status: 500 },
     );
   }
