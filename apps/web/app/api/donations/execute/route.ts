@@ -41,7 +41,6 @@ function normalizeTxId(txId: string): string {
 async function verifyTransferOnChain(
   transferTransactionId: string,
 ): Promise<string> {
-  // Mirror node expects "0.0.XXXX-seconds-nanos" format
   const normalized = transferTransactionId.includes("@")
     ? normalizeTxId(transferTransactionId)
     : transferTransactionId;
@@ -70,7 +69,6 @@ async function verifyTransferOnChain(
       if (e instanceof Error && e.message.startsWith("Transfer failed")) {
         throw e;
       }
-      // network error — retry
     }
   }
   throw new Error("Transfer not confirmed on mirror node after retries");
@@ -98,7 +96,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Pre-flight: catch missing env vars early with a clear message
     if (!process.env.HEDERA_OPERATOR_ID || !process.env.HEDERA_OPERATOR_KEY) {
       console.error("[donate/execute] Missing HEDERA_OPERATOR_ID or HEDERA_OPERATOR_KEY");
       return NextResponse.json({ error: "Server misconfigured: missing operator credentials" }, { status: 503 });
@@ -108,7 +105,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Server misconfigured: missing donation topic" }, { status: 503 });
     }
 
-    // --- Look up batch entry ---
     const entry = getBatchEntry(batchId);
     if (!entry) {
       return NextResponse.json(
@@ -126,10 +122,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Transfer verification failed: ${msg}` }, { status: 400 });
     }
 
-    // Mark as used before executing operator batch to prevent replay.
     markBatchEntryUsed(batchId);
 
-    // --- Set up server-side Hedera client ---
     const client = getHederaServerClient();
     const operatorKey = getOperatorKey();
     const operatorPublicKey = operatorKey.publicKey;
@@ -147,7 +141,7 @@ export async function POST(request: Request) {
       amount_usd: entry.amountUsd,
       transfer_tx: confirmedTransferId,
       supporter_awarded: entry.template === "B",
-      badge_serial: null, // filled in DB after batch; on-chain record omits it
+      badge_serial: null,
       threshold_usd: 5,
       rate_hbar_usd: entry.hbarRate,
       prepared_at: new Date(entry.expiresAt - 5 * 60 * 1000).toISOString(),
@@ -160,13 +154,18 @@ export async function POST(request: Request) {
       .freezeWith(client)
       .sign(operatorKey);
 
-    // --- Build Template B inner transactions (badge mint + NFT transfer) ---
+    // --- Template B: mint badge in the batch; transfer separately after ---
+    //
+    // The NFT transfer is intentionally NOT included in the batch. Hedera
+    // validates all inner transactions before execution, so a transfer
+    // referencing serial N would fail validation because the NFT doesn't
+    // exist yet at validation time (it will be minted by mintTx in the
+    // same batch). Running the transfer as a follow-up transaction avoids
+    // this ordering issue.
     let mintTx: TokenMintTransaction | null = null;
-    let nftTransferTx: TransferTransaction | null = null;
     let predictedSerial: number | null = null;
 
     if (entry.template === "B" && BADGE_TOKEN_ID) {
-      // Pre-determine serial to include in batch NFT transfer
       predictedSerial = (await getBadgeTokenSupply()) + 1;
 
       mintTx = await new TokenMintTransaction()
@@ -184,22 +183,12 @@ export async function POST(request: Request) {
         .setBatchKey(operatorPublicKey)
         .freezeWith(client)
         .sign(operatorKey);
-
-      nftTransferTx = await new TransferTransaction()
-        .addNftTransfer(
-          new NftId(TokenId.fromString(BADGE_TOKEN_ID), predictedSerial),
-          operatorId,
-          AccountId.fromString(entry.accountId),
-        )
-        .setBatchKey(operatorPublicKey)
-        .freezeWith(client)
-        .sign(operatorKey);
     }
 
-    // --- Assemble operator-only BatchTransaction ---
+    // --- Assemble batch: [mintTx, hcsTx] for Template B, [hcsTx] for A ---
     const innerTxs =
-      entry.template === "B" && mintTx && nftTransferTx
-        ? [mintTx, nftTransferTx, hcsTx]
+      entry.template === "B" && mintTx
+        ? [mintTx, hcsTx]
         : [hcsTx];
 
     const batchTx = await new BatchTransaction()
@@ -211,31 +200,58 @@ export async function POST(request: Request) {
     const response = await batchTx.execute(client);
     const batchTransactionId = normalizeTxId(response.transactionId.toString());
 
-    // Attempt to get receipt to confirm consensus, but don't fail if it times out.
+    // Get receipt — this confirms consensus. Distinguish real failures from
+    // timeouts: a ReceiptStatusError means the batch was rejected at consensus.
     let receiptConfirmed = false;
     try {
       await response.getReceipt(client);
       receiptConfirmed = true;
     } catch (receiptErr) {
-      console.warn(
-        `[donate/execute] Receipt fetch timed out for ${batchTransactionId}:`,
-        receiptErr,
-      );
+      const errMsg = receiptErr instanceof Error ? receiptErr.message : String(receiptErr);
+      // If the error contains a status code it's a consensus failure, not a timeout
+      if (errMsg.includes("status") || errMsg.toLowerCase().includes("failed")) {
+        console.error(`[donate/execute] Batch receipt FAILED for ${batchTransactionId}:`, receiptErr);
+      } else {
+        console.warn(`[donate/execute] Batch receipt timeout for ${batchTransactionId}:`, errMsg);
+      }
     }
 
-    // Get actual mint serial if template B
+    // Get actual mint serial from the mint receipt
     let actualSerial: number | null = null;
-    if (receiptConfirmed && entry.template === "B" && mintTx?.transactionId) {
-      try {
-        const mintReceipt = await new TransactionReceiptQuery()
-          .setTransactionId(mintTx.transactionId)
-          .execute(client);
-        actualSerial = mintReceipt.serials?.[0]?.toNumber() ?? predictedSerial;
-      } catch {
+    if (entry.template === "B") {
+      if (receiptConfirmed && mintTx?.transactionId) {
+        try {
+          const mintReceipt = await new TransactionReceiptQuery()
+            .setTransactionId(mintTx.transactionId)
+            .execute(client);
+          actualSerial = mintReceipt.serials?.[0]?.toNumber() ?? predictedSerial;
+        } catch {
+          actualSerial = predictedSerial;
+        }
+      } else {
         actualSerial = predictedSerial;
       }
-    } else if (entry.template === "B") {
-      actualSerial = predictedSerial;
+    }
+
+    // --- Transfer minted NFT to user (separate from batch to avoid serial validation issue) ---
+    if (receiptConfirmed && entry.template === "B" && actualSerial !== null && BADGE_TOKEN_ID) {
+      try {
+        const nftTransferTx = await new TransferTransaction()
+          .addNftTransfer(
+            new NftId(TokenId.fromString(BADGE_TOKEN_ID), actualSerial),
+            operatorId,
+            AccountId.fromString(entry.accountId),
+          )
+          .freezeWith(client)
+          .sign(operatorKey);
+        const nftResponse = await nftTransferTx.execute(client);
+        await nftResponse.getReceipt(client);
+        console.log(`[donate/execute] NFT serial #${actualSerial} transferred to ${entry.accountId}`);
+      } catch (nftErr) {
+        // Transfer failed but badge was minted — log and continue.
+        // The NFT sits in the operator treasury and can be transferred manually.
+        console.error(`[donate/execute] NFT transfer failed for serial #${actualSerial}:`, nftErr);
+      }
     }
 
     // --- Record in DB ---
@@ -258,8 +274,6 @@ export async function POST(request: Request) {
       preparedAt: new Date(entry.expiresAt - 5 * 60 * 1000),
     });
 
-    // Grant supporter status if threshold met (template B always meets it).
-    // Grant optimistically even if batch receipt timed out — transfer is confirmed.
     if (entry.template === "B" || entry.amountUsd >= 5) {
       await db
         .insert(supporters)
