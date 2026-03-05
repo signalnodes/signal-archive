@@ -82,7 +82,7 @@ export function HeaderNav() {
               <input
                 name="q"
                 type="text"
-                placeholder="Search archive..."
+                placeholder="Search..."
                 className="w-full h-9 rounded-md border border-border bg-transparent px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </form>

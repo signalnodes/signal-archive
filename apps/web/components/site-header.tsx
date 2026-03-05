@@ -31,7 +31,7 @@ export async function SiteHeader() {
             <input
               name="q"
               type="text"
-              placeholder="Search archive..."
+              placeholder="Search..."
               className="h-8 w-44 rounded-md border border-border bg-transparent pl-8 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
