@@ -141,11 +141,22 @@ export async function POST(request: Request) {
         );
     }
 
-    // Set user as payer (transactionId) before freezing — if we let the server
-    // client auto-generate the ID it uses the operator, causing a payer mismatch
-    // in the execute endpoint's verification check.
+    // Pin to a single node before freezing.
+    //
+    // freezeWith(client) normally creates one signed-transaction copy per Hedera
+    // node. DAppSigner.signTransaction re-serializes the body via _makeTransactionBody
+    // to get bytes for the wallet to sign. If nodeAccountIds is not populated after
+    // fromBytes on the client, it signs a body without a nodeAccountId — but
+    // _signedTransactions.get(0) has the body WITH the nodeAccountId.
+    // Those two bodies differ → INVALID_SIGNATURE when Hedera validates the inner tx.
+    //
+    // Pinning to one node means there is only one copy in the TransactionList.
+    // The wallet signs exactly the body in _signedTransactions.get(0). No mismatch.
+    const network = process.env.NEXT_PUBLIC_HEDERA_NETWORK ?? "mainnet";
+    const pinnedNode = AccountId.fromString(network === "mainnet" ? "0.0.3" : "0.0.3");
     transferTx
       .setTransactionId(TransactionId.generate(AccountId.fromString(walletAddress)))
+      .setNodeAccountIds([pinnedNode])
       .setBatchKey(operatorKey.publicKey)
       .freezeWith(client);
     const transactionBytes = Buffer.from(transferTx.toBytes()).toString(
