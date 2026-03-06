@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import {
   BatchTransaction,
   TokenMintTransaction,
+  TokenUpdateNftsTransaction,
   TransferTransaction,
   TopicMessageSubmitTransaction,
   AccountId,
   TokenId,
   NftId,
   TransactionReceiptQuery,
+  Long,
 } from "@hashgraph/sdk";
 import { getDb, donations, supporters } from "@taa/db";
 import { eq, sql } from "drizzle-orm";
@@ -142,7 +144,7 @@ export async function POST(request: Request) {
       transfer_tx: confirmedTransferId,
       supporter_awarded: entry.template === "B",
       badge_serial: null,
-      threshold_usd: 5,
+      threshold_usd: 10,
       rate_hbar_usd: entry.hbarRate,
       prepared_at: new Date(entry.expiresAt - 5 * 60 * 1000).toISOString(),
     });
@@ -171,8 +173,9 @@ export async function POST(request: Request) {
       mintTx = await new TokenMintTransaction()
         .setTokenId(BADGE_TOKEN_ID)
         .setMetadata([
-          // Max 100 bytes per Hedera NFT metadata limit — keep minimal
-          Buffer.from(JSON.stringify({ wallet: entry.accountId, type: "SABADGE" })),
+          // Placeholder — overwritten immediately after by TokenUpdateNftsTransaction
+          // once we know the serial. Stays well under the 100-byte limit.
+          Buffer.from(JSON.stringify({ type: "SIGBADGE" })),
         ])
         .setBatchKey(operatorPublicKey)
         .freezeWith(client)
@@ -239,6 +242,24 @@ export async function POST(request: Request) {
         // The NFT sits in the operator treasury and can be transferred manually.
         console.error(`[donate/execute] NFT transfer failed for serial #${actualSerial}:`, nftErr);
       }
+
+      // --- Update NFT metadata to server-side dynamic URL (dNFT via HIP-657) ---
+      // Now that we know the serial, point the on-chain metadata to our dynamic endpoint.
+      // This is a best-effort update — badge is already minted and transferred if this fails.
+      try {
+        const metadataUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://signalarchive.org"}/api/nft/${actualSerial}`;
+        const updateTx = await new TokenUpdateNftsTransaction()
+          .setTokenId(TokenId.fromString(BADGE_TOKEN_ID))
+          .setSerialNumbers([Long.fromNumber(actualSerial)])
+          .setMetadata(Buffer.from(metadataUrl))
+          .freezeWith(client)
+          .sign(operatorKey);
+        const updateResponse = await updateTx.execute(client);
+        await updateResponse.getReceipt(client);
+        console.log(`[donate/execute] NFT serial #${actualSerial} metadata updated to ${metadataUrl}`);
+      } catch (updateErr) {
+        console.error(`[donate/execute] Metadata update failed for serial #${actualSerial}:`, updateErr);
+      }
     }
 
     // --- Record in DB ---
@@ -261,7 +282,7 @@ export async function POST(request: Request) {
       preparedAt: new Date(entry.expiresAt - 5 * 60 * 1000),
     });
 
-    if (entry.template === "B" || entry.amountUsd >= 5) {
+    if (entry.template === "B" || entry.amountUsd >= 10) {
       await db
         .insert(supporters)
         .values({

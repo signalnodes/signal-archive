@@ -1,18 +1,24 @@
 /**
  * Creates the Signal Archive supporter badge NFT token on Hedera.
  *
- * Token properties:
- *   - Type: NON_FUNGIBLE_UNIQUE (NFT)
- *   - Name: Signal Archive Supporter
- *   - Symbol: SABADGE
- *   - Treasury: operator account
- *   - Supply key: operator (enables future minting)
- *   - No max supply (infinite)
- *   - No freeze / wipe keys (keep it simple)
+ * Key design (all set to operator key):
+ *   - Admin key: update token config or burn keys later for immutability
+ *   - Supply key: mint new serials
+ *   - Metadata key: update per-NFT metadata URIs (HIP-657)
+ *   - Wipe key: revoke a badge (e.g. compromised account)
+ *   - Freeze key: freeze an individual account's token balance
+ *   - Pause key: emergency pause of the entire token
+ *   - No KYC key — no KYC required
+ *
+ * Supply: FINITE, max 500 (founding tier). IMMUTABLE after creation — cannot be raised or converted
+ * to infinite. A new token would be required for any future tier beyond 500.
  *
  * Usage:
  *   npx tsx --env-file=.env scripts/create-badge-token.ts
  *   HEDERA_NETWORK=mainnet npx tsx --env-file=.env scripts/create-badge-token.ts
+ *
+ * Optional: pass an IPFS CID to print the metadata URI reminder:
+ *   npx tsx --env-file=.env scripts/create-badge-token.ts QmXXX...
  */
 
 import {
@@ -27,38 +33,62 @@ import {
 const OPERATOR_ID = process.env.HEDERA_OPERATOR_ID;
 const OPERATOR_KEY = process.env.HEDERA_OPERATOR_KEY;
 const NETWORK = process.env.HEDERA_NETWORK ?? "testnet";
+const metadataCid = process.argv[2] ?? null;
 
 if (!OPERATOR_ID || !OPERATOR_KEY) {
   console.error("Missing HEDERA_OPERATOR_ID or HEDERA_OPERATOR_KEY");
   process.exit(1);
 }
 
+const hashscanBase =
+  NETWORK === "mainnet" ? "https://hashscan.io/mainnet" : "https://hashscan.io/testnet";
+
 async function main() {
-  console.log(`Creating badge NFT token on ${NETWORK}...\n`);
+  console.log(`Creating badge NFT token on ${NETWORK}...`);
+  if (metadataCid) console.log(`Metadata CID: ${metadataCid}`);
+  console.log();
 
   const client =
     NETWORK === "mainnet" ? Client.forMainnet() : Client.forTestnet();
   const operatorKey = PrivateKey.fromStringED25519(OPERATOR_KEY!);
-  client.setOperator(AccountId.fromString(OPERATOR_ID!), operatorKey);
+  const operatorId = AccountId.fromString(OPERATOR_ID!);
+  client.setOperator(operatorId, operatorKey);
 
   const tx = await new TokenCreateTransaction()
     .setTokenName("Signal Archive Supporter")
-    .setTokenSymbol("SABADGE")
+    .setTokenSymbol("SIGBADGE")
     .setTokenType(TokenType.NonFungibleUnique)
-    .setSupplyType(TokenSupplyType.Infinite)
-    .setTreasuryAccountId(AccountId.fromString(OPERATOR_ID!))
-    .setSupplyKey(operatorKey.publicKey)
+    .setSupplyType(TokenSupplyType.Finite)
+    .setMaxSupply(500)
+    .setTreasuryAccountId(operatorId)
+    // All keys set to operator — can be burned later via TokenUpdateTransaction
+    .setAdminKey(operatorKey.publicKey)    // update token config / burn keys
+    .setSupplyKey(operatorKey.publicKey)   // mint new serials
+    .setMetadataKey(operatorKey.publicKey) // update per-NFT metadata (HIP-657)
+    .setWipeKey(operatorKey.publicKey)     // revoke badge from an account
+    .setFreezeKey(operatorKey.publicKey)   // freeze an account's balance
+    .setPauseKey(operatorKey.publicKey)    // emergency pause entire token
+    // No KYC key
     .setTokenMemo("Signal Archive supporter badge — https://signalarchive.org")
     .execute(client);
 
   const receipt = await tx.getReceipt(client);
   const tokenId = receipt.tokenId?.toString();
 
-  console.log(`Badge token created: ${tokenId}`);
-  console.log(`\nAdd to Railway web env vars:`);
-  console.log(`  NEXT_PUBLIC_BADGE_TOKEN_ID=${tokenId}`);
-  console.log(`\nAdd to Railway worker env vars (if needed):`);
-  console.log(`  BADGE_TOKEN_ID=${tokenId}`);
+  console.log(`Token created: ${tokenId}`);
+  console.log(`HashScan:      ${hashscanBase}/token/${tokenId}`);
+
+  console.log(`\n--- Railway env vars ---`);
+  console.log(`NEXT_PUBLIC_BADGE_TOKEN_ID=${tokenId}`);
+
+  if (metadataCid) {
+    console.log(`\n--- execute/route.ts metadata line ---`);
+    console.log(`Buffer.from("ipfs://${metadataCid}")`);
+  } else {
+    console.log(`\nOnce art is pinned to IPFS, update execute/route.ts:`);
+    console.log(`  Buffer.from("ipfs://<your-metadata-cid>")`);
+    console.log(`Then re-run this script with the CID as an argument to print it.`);
+  }
 
   client.close();
   process.exit(0);

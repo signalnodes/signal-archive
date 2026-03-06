@@ -10,8 +10,8 @@ import { eq } from "drizzle-orm";
 import { getDb, supporters } from "@taa/db";
 
 // Minimum per-donation amounts to qualify as a supporter
-export const MIN_HBAR = 50;
-export const MIN_USDC = 5;
+export const MIN_HBAR = 100; // conservative floor: $10 at $0.10/HBAR
+export const MIN_USDC = 10;
 
 const TTL_SUPPORTER_MS = 60 * 60 * 1000; // 1 hour
 const TTL_VISITOR_MS = 60 * 1000;         // 60 seconds

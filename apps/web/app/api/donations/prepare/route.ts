@@ -7,7 +7,7 @@ import { createBatchEntry, type DonationTemplate } from "@/lib/batch-store";
 
 const DONATION_ACCOUNT_ID = process.env.NEXT_PUBLIC_DONATION_ACCOUNT_ID ?? "";
 const BADGE_TOKEN_ID = process.env.NEXT_PUBLIC_BADGE_TOKEN_ID ?? "";
-const THRESHOLD_USD = 5;
+const THRESHOLD_USD = 10;
 
 async function isTokenAssociated(
   accountId: string,
