@@ -1,24 +1,39 @@
 /**
  * HBAR/USD rate service.
  *
- * Fetches the current HBAR price from CoinGecko and caches it server-side
- * with a short TTL. Used during donation prepare to lock the rate.
- *
- * The locked rate is stored in the batch store and recorded in the DB
- * and HCS receipt so the USD-equivalent is verifiable on-chain.
+ * Primary source: CoinGecko (market rate, 1-min cache).
+ * Fallback: Hedera mirror node /network/exchangerate (no rate limits, always available).
+ * Last resort: stale cached value or hardcoded floor.
  */
+
+import { getMirrorBase } from "@/lib/hedera-server";
 
 const CACHE_TTL_MS = 60_000; // 1 minute
 const COINGECKO_URL =
   "https://api.coingecko.com/api/v3/simple/price?ids=hedera-hashgraph&vs_currencies=usd";
 
+// Conservative fallback if all sources fail (used only as last resort)
+const FALLBACK_RATE = 0.15;
+
 let cachedRate: number | null = null;
 let cacheExpiresAt = 0;
 
+/** Fetch HBAR/USD from the Hedera mirror node exchange rate endpoint. */
+async function getHbarRateFromMirrorNode(): Promise<number> {
+  const res = await fetch(`${getMirrorBase()}/api/v1/network/exchangerate`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`Mirror node exchange rate failed: ${res.status}`);
+  const data = await res.json();
+  const cents = data.current_rate?.cent_equivalent;
+  const hbars = data.current_rate?.hbar_equivalent;
+  if (!cents || !hbars || hbars === 0) throw new Error("Invalid mirror node exchange rate");
+  return cents / hbars / 100; // convert cents-per-hbar to USD-per-hbar
+}
+
 /**
  * Returns the current HBAR/USD rate.
- * Cached for 1 minute to avoid hammering CoinGecko on every prepare call.
- * Throws if the fetch fails and no cached value is available.
+ * Tries CoinGecko first, falls back to mirror node, then stale cache, then floor.
  */
 export async function getHbarUsdRate(): Promise<number> {
   const now = Date.now();
@@ -26,33 +41,43 @@ export async function getHbarUsdRate(): Promise<number> {
     return cachedRate;
   }
 
-  const res = await fetch(COINGECKO_URL, {
-    headers: { Accept: "application/json" },
-    // Next.js: skip cache so we always get fresh data server-side
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    if (cachedRate !== null) {
-      // Stale is better than nothing during a CoinGecko blip
-      return cachedRate;
+  // --- Try CoinGecko ---
+  try {
+    const res = await fetch(COINGECKO_URL, {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const data = (await res.json()) as {
+        "hedera-hashgraph"?: { usd?: number };
+      };
+      const rate = data["hedera-hashgraph"]?.usd;
+      if (rate && rate > 0) {
+        cachedRate = rate;
+        cacheExpiresAt = now + CACHE_TTL_MS;
+        return rate;
+      }
     }
-    throw new Error(`CoinGecko fetch failed: ${res.status}`);
+    // 429 or other error — fall through to mirror node
+  } catch {
+    // network error — fall through
   }
 
-  const data = (await res.json()) as {
-    "hedera-hashgraph"?: { usd?: number };
-  };
-  const rate = data["hedera-hashgraph"]?.usd;
-
-  if (!rate || rate <= 0) {
-    if (cachedRate !== null) return cachedRate;
-    throw new Error("CoinGecko returned invalid HBAR rate");
+  // --- Try Hedera mirror node exchange rate ---
+  try {
+    const rate = await getHbarRateFromMirrorNode();
+    if (rate > 0) {
+      cachedRate = rate;
+      cacheExpiresAt = now + CACHE_TTL_MS;
+      return rate;
+    }
+  } catch {
+    // fall through
   }
 
-  cachedRate = rate;
-  cacheExpiresAt = now + CACHE_TTL_MS;
-  return rate;
+  // --- Stale cache or hardcoded floor ---
+  if (cachedRate !== null) return cachedRate;
+  return FALLBACK_RATE;
 }
 
 /**
