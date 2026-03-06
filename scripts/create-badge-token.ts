@@ -5,6 +5,7 @@
  *   - Admin key: update token config or burn keys later for immutability
  *   - Supply key: mint new serials
  *   - Metadata key: update per-NFT metadata URIs (HIP-657)
+ *   - Fee schedule key: update royalty/custom fees
  *   - Wipe key: revoke a badge (e.g. compromised account)
  *   - Freeze key: freeze an individual account's token balance
  *   - Pause key: emergency pause of the entire token
@@ -62,12 +63,13 @@ async function main() {
     .setMaxSupply(500)
     .setTreasuryAccountId(operatorId)
     // All keys set to operator — can be burned later via TokenUpdateTransaction
-    .setAdminKey(operatorKey.publicKey)    // update token config / burn keys
-    .setSupplyKey(operatorKey.publicKey)   // mint new serials
-    .setMetadataKey(operatorKey.publicKey) // update per-NFT metadata (HIP-657)
-    .setWipeKey(operatorKey.publicKey)     // revoke badge from an account
-    .setFreezeKey(operatorKey.publicKey)   // freeze an account's balance
-    .setPauseKey(operatorKey.publicKey)    // emergency pause entire token
+    .setAdminKey(operatorKey.publicKey)       // update token config / burn keys
+    .setSupplyKey(operatorKey.publicKey)      // mint new serials
+    .setMetadataKey(operatorKey.publicKey)    // update per-NFT metadata (HIP-657)
+    .setFeeScheduleKey(operatorKey.publicKey) // update custom fees (royalties)
+    .setWipeKey(operatorKey.publicKey)        // revoke badge from an account
+    .setFreezeKey(operatorKey.publicKey)      // freeze an account's balance
+    .setPauseKey(operatorKey.publicKey)       // emergency pause entire token
     // No KYC key
     .setTokenMemo("Signal Archive supporter badge — https://signalarchive.org")
     .execute(client);
