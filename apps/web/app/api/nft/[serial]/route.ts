@@ -12,9 +12,10 @@ const BADGE_IMAGE_CID = process.env.BADGE_IMAGE_CID ?? "";
  */
 export async function GET(
   _request: Request,
-  { params }: { params: { serial: string } },
+  { params }: { params: Promise<{ serial: string }> },
 ) {
-  const serial = parseInt(params.serial, 10);
+  const { serial: serialParam } = await params;
+  const serial = parseInt(serialParam, 10);
   if (isNaN(serial) || serial < 1) {
     return NextResponse.json({ error: "Invalid serial" }, { status: 400 });
   }
