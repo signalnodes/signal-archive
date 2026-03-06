@@ -5,14 +5,15 @@
  *   - Admin key: update token config or burn keys later for immutability
  *   - Supply key: mint new serials
  *   - Metadata key: update per-NFT metadata URIs (HIP-657)
- *   - Fee schedule key: update royalty/custom fees
+ *   - Fee schedule key: update royalty/custom fees (MUST be set at creation)
  *   - Wipe key: revoke a badge (e.g. compromised account)
  *   - Freeze key: freeze an individual account's token balance
  *   - Pause key: emergency pause of the entire token
  *   - No KYC key — no KYC required
  *
- * Supply: FINITE, max 500 (founding tier). IMMUTABLE after creation — cannot be raised or converted
- * to infinite. A new token would be required for any future tier beyond 500.
+ * Supply: FINITE, max 500 (founding tier). IMMUTABLE after creation.
+ * Royalty: 10% on secondary sales + 2 HBAR fallback. Set at creation — fee schedule key
+ * CANNOT be added post-creation even with admin key.
  *
  * Usage:
  *   npx tsx --env-file=.env scripts/create-badge-token.ts
@@ -29,6 +30,9 @@ import {
   TokenCreateTransaction,
   TokenType,
   TokenSupplyType,
+  CustomRoyaltyFee,
+  CustomFixedFee,
+  Hbar,
 } from "@hashgraph/sdk";
 
 const OPERATOR_ID = process.env.HEDERA_OPERATOR_ID;
@@ -66,11 +70,23 @@ async function main() {
     .setAdminKey(operatorKey.publicKey)       // update token config / burn keys
     .setSupplyKey(operatorKey.publicKey)      // mint new serials
     .setMetadataKey(operatorKey.publicKey)    // update per-NFT metadata (HIP-657)
-    .setFeeScheduleKey(operatorKey.publicKey) // update custom fees (royalties)
+    .setFeeScheduleKey(operatorKey.publicKey) // update custom fees — MUST be set at creation
     .setWipeKey(operatorKey.publicKey)        // revoke badge from an account
     .setFreezeKey(operatorKey.publicKey)      // freeze an account's balance
     .setPauseKey(operatorKey.publicKey)       // emergency pause entire token
     // No KYC key
+    // 10% royalty on secondary sales; 2 HBAR fallback for wallet-to-wallet transfers
+    .setCustomFees([
+      new CustomRoyaltyFee()
+        .setNumerator(10)
+        .setDenominator(100)
+        .setFeeCollectorAccountId(operatorId)
+        .setFallbackFee(
+          new CustomFixedFee()
+            .setAmount(new Hbar(2).toTinybars())
+            .setFeeCollectorAccountId(operatorId),
+        ),
+    ])
     .setTokenMemo("Signal Archive supporter badge — https://signalarchive.org")
     .execute(client);
 
