@@ -75,6 +75,9 @@ export async function submitAtomicDonation(
       // return needsAssociation: true again and we surface the error then.
     }
 
+    // Wait for mirror node to index the association before retrying
+    await new Promise((r) => setTimeout(r, 4000));
+
     // Always retry prepare after attempting association
     onStateChange("preparing");
     const retryRes = await fetch("/api/donations/prepare", {
