@@ -171,14 +171,8 @@ export async function POST(request: Request) {
       mintTx = await new TokenMintTransaction()
         .setTokenId(BADGE_TOKEN_ID)
         .setMetadata([
-          Buffer.from(
-            JSON.stringify({
-              wallet: entry.accountId,
-              type: "supporter",
-              transfer_tx: confirmedTransferId,
-              minted_at: new Date().toISOString(),
-            }),
-          ),
+          // Max 100 bytes per Hedera NFT metadata limit — keep minimal
+          Buffer.from(JSON.stringify({ wallet: entry.accountId, type: "SABADGE" })),
         ])
         .setBatchKey(operatorPublicKey)
         .freezeWith(client)
