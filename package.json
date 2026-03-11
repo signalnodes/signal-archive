@@ -13,7 +13,8 @@
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
     "db:migrate:run": "npm run db:migrate:run --workspace=@taa/db",
-    "db:seed": "npm run db:seed --workspace=@taa/db"
+    "db:seed": "npm run db:seed --workspace=@taa/db",
+    "test": "turbo run test"
   },
   "packageManager": "npm@11.6.2",
   "devDependencies": {

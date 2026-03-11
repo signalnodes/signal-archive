@@ -76,13 +76,14 @@ Live at **signalarchive.org** — Twitter **@signalarchives**
 | Runtime | **Node.js (TypeScript)** | Hedera SDK is JS-native |
 | Database | **PostgreSQL 16** (Neon) | Full-text search, JSONB, managed |
 | ORM | **Drizzle ORM** | Type-safe, migrations |
-| Job Scheduling | **BullMQ + Redis** (Upstash) | Repeatable jobs for ingestion, deletion checks, HCS |
+| Job Scheduling | **BullMQ + Redis** (Railway-managed) | Repeatable jobs for ingestion, deletion checks, HCS |
 | Build | **tsup** (CJS bundle) | Worker bundled for Railway deployment |
 
 ### Frontend
 | Component | Technology | Notes |
 |-----------|-----------|-------|
-| Framework | **Next.js 14+ (App Router)** | SSR for SEO, API routes |
+| Framework | **Next.js 16 (App Router)** | SSR for SEO, API routes |
+| UI Runtime | **React 19** | |
 | Styling | **Tailwind CSS v4** | shadcn/ui components |
 | Search | **PostgreSQL full-text search** | Supports phrases, exclusions, `from:username` |
 
@@ -99,7 +100,7 @@ Live at **signalarchive.org** — Twitter **@signalarchives**
 | Web frontend | Railway | Hobby (~$5/mo) |
 | BullMQ worker | Railway | Hobby (~$5/mo) |
 | PostgreSQL | Neon | Free tier (pooled URL for web, direct for worker/migrations) |
-| Redis | Upstash | Free tier (TLS — `rediss://` URL) |
+| Redis | Railway (internal) | Railway-managed Redis (`redis.railway.internal:6379`) |
 | Blockchain | Hedera Mainnet | Pay-per-use |
 | CDN / DNS | Cloudflare | Free |
 
@@ -122,6 +123,8 @@ CREATE TABLE tracked_accounts (
     subcategory     TEXT,
     tracking_tier   TEXT DEFAULT 'standard',        -- 'priority' (30min), 'standard' (2hr), 'low' (6hr)
     is_active       BOOLEAN DEFAULT true,
+    donor_only      BOOLEAN DEFAULT false,          -- Excludes from public /accounts; shown in /research for supporters
+    avatar_url      TEXT,
     metadata        JSONB,                          -- Extensible: trackingMode, party, state, etc.
     created_at      TIMESTAMPTZ DEFAULT now(),
     updated_at      TIMESTAMPTZ DEFAULT now()
@@ -189,6 +192,24 @@ CREATE INDEX idx_deletions_severity ON deletion_events (severity_score DESC);
 **Additional tables:**
 
 ```sql
+-- Individual donation records (one row per confirmed transaction)
+CREATE TABLE donations (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    wallet_address      TEXT NOT NULL,
+    transaction_id      TEXT UNIQUE NOT NULL,   -- User's transfer tx (HashScan-normalized)
+    asset               TEXT NOT NULL,           -- 'hbar' | 'usdc'
+    amount              NUMERIC(18,8) NOT NULL,
+    amount_usd          NUMERIC(12,2),
+    status              TEXT DEFAULT 'pending',  -- 'pending' | 'confirmed'
+    confirmed_at        TIMESTAMPTZ,
+    hbar_rate           NUMERIC(12,8),           -- Rate locked at prepare time
+    template            TEXT,                    -- 'A' (HCS only) | 'B' (mint + HCS)
+    badge_serial        NUMERIC(18,0),           -- NFT serial minted (Template B only)
+    batch_transaction_id TEXT,                   -- Operator HIP-551 batch tx
+    prepared_at         TIMESTAMPTZ,
+    created_at          TIMESTAMPTZ DEFAULT now()
+);
+
 -- Supporters (donors who have met the minimum threshold)
 CREATE TABLE supporters (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -196,7 +217,11 @@ CREATE TABLE supporters (
     total_donated_usd NUMERIC(12,2) DEFAULT 0,
     first_donation_at TIMESTAMPTZ NOT NULL,
     last_donation_at  TIMESTAMPTZ NOT NULL,
-    created_at      TIMESTAMPTZ DEFAULT now()
+    created_at      TIMESTAMPTZ DEFAULT now(),
+    -- NFT badge fields (HIP-551 atomic batch)
+    badge_token_id  TEXT,                   -- Token ID of awarded badge (0.0.10314265)
+    badge_serial    NUMERIC(18,0),          -- NFT serial number
+    badge_awarded_at TIMESTAMPTZ
 );
 
 -- Donor-only tracked crypto wallets (Wallet Watch)
@@ -212,11 +237,8 @@ CREATE TABLE tracked_wallets (
 );
 ```
 
-**Schema additions:**
-- `tracked_accounts.donor_only BOOLEAN DEFAULT false` — excludes account from public /accounts grid; included in /research for supporters only
-
 **Supporter gating:**
-- Minimum donation to qualify: **50 HBAR** or **5 USDC** per transaction
+- Minimum donation to qualify: **100 HBAR** or **10 USDC** per transaction (≥ $10 USD at time of donation)
 - Supporter status checked via in-process cache (`apps/web/lib/supporter-cache.ts`) — 1hr TTL for supporters, 60s for non-supporters
 - API routes `/api/research/wallets` and `/api/research/accounts` verify supporter status server-side via wallet address query param
 
@@ -234,10 +256,9 @@ CREATE TABLE tracked_wallets (
 - Cost: ~$0.0002/request, shared 120 req/min rate limit
 - Retweets are skipped — we track what people say, not what they amplify
 
-**Legacy fallback: Stagehand browser automation**
-- Used only if `SOCIALDATA_API_KEY` is not set and `ANTHROPIC_API_KEY` is present
-- Navigates to `x.com/[username]`, scrolls 3x, extracts visible tweets via AI
-- Not recommended for production — slower, higher cost, more fragile
+**Worker behavior when `SOCIALDATA_API_KEY` is missing:**
+- `createProvider()` throws immediately — the worker will not start
+- There is no automatic fallback; SocialData is required for automated ingestion
 
 **Local backfill: `scripts/browser-ingest.ts`**
 - Playwright + persistent Chromium profile (real authenticated X account)
@@ -341,7 +362,38 @@ When a deletion is detected, submit a second HCS message:
 | 30-90 days | Every 12th cycle |
 | > 90 days | Skipped (cost control) |
 
-### 4. Web Portal (Next.js)
+### 4. Donation Flow (HIP-551 Atomic Batch)
+
+Donations are processed via a two-step server-assisted flow:
+
+**Step 1 — `POST /api/donations/prepare`**
+- Client sends `{ walletAddress, asset, amount }`
+- Server locks the HBAR/USD rate (CoinGecko → mirror node fallback → stale cache → floor)
+- Determines template:
+  - **Template A**: `amountUsd < $10` OR donor already has a badge → batch = `[hcsTx]`
+  - **Template B**: `amountUsd >= $10` AND no badge yet AND token is associated → batch = `[mintTx, hcsTx]`
+- Returns `{ batchId, template, amountUsd, needsAssociation }`; if `needsAssociation: true`, user must associate the badge token first
+
+**Step 2 — User submits transfer**
+- Client builds and submits the HBAR/USDC `TransferTransaction` via WalletConnect (`signAndExecuteTransaction`)
+
+**Step 3 — `POST /api/donations/execute`**
+- Client sends `{ batchId, transferTransactionId }`
+- Server verifies the transfer landed on-chain via mirror node (up to 6 retries × 3s)
+- Server builds and signs the operator-only `BatchTransaction` (HIP-551)
+- For Template B: mints badge NFT in the batch, then transfers it to the donor in a **separate** follow-up transaction (serials are not known at batch validation time — see critical design note below)
+- NFT metadata is updated via `TokenUpdateNftsTransaction` (HIP-657 dNFT) to point to `/api/nft/{serial}`
+- Records to `donations` table and upserts `supporters` table (with badge serial if Template B)
+- Warms the supporter cache
+
+**Critical design constraints:**
+- NFT transfer must be outside the batch: Hedera validates all inner txs before execution, so a transfer referencing a not-yet-minted serial fails validation
+- Never write `predictedSerial` to DB: only write `actualSerial` from the confirmed mint receipt, or `alreadyHasBadge()` will permanently block Template B for that wallet
+- Two-party batch signing does not work with WalletConnect: operator builds/signs the batch unilaterally after verifying the user's transfer
+
+**Badge NFT:** Token `0.0.10314265` (`SIGBADGE`) on mainnet — FINITE 500 max supply, 10% royalty + 2 HBAR fallback, all keys set to operator
+
+### 5. Web Portal (Next.js)
 
 **Routes:**
 
@@ -424,12 +476,17 @@ At Phase 1 volume (~40 accounts, ~30-minute intervals) actual cost is < $5/mo.
 
 | Queue | Purpose | Concurrency |
 |-------|---------|-------------|
-| `ingestion:priority` | Poll priority accounts every 30 min | 3 workers |
-| `ingestion:standard` | Poll standard accounts every 2 hours | 5 workers |
-| `ingestion:low` | Poll low-priority accounts every 6 hours | 2 workers |
-| `deletion-check` | Batch deletion verification every 15 min | 2 workers |
+| `ingestion` | Poll accounts for new tweets — all tiers in one queue, differentiated by BullMQ job priority | 5 workers |
+| `deletion-check` | Batch deletion verification every 15 min | 1 worker |
 | `hcs-submit` | Submit attestations to HCS | 1 worker (sequential) |
-| `media-archive` | Download and store tweet media | 3 workers (stub — not consuming) |
+| `media-archive` | Download and store tweet media | stub — not consuming |
+
+**Ingestion queue priorities** (lower number = higher priority, set via `TIER_PRIORITIES`):
+| Tier | BullMQ Priority | Interval |
+|------|----------------|----------|
+| priority | 1 | 30 min ± 30% jitter |
+| standard | 5 | 2 hr ± 30% jitter |
+| low | 10 | 6 hr ± 30% jitter |
 
 ---
 
@@ -465,8 +522,13 @@ signal-archive/
 │   │   └── src/schema/
 │   │       ├── tweets.ts
 │   │       ├── tracked-accounts.ts
+│   │       ├── tracked-wallets.ts
 │   │       ├── hcs-attestations.ts
-│   │       └── deletion-events.ts
+│   │       ├── deletion-events.ts
+│   │       ├── supporters.ts
+│   │       ├── donations.ts
+│   │       ├── tracking-requests.ts
+│   │       └── engagement-snapshots.ts  (abandoned — not populated)
 │   └── shared/                 # Types, canonical hash utils, constants
 ├── scripts/
 │   ├── seed-accounts.ts        # Bulk load tracked accounts
@@ -494,8 +556,8 @@ Railway
 
 External services:
 ├── Neon Postgres   (pooled URL for web, direct URL for worker + migrations)
-├── Upstash Redis   (rediss:// TLS — ioredis URL parsed manually, not via constructor opts)
-├── Hedera Mainnet  (HCS topic 0.0.10301350)
+├── Railway Redis   (internal: redis.railway.internal:6379)
+├── Hedera Mainnet  (HCS topics: 0.0.10301350 / 0.0.10307943 / 0.0.10310903)
 └── Cloudflare      (DNS, SSL proxy)
 ```
 
@@ -523,7 +585,7 @@ External services:
 | Risk | Mitigation |
 |------|-----------|
 | X bot detection | SocialData.tools API (server-to-server, no browser); browser-ingest uses real Chromium + anti-detection measures |
-| SocialData goes down | Stagehand browser automation fallback; browser-ingest for manual recovery |
+| SocialData goes down | browser-ingest for manual recovery; no automated fallback — worker requires `SOCIALDATA_API_KEY` |
 | Hedera network issues | BullMQ retry logic; content hashes stored locally regardless |
 | Legal challenges | Public interest defense; only track public statements from public figures |
 | Database growth | Age-based deletion check frequency; ARCHIVE_SINCE cutoff on ingestion |
@@ -538,7 +600,6 @@ External services:
 | Twitter/X bot auto-posting deletions | High — biggest growth lever |
 | Mass deletion event detection | High — newsworthy, automatic flagging |
 | Research: admin scripts to add wallets + donor-only accounts (with HCS attestation to `0.0.10307943`) | High — research topic exists but nothing writes to it yet |
-| Fix donation verify flow — donations not recording to DB in production | High — supporters table only populated manually for now |
 | Media archival to Cloudflare R2 | Medium — images die when tweets deleted |
 | Phase 2: Congress bulk onboarding (~535 accounts) | Medium |
 | Worker health monitoring (Better Stack) | Medium |

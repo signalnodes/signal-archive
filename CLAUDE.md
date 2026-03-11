@@ -1,90 +1,81 @@
-# Project Workflow (WSL + GitHub)
+# TAA — Signal Archive
 
-This repo follows a standard workflow used across my WSL projects. Prefer the canonical commands below and avoid improvising new scaffolding unless I ask.
+Public accountability platform: monitors, records, and cryptographically attests tweets from public figures. Proof anchored to Hedera Consensus Service (HCS). Live at **signalarchive.org**.
 
-## Folder conventions (context)
-- Projects root: ~/Projects
-- scratch/ = experiments + MVPs
-- oss/ = open-source candidates
-- clients/ = client work
-- scripts/ = helper scripts (not part of most repos)
-
-## Canonical creation flow
-New Node projects are created from the template at:
-- ~/Projects/scratch/_template-node
-
-Preferred generator:
-- new-node <project-name> [target-folder]
-
-Examples:
-- new-node my-project (defaults to ~/Projects/scratch)
-- new-node my-project ~/Projects/oss
-
-Expected result after generation:
-- git repo initialized on branch main
-- initial commit exists (init from template)
-- .env is ignored
-- .env.example exists and is committed
-
-## GitHub (preferred: gh CLI, private by default)
-Create the GitHub repo with:
-- gh repo create <repo-name> --private --source . --remote origin --push
-
-After that (normal workflow):
-- git add .
-- git commit -m "..."
-- git push
-
-## Sync workflow (when GitHub was edited elsewhere)
-Inside the repo:
-- git fetch origin
-- git pull --rebase
-
-## Security rules (non-negotiable)
-Never commit secrets.
-
-### Env handling
-- .env must NEVER be tracked.
-- .env.example SHOULD exist and can be committed.
-
-.gitignore policy:
-- ignore .env
-- ignore .env.*
-- allow !.env.example
-
-Quick checks:
-- git check-ignore -v .env || echo ".env is NOT ignored"
-- git ls-files | grep -E '^\.env' && echo "BAD: env tracked" || echo "OK: env not tracked"
-
----
-
-# TAA — Tweet Accountability Archive
-
-## Project context
-Read docs/ARCHITECTURE.md for full system design, database schema, tech stack, and implementation patterns.
-Read docs/SEED_ACCOUNTS.md for Phase 1 tracked accounts list.
+## Docs
+- `docs/ARCHITECTURE.md` — full system design, database schema, flows
+- `docs/SEED_ACCOUNTS.md` — Phase 1 tracked accounts (~40)
 
 ## Tech stack
-- **Frontend**: Next.js 14+ (App Router), Tailwind CSS
+- **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS v4, shadcn/ui
 - **Backend**: TypeScript, Node.js
-- **Database**: PostgreSQL 16 (Docker), Drizzle ORM
-- **Job queue**: BullMQ + Redis
-- **Blockchain**: Hedera Consensus Service (@hashgraph/sdk)
-- **Browser automation**: Stagehand or similar (TBD)
-
-## Local services
-- Postgres: `docker run --name taa-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=tweet_accountability -p 5432:5432 -d postgres:16`
-- Redis: `docker run --name taa-redis -p 6379:6379 -d redis:7-alpine`
-
-## Env vars (see .env.example)
-- DATABASE_URL=postgresql://postgres:postgres@localhost:5432/tweet_accountability
-- REDIS_URL=redis://localhost:6379
-- HEDERA_OPERATOR_ID=
-- HEDERA_OPERATOR_KEY=
-- HEDERA_NETWORK=testnet
+- **Database**: PostgreSQL 16 (Neon in prod, Docker locally), Drizzle ORM
+- **Job queue**: BullMQ + Redis (Railway-managed in prod, Docker locally)
+- **Blockchain**: Hedera Consensus Service + NFT badges (@hashgraph/sdk)
+- **Tweet ingestion**: SocialData.tools API (primary), browser CDP scraping (legacy fallback)
 
 ## Monorepo structure
-- apps/web — Next.js frontend + API routes
-- apps/worker — BullMQ job consumers (ingestion, deletion checks, HCS)
-- packages/db — Drizzle schema + migrations
-- packages/shared — Types, canonical hash utils, constants
+```
+apps/web        — Next.js frontend + API routes
+apps/worker     — BullMQ job consumers
+packages/db     — Drizzle schema + migrations
+packages/shared — Types, canonical hash, constants
+scripts/        — Operational scripts (seeding, HCS topics, badge mgmt)
+```
+
+## Database tables (packages/db/src/schema/)
+- `tracked_accounts` — accounts to monitor (+ `donor_only` flag)
+- `tweets` — archived tweet content + content_hash + is_deleted
+- `deletion_events` — when a tweet deletion was detected
+- `hcs_attestations` — Hedera transaction proofs for tweets
+- `engagement_snapshots` — periodic retweet/reply/like snapshots
+- `supporters` — donor wallets, cumulative USD, badge serial
+- `donations` — individual donation transactions (HBAR/USDC amounts, batch_id)
+- `tracking_requests` — community nomination requests
+- `tracked_wallets` — donor wallet whitelist for research section
+
+## API routes (apps/web/app/api/)
+- `POST /api/donations/prepare` — prepare atomic batch (HIP-551)
+- `POST /api/donations/execute` — verify transfer + run operator batch + record donation
+- `POST /api/donations/verify` — legacy verification
+- `GET  /api/supporters/[walletAddress]` — check donor status
+- `GET  /api/research/wallets` — donor-gated wallet watch data
+- `GET  /api/research/accounts` — donor-gated accounts list
+- `GET  /api/nft/[serial]` — badge NFT metadata
+- `GET  /api/accounts/[username]/statements` — tweet statements
+- `GET  /api/accounts/[username]/activity` — recent activity
+- `GET  /api/accounts/[username]/attestations` — HCS proofs
+- `GET  /api/accounts/[username]/deletions` — deletion events
+- `GET  /api/health` — health check
+
+## Worker jobs (apps/worker/src/jobs/)
+- `ingest.ts` — archive tweets from tracked accounts via SocialData API
+- `check-deletions.ts` — detect deleted tweets
+- `submit-hcs.ts` — post attestations to Hedera
+- `archive-media.ts` — media archival (stub, not yet implemented)
+
+## Dev commands
+```bash
+npm run dev                    # turbo dev (web + worker)
+npm run build                  # turbo build all
+npm run typecheck              # turbo typecheck all
+npm run db:migrate             # run Drizzle migrations
+npm run db:generate            # generate Drizzle migration from schema changes
+npx tsx --env-file=.env scripts/<name>.ts  # run any operational script
+```
+
+## Local services
+```bash
+docker run --name taa-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=tweet_accountability -p 5432:5432 -d postgres:16
+docker run --name taa-redis -p 6379:6379 -d redis:7-alpine
+```
+
+## Env vars (see .env.example)
+- DATABASE_URL, REDIS_URL, HEDERA_OPERATOR_ID, HEDERA_OPERATOR_KEY
+- HEDERA_NETWORK (testnet locally, mainnet in prod)
+- SOCIALDATA_API_KEY, NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
+
+## Quality gates
+- Always run `npm run typecheck` after code changes
+- Never skip pre-commit hooks
+- Test donation/HCS flows on testnet before mainnet
