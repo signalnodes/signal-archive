@@ -1,8 +1,8 @@
 // Cost note: single indexed query on account_id. Thin select — no heavy joins
 // beyond the required account username lookup (already in deletionEvents.accountId).
 import { NextResponse } from "next/server";
-import { desc, eq } from "drizzle-orm";
-import { getDb, deletionEvents, trackedAccounts } from "@taa/db";
+import { and, desc, eq, gte } from "drizzle-orm";
+import { getDb, deletionEvents, massDeletionEvents, trackedAccounts } from "@taa/db";
 
 const PAGE_SIZE = 25;
 
@@ -24,6 +24,26 @@ export async function GET(
     .limit(1);
 
   if (!account) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Mass deletion events in the last 30 days
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000);
+  const massEvents = await db
+    .select({
+      id: massDeletionEvents.id,
+      windowStart: massDeletionEvents.windowStart,
+      windowEnd: massDeletionEvents.windowEnd,
+      deletionCount: massDeletionEvents.deletionCount,
+      detectedAt: massDeletionEvents.detectedAt,
+    })
+    .from(massDeletionEvents)
+    .where(
+      and(
+        eq(massDeletionEvents.accountId, account.id),
+        gte(massDeletionEvents.detectedAt, thirtyDaysAgo)
+      )
+    )
+    .orderBy(desc(massDeletionEvents.detectedAt))
+    .limit(10);
 
   const rows = await db
     .select({
@@ -54,5 +74,5 @@ export async function GET(
     },
   }));
 
-  return NextResponse.json({ deletions, page, pageSize: PAGE_SIZE });
+  return NextResponse.json({ deletions, massDeletionEvents: massEvents, page, pageSize: PAGE_SIZE });
 }

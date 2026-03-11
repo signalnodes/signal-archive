@@ -3,6 +3,15 @@
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RecentDeletionsFeed, type DeletionRow } from "@/components/recent-deletions-feed";
+import { formatDistanceToNow } from "date-fns";
+
+interface MassDeletionEvent {
+  id: string;
+  windowStart: string;
+  windowEnd: string;
+  deletionCount: number;
+  detectedAt: string;
+}
 
 interface DeletionsTabProps {
   username: string;
@@ -10,6 +19,7 @@ interface DeletionsTabProps {
 
 export function DeletionsTab({ username }: DeletionsTabProps) {
   const [deletions, setDeletions] = useState<DeletionRow[]>([]);
+  const [massEvents, setMassEvents] = useState<MassDeletionEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [page, setPage] = useState(1);
@@ -23,7 +33,6 @@ export function DeletionsTab({ username }: DeletionsTabProps) {
         return r.json();
       })
       .then((data) => {
-        // Hydrate date strings
         const rows: DeletionRow[] = (data.deletions ?? []).map(
           (r: DeletionRow) => ({
             ...r,
@@ -35,6 +44,7 @@ export function DeletionsTab({ username }: DeletionsTabProps) {
         );
         setDeletions((prev) => (page === 1 ? rows : [...prev, ...rows]));
         setHasMore(rows.length === (data.pageSize ?? 25));
+        if (page === 1) setMassEvents(data.massDeletionEvents ?? []);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -54,6 +64,22 @@ export function DeletionsTab({ username }: DeletionsTabProps) {
 
   return (
     <div>
+      {massEvents.length > 0 && (
+        <div className="flex flex-col gap-2 mb-4">
+          {massEvents.map((e) => (
+            <div
+              key={e.id}
+              className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm"
+            >
+              <span className="font-semibold text-destructive">Mass deletion detected — </span>
+              <span className="text-foreground">
+                {e.deletionCount} tweets deleted within 1 hour,{" "}
+                {formatDistanceToNow(new Date(e.detectedAt), { addSuffix: true })}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
       <RecentDeletionsFeed deletions={deletions} />
       {hasMore && (
         <button

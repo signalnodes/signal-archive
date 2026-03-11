@@ -4,6 +4,7 @@ import { connection, hcsSubmitQueue } from "../queues";
 import { QUEUE_NAMES, DELETION_CHECK_THRESHOLDS } from "@taa/shared";
 import { getDb, tweets, deletionEvents, trackedAccounts } from "@taa/db";
 import type { DeletionChecker } from "../services/deletion-checker";
+import { detectMassDeletion } from "./detect-mass-deletions";
 
 const MAX_BATCH_SIZE = 25;
 
@@ -98,6 +99,7 @@ async function processDeletionCheck(
   const statusMap = await checker.checkTweets(tweetIds);
 
   let deletionCount = 0;
+  const affectedAccountIds = new Set<string>();
 
   for (const tweet of tweetsToCheck) {
     const stillExists = statusMap.get(tweet.tweetId);
@@ -105,6 +107,7 @@ async function processDeletionCheck(
 
     // Tweet was deleted
     deletionCount++;
+    if (tweet.accountId) affectedAccountIds.add(tweet.accountId);
     const detectedAt = new Date();
     const tweetAgeHours = Math.round(
       (detectedAt.getTime() - tweet.postedAt.getTime()) / 3_600_000
@@ -143,6 +146,13 @@ async function processDeletionCheck(
   console.log(
     `[deletion-check] Cycle ${cycleCount}: checked ${tweetsToCheck.length} tweets, ${deletionCount} deletions detected`
   );
+
+  // Check for mass deletion events on any account that had new deletions
+  if (affectedAccountIds.size > 0) {
+    await Promise.all(
+      [...affectedAccountIds].map((accountId) => detectMassDeletion(db, accountId))
+    );
+  }
 
   await job.updateData({ cycleCount: cycleCount + 1 });
 }

@@ -38,3 +38,11 @@ export const TIER_PRIORITIES: Record<TrackingTier, number> = {
 
 /** Jitter factor for anti-detection (±30%) */
 export const JITTER_FACTOR = 0.3;
+
+/** Mass deletion detection thresholds */
+export const MASS_DELETION = {
+  /** Minimum deletions within the window to flag as a mass deletion event */
+  THRESHOLD: 5,
+  /** Rolling window size in hours */
+  WINDOW_HOURS: 1,
+} as const;

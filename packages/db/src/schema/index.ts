@@ -7,3 +7,4 @@ export { trackingRequests } from "./tracking-requests";
 export { donations } from "./donations";
 export { supporters } from "./supporters";
 export { trackedWallets } from "./tracked-wallets";
+export { massDeletionEvents } from "./mass-deletion-events";
