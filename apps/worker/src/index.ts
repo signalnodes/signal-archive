@@ -5,6 +5,7 @@ import { createMediaArchiveWorker } from "./jobs/archive-media";
 import { createProvider } from "./services/scraper";
 import { createDeletionChecker } from "./services/deletion-checker";
 import { registerScheduledJobs } from "./scheduler";
+import { startHeartbeat, stopHeartbeat } from "./heartbeat";
 
 console.log("[worker] Starting TAA workers...");
 
@@ -27,7 +28,10 @@ for (const worker of workers) {
 }
 
 registerScheduledJobs()
-  .then(() => console.log("[worker] Scheduler ready"))
+  .then(() => {
+    console.log("[worker] Scheduler ready");
+    startHeartbeat();
+  })
   .catch((err) => {
     console.error("[worker] Scheduler failed, shutting down:", err);
     process.exit(1);
@@ -35,6 +39,7 @@ registerScheduledJobs()
 
 async function shutdown() {
   console.log("[worker] Shutting down gracefully...");
+  stopHeartbeat();
   await Promise.all(workers.map((w) => w.close()));
   process.exit(0);
 }
