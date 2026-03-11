@@ -6,6 +6,9 @@ import { getDb, tweets, deletionEvents, trackedAccounts } from "@taa/db";
 import type { DeletionChecker } from "../services/deletion-checker";
 import { detectMassDeletion } from "./detect-mass-deletions";
 
+const WORKER_LAST_SEEN_KEY = "worker:last-seen";
+const WORKER_LAST_SEEN_TTL = 1800; // 30 min — expires if worker dies
+
 const MAX_BATCH_SIZE = 25;
 
 export interface CheckDeletionsJobData {
@@ -153,6 +156,9 @@ async function processDeletionCheck(
       [...affectedAccountIds].map((accountId) => detectMassDeletion(db, accountId))
     );
   }
+
+  // Record liveness — health endpoint reads this to detect a silent worker
+  await connection.set(WORKER_LAST_SEEN_KEY, Date.now().toString(), "EX", WORKER_LAST_SEEN_TTL);
 
   await job.updateData({ cycleCount: cycleCount + 1 });
 }
