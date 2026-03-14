@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CategoryBadge } from "@/components/category-badge";
 import { AccountAvatar } from "@/components/account-avatar";
+import { SeverityBadge } from "@/components/severity-badge";
 import { Timestamp } from "@/components/timestamp";
 import { formatTweetAge } from "@/lib/format";
 
@@ -92,10 +93,8 @@ function DeletionCard({ row }: { row: DeletionRow }) {
               )}
             </div>
           </div>
-          {deletion.severityScore != null && deletion.severityScore >= 7 && (
-            <div className="text-xs font-mono text-destructive border border-destructive/30 rounded px-2 py-1 shrink-0">
-              {deletion.severityScore}/10
-            </div>
+          {deletion.severityScore != null && (
+            <SeverityBadge score={deletion.severityScore} />
           )}
         </div>
       </CardContent>

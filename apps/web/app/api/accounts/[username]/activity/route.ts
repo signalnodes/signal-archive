@@ -31,6 +31,7 @@ export async function GET(
 
   if (!account) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+
   const meta = account.metadata as Record<string, unknown> | null;
   const trackingMode = (meta?.trackingMode as string) ?? "FULL_ARCHIVE";
   const isFullArchive = trackingMode === "FULL_ARCHIVE";
@@ -89,5 +90,7 @@ export async function GET(
     20
   );
 
-  return NextResponse.json({ events, trackingMode });
+  return NextResponse.json({ events, trackingMode }, {
+    headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" },
+  });
 }

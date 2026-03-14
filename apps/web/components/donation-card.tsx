@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { ExternalLink, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import {
   Card,
@@ -102,7 +103,9 @@ export function DonationCard() {
       );
 
       if (!result.success) {
-        setErrorMsg(result.error ?? "Transaction failed");
+        const msg = result.error ?? "Transaction failed";
+        setErrorMsg(msg);
+        toast.error(msg);
         setFlowState("error");
         return;
       }
@@ -111,7 +114,9 @@ export function DonationCard() {
       await refreshSupporterStatus();
       setFlowState("success");
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Unknown error");
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setErrorMsg(msg);
+      toast.error(msg);
       setFlowState("error");
     }
   }

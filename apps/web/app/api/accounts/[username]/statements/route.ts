@@ -2,7 +2,8 @@
 // only fields required by TweetCard. No engagement, no raw_json.
 import { NextResponse } from "next/server";
 import { desc, eq } from "drizzle-orm";
-import { getDb, tweets, trackedAccounts } from "@taa/db";
+import { getDb, tweets } from "@taa/db";
+import { getAccountByUsername, parsePage } from "@/lib/api-helpers";
 
 const PAGE_SIZE = 25;
 
@@ -12,16 +13,11 @@ export async function GET(
 ) {
   const { username } = await params;
   const url = new URL(_req.url);
-  const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1", 10) || 1);
+  const page = parsePage(url.searchParams.get("page"));
   const offset = (page - 1) * PAGE_SIZE;
 
   const db = getDb();
-
-  const [account] = await db
-    .select({ id: trackedAccounts.id })
-    .from(trackedAccounts)
-    .where(eq(trackedAccounts.username, username))
-    .limit(1);
+  const account = await getAccountByUsername(db, username);
 
   if (!account) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -42,5 +38,7 @@ export async function GET(
     .limit(PAGE_SIZE)
     .offset(offset);
 
-  return NextResponse.json({ tweets: rows, page, pageSize: PAGE_SIZE });
+  return NextResponse.json({ tweets: rows, page, pageSize: PAGE_SIZE }, {
+    headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" },
+  });
 }

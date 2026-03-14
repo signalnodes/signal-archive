@@ -3,6 +3,7 @@
 import { NextResponse } from "next/server";
 import { and, desc, eq, gte } from "drizzle-orm";
 import { getDb, deletionEvents, massDeletionEvents, trackedAccounts } from "@taa/db";
+import { parsePage } from "@/lib/api-helpers";
 
 const PAGE_SIZE = 25;
 
@@ -12,7 +13,7 @@ export async function GET(
 ) {
   const { username } = await params;
   const url = new URL(_req.url);
-  const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1", 10) || 1);
+  const page = parsePage(url.searchParams.get("page"));
   const offset = (page - 1) * PAGE_SIZE;
 
   const db = getDb();
@@ -74,5 +75,7 @@ export async function GET(
     },
   }));
 
-  return NextResponse.json({ deletions, massDeletionEvents: massEvents, page, pageSize: PAGE_SIZE });
+  return NextResponse.json({ deletions, massDeletionEvents: massEvents, page, pageSize: PAGE_SIZE }, {
+    headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" },
+  });
 }

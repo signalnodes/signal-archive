@@ -30,8 +30,11 @@ export function ActivityFeed({ username }: ActivityFeedProps) {
   const [events, setEvents] = useState<EventUI[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
+    setLoading(true);
+    setError(false);
     fetch(`/api/accounts/${encodeURIComponent(username)}/activity`)
       .then((r) => {
         if (!r.ok) throw new Error("Failed");
@@ -40,7 +43,7 @@ export function ActivityFeed({ username }: ActivityFeedProps) {
       .then((data) => setEvents(data.events ?? []))
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [username]);
+  }, [username, retryCount]);
 
   if (loading) {
     return (
@@ -54,9 +57,17 @@ export function ActivityFeed({ username }: ActivityFeedProps) {
 
   if (error) {
     return (
-      <p className="text-sm text-muted-foreground py-8 text-center">
-        Failed to load activity.
-      </p>
+      <div className="flex flex-col items-center gap-3 py-8">
+        <p className="text-sm text-muted-foreground text-center">
+          Failed to load activity.
+        </p>
+        <button
+          onClick={() => setRetryCount((c) => c + 1)}
+          className="text-sm px-3 py-1.5 rounded border hover:bg-muted transition-colors"
+        >
+          Retry
+        </button>
+      </div>
     );
   }
 

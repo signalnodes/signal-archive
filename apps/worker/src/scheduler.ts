@@ -4,6 +4,7 @@ import {
   TIER_INTERVALS,
   TIER_PRIORITIES,
   QUEUE_NAMES,
+  DELETION_CHECK_INTERVAL_MS,
   applyJitter,
   type TrackingTier,
 } from "@taa/shared";
@@ -68,7 +69,7 @@ export async function registerScheduledJobs() {
   const deletionJobData: CheckDeletionsJobData = { cycleCount: 0 };
 
   await deletionCheckQueue.add(deletionJobId, deletionJobData, {
-    repeat: { every: 15 * 60 * 1000 },
+    repeat: { every: DELETION_CHECK_INTERVAL_MS },
     jobId: deletionJobId,
   });
 

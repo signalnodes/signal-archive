@@ -19,6 +19,10 @@ export const workerEnvSchema = baseSchema.extend({
     .default("false")
     .transform((v) => v === "true"),
   ANTHROPIC_API_KEY: z.string().optional(),
+  AI_SCORING_ENABLED: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((v) => v === "true"),
 });
 
 export const webEnvSchema = baseSchema.extend({

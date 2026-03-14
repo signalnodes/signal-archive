@@ -2,7 +2,8 @@
 // Limited to PAGE_SIZE — does not re-fetch verification data.
 import { NextResponse } from "next/server";
 import { desc, eq } from "drizzle-orm";
-import { getDb, hcsAttestations, tweets, trackedAccounts } from "@taa/db";
+import { getDb, hcsAttestations, tweets } from "@taa/db";
+import { getAccountByUsername, parsePage } from "@/lib/api-helpers";
 
 const PAGE_SIZE = 25;
 
@@ -12,16 +13,11 @@ export async function GET(
 ) {
   const { username } = await params;
   const url = new URL(_req.url);
-  const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1", 10) || 1);
+  const page = parsePage(url.searchParams.get("page"));
   const offset = (page - 1) * PAGE_SIZE;
 
   const db = getDb();
-
-  const [account] = await db
-    .select({ id: trackedAccounts.id })
-    .from(trackedAccounts)
-    .where(eq(trackedAccounts.username, username))
-    .limit(1);
+  const account = await getAccountByUsername(db, username);
 
   if (!account) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -42,5 +38,7 @@ export async function GET(
     .limit(PAGE_SIZE)
     .offset(offset);
 
-  return NextResponse.json({ attestations: rows, page, pageSize: PAGE_SIZE });
+  return NextResponse.json({ attestations: rows, page, pageSize: PAGE_SIZE }, {
+    headers: { "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400" },
+  });
 }

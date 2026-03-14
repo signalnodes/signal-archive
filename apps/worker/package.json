@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
     "@hashgraph/sdk": "^2.80.0",
     "@taa/db": "*",
     "@taa/shared": "*",

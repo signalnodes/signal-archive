@@ -9,6 +9,10 @@ const MAX_REQUESTS = 60; // per IP per window
 
 // ip → [timestamp, ...]
 const counters = new Map<string, number[]>();
+// ip → first-seen timestamp (for pruning stale entries)
+const firstSeen = new Map<string, number>();
+
+const MAX_MAP_SIZE = 10_000;
 
 // Prune entries older than the window
 function getCount(ip: string, now: number): number {
@@ -20,8 +24,21 @@ function getCount(ip: string, now: number): number {
 
 function record(ip: string, now: number) {
   const hits = counters.get(ip) ?? [];
+  if (hits.length === 0) firstSeen.set(ip, now);
   hits.push(now);
   counters.set(ip, hits);
+}
+
+function pruneStale(now: number) {
+  if (counters.size <= MAX_MAP_SIZE) return;
+  // Remove IPs whose oldest request is beyond the window
+  for (const [ip, first] of firstSeen) {
+    if (now - first >= WINDOW_MS) {
+      counters.delete(ip);
+      firstSeen.delete(ip);
+    }
+    if (counters.size <= MAX_MAP_SIZE) break;
+  }
 }
 
 export function middleware(req: NextRequest) {
@@ -38,6 +55,7 @@ export function middleware(req: NextRequest) {
     "unknown";
 
   const now = Date.now();
+  pruneStale(now);
   const count = getCount(ip, now);
 
   if (count >= MAX_REQUESTS) {

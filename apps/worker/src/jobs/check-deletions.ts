@@ -1,15 +1,16 @@
 import { Worker, Job } from "bullmq";
 import { eq, and, lte, gt, sql } from "drizzle-orm";
 import { connection, hcsSubmitQueue } from "../queues";
-import { QUEUE_NAMES, DELETION_CHECK_THRESHOLDS } from "@taa/shared";
+import { QUEUE_NAMES, DELETION_CHECK_THRESHOLDS, DELETION_CHECK_BATCH_SIZE } from "@taa/shared";
+import type { ScoringContext } from "@taa/shared";
 import { getDb, tweets, deletionEvents, trackedAccounts } from "@taa/db";
 import type { DeletionChecker } from "../services/deletion-checker";
 import { detectMassDeletion } from "./detect-mass-deletions";
+import { scoreDeletion } from "../services/ai-scorer";
 
 const WORKER_LAST_SEEN_KEY = "worker:last-seen";
-const WORKER_LAST_SEEN_TTL = 1800; // 30 min — expires if worker dies
+const WORKER_LAST_SEEN_TTL = 1800; // 30 min, expires if worker dies
 
-const MAX_BATCH_SIZE = 25;
 
 export interface CheckDeletionsJobData {
   cycleCount: number;
@@ -73,22 +74,28 @@ async function processDeletionCheck(
   }
 
   // Query tweets matching any age bracket, oldest first, limited to batch size
+  // Include account context for AI severity scoring
   const tweetsToCheck = await db
     .select({
       id: tweets.id,
       tweetId: tweets.tweetId,
       accountId: tweets.accountId,
       content: tweets.content,
+      tweetType: tweets.tweetType,
+      mediaUrls: tweets.mediaUrls,
       postedAt: tweets.postedAt,
       contentHash: tweets.contentHash,
       authorId: tweets.authorId,
       username: trackedAccounts.username,
+      displayName: trackedAccounts.displayName,
+      category: trackedAccounts.category,
+      subcategory: trackedAccounts.subcategory,
     })
     .from(tweets)
     .leftJoin(trackedAccounts, eq(tweets.accountId, trackedAccounts.id))
     .where(sql`(${sql.join(conditions, sql` OR `)})`)
     .orderBy(tweets.postedAt)
-    .limit(MAX_BATCH_SIZE);
+    .limit(DELETION_CHECK_BATCH_SIZE);
 
   if (tweetsToCheck.length === 0) {
     console.log(
@@ -117,6 +124,25 @@ async function processDeletionCheck(
     );
     const contentPreview = tweet.content.slice(0, 280);
 
+    // --- AI severity scoring ---
+    const scoringCtx: ScoringContext = {
+      username: tweet.username ?? "unknown",
+      displayName: tweet.displayName ?? null,
+      category: tweet.category ?? "unknown",
+      subcategory: tweet.subcategory ?? null,
+      content: tweet.content,
+      postedAt: tweet.postedAt.toISOString(),
+      tweetAgeHours,
+      tweetType: tweet.tweetType ?? "tweet",
+      hasMedia: (tweet.mediaUrls?.length ?? 0) > 0,
+    };
+
+    const scoring = await scoreDeletion(scoringCtx);
+
+    console.log(
+      `[deletion-check] Scored @${scoringCtx.username} deletion: ${scoring.severity}/10 (${scoring.model}, ${scoring.latencyMs}ms)`
+    );
+
     await db
       .update(tweets)
       .set({
@@ -133,7 +159,18 @@ async function processDeletionCheck(
       detectedAt,
       tweetAgeHours: String(tweetAgeHours),
       contentPreview,
-    });
+      severityScore: scoring.severity,
+      categoryTags: scoring.categoryTags,
+      metadata: {
+        ai: {
+          reasoning: scoring.reasoning,
+          confidence: scoring.confidence,
+          model: scoring.model,
+          scoredAt: scoring.scoredAt,
+          latencyMs: scoring.latencyMs,
+        },
+      },
+    }).onConflictDoNothing();
 
     await hcsSubmitQueue.add(`hcs:deletion:${tweet.tweetId}`, {
       dbId: tweet.id,
@@ -143,6 +180,9 @@ async function processDeletionCheck(
       type: "deletion_detected" as const,
       username: tweet.username ?? "unknown",
       postedAt: tweet.postedAt.toISOString(),
+      severity: scoring.severity,
+      severityModel: scoring.model,
+      severityConfidence: scoring.confidence,
     });
   }
 
@@ -157,7 +197,7 @@ async function processDeletionCheck(
     );
   }
 
-  // Record liveness — health endpoint reads this to detect a silent worker
+  // Record liveness; health endpoint reads this to detect a silent worker
   await connection.set(WORKER_LAST_SEEN_KEY, Date.now().toString(), "EX", WORKER_LAST_SEEN_TTL);
 
   await job.updateData({ cycleCount: cycleCount + 1 });

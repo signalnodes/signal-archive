@@ -6,7 +6,7 @@ let timer: ReturnType<typeof setInterval> | null = null;
 async function ping() {
   if (!HEARTBEAT_URL) return;
   try {
-    await fetch(HEARTBEAT_URL);
+    await fetch(HEARTBEAT_URL, { signal: AbortSignal.timeout(5000) });
   } catch (err) {
     console.error("[heartbeat] ping failed:", (err as Error).message);
   }

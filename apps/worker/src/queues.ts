@@ -19,6 +19,13 @@ function parseRedisConnection(url: string) {
 
 export const connection = new Redis(parseRedisConnection(redisUrl));
 
+connection.on("error", (err) => {
+  console.error("[redis] connection error:", err.message);
+});
+connection.on("reconnecting", () => {
+  console.warn("[redis] reconnecting...");
+});
+
 export const ingestionQueue = new Queue(QUEUE_NAMES.INGESTION, { connection });
 export const deletionCheckQueue = new Queue(QUEUE_NAMES.DELETION_CHECK, { connection });
 export const hcsSubmitQueue = new Queue(QUEUE_NAMES.HCS_SUBMIT, { connection });

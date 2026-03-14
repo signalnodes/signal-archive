@@ -18,6 +18,10 @@ export interface SubmitHcsJobData {
   type: "tweet_attestation" | "deletion_detected";
   username: string;
   postedAt: string; // ISO string
+  // AI severity scoring (included for deletion_detected only)
+  severity?: number;
+  severityModel?: string;
+  severityConfidence?: number;
 }
 
 function getHederaClient(): Client {
@@ -62,7 +66,9 @@ async function processHcsSubmission(job: Job<SubmitHcsJobData>) {
   const topicId = getTopicId();
   const client = getHederaClient();
 
-  const payload = {
+  const { severity, severityModel, severityConfidence } = job.data;
+
+  const payload: Record<string, unknown> = {
     type,
     tweetId,
     authorId,
@@ -72,6 +78,13 @@ async function processHcsSubmission(job: Job<SubmitHcsJobData>) {
     topicId,
     submittedAt: new Date().toISOString(),
   };
+
+  // Include AI severity data in on-chain attestation for deletion events
+  if (type === "deletion_detected" && severity != null) {
+    payload.severity = severity;
+    payload.severityModel = severityModel ?? null;
+    payload.severityConfidence = severityConfidence ?? null;
+  }
 
   try {
     console.log(`[submit-hcs] Submitting ${type} for tweet ${tweetId}`);

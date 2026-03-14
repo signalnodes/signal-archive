@@ -6,8 +6,15 @@ import { createProvider } from "./services/scraper";
 import { createDeletionChecker } from "./services/deletion-checker";
 import { registerScheduledJobs } from "./scheduler";
 import { startHeartbeat, stopHeartbeat } from "./heartbeat";
+import { workerEnvSchema } from "@taa/shared";
 
 console.log("[worker] Starting TAA workers...");
+
+const envResult = workerEnvSchema.safeParse(process.env);
+if (!envResult.success) {
+  console.error("[worker] Missing required env vars:", envResult.error.flatten().fieldErrors);
+  process.exit(1);
+}
 
 const provider = createProvider();
 const checker = createDeletionChecker();

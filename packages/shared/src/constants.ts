@@ -39,6 +39,15 @@ export const TIER_PRIORITIES: Record<TrackingTier, number> = {
 /** Jitter factor for anti-detection (±30%) */
 export const JITTER_FACTOR = 0.3;
 
+/** Deletion check job interval (milliseconds) */
+export const DELETION_CHECK_INTERVAL_MS = 15 * 60 * 1000;
+
+/** Max tweets to check per deletion-check cycle */
+export const DELETION_CHECK_BATCH_SIZE = 25;
+
+/** SocialData.tools API rate limit (requests per minute) */
+export const SOCIALDATA_RATE_LIMIT = 120;
+
 /** Mass deletion detection thresholds */
 export const MASS_DELETION = {
   /** Minimum deletions within the window to flag as a mass deletion event */

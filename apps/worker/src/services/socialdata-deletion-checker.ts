@@ -23,6 +23,7 @@ export function createSocialDataDeletionChecker(): DeletionChecker {
           const response = await withBackoff(() =>
             fetch(url, {
               headers: { Authorization: `Bearer ${apiKey}` },
+              signal: AbortSignal.timeout(5000),
             }),
           );
 

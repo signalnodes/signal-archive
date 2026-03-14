@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { TweetProvider, ScrapedTweet } from "./scraper";
 import type { TweetType } from "@taa/shared";
+import { seededRandom } from "@taa/shared";
 
 const MOCK_CONTENT_TEMPLATES = [
   "Great progress on our agenda today! The American people deserve results.",
@@ -24,18 +25,6 @@ function deterministicAuthorId(username: string): string {
   return createHash("md5").update(username).digest("hex").slice(0, 16);
 }
 
-function seededRandom(seed: string): () => number {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) {
-    h = (Math.imul(31, h) + seed.charCodeAt(i)) | 0;
-  }
-  return () => {
-    h = (h + 0x6d2b79f5) | 0;
-    let t = Math.imul(h ^ (h >>> 15), 1 | h);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 export function createMockProvider(): TweetProvider {
   return {

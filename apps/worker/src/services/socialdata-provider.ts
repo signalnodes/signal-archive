@@ -61,6 +61,7 @@ export function createSocialDataProvider(): TweetProvider {
       const response = await withBackoff(() =>
         fetch(url, {
           headers: { Authorization: `Bearer ${apiKey}` },
+          signal: AbortSignal.timeout(10_000),
         }),
       );
 
