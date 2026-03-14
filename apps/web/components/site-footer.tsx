@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Twitter } from "lucide-react";
 
 export function SiteFooter() {
   return (
@@ -39,15 +38,6 @@ export function SiteFooter() {
             title="RSS feed"
           >
             RSS
-          </a>
-          <a
-            href="https://twitter.com/signalarchives"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-foreground transition-colors"
-            title="@signalarchives on X"
-          >
-            <Twitter className="h-4 w-4" />
           </a>
         </div>
       </div>

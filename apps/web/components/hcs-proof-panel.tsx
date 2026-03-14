@@ -26,7 +26,8 @@ export function HcsProofPanel({ attestation, contentHash, tweetId }: HcsProofPan
         <h2 className="font-semibold mb-2">Hedera Attestation</h2>
         <p className="text-sm text-muted-foreground">
           HCS attestation pending. This tweet has been captured and hashed but the
-          blockchain submission has not yet been confirmed.
+          blockchain submission has not yet been confirmed. Attestations are typically
+          confirmed within a few minutes of capture.
         </p>
         <div className="flex items-start gap-2 mt-3">
           <p className="text-xs text-muted-foreground font-mono break-all">
