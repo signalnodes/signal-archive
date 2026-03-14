@@ -19,7 +19,11 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@taa/db": ["../../packages/db/src/index.ts"],
+      "@taa/db/*": ["../../packages/db/src/*"],
+      "@taa/shared": ["../../packages/shared/src/index.ts"],
+      "@taa/shared/*": ["../../packages/shared/src/*"]
     }
   },
   "include": [

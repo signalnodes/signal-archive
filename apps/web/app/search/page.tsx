@@ -44,7 +44,6 @@ export default async function SearchPage({ searchParams }: Props) {
       tweetType: string;
       isDeleted: boolean;
       postedAt: Date;
-      engagement: unknown;
       mediaUrls: string[] | null;
     };
     username: string | null;
@@ -70,7 +69,6 @@ export default async function SearchPage({ searchParams }: Props) {
           tweetType: tweets.tweetType,
           isDeleted: tweets.isDeleted,
           postedAt: tweets.postedAt,
-          engagement: tweets.engagement,
           mediaUrls: tweets.mediaUrls,
         },
         username: trackedAccounts.username,

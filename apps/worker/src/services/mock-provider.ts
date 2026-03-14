@@ -41,7 +41,7 @@ export function createMockProvider(): TweetProvider {
   return {
     async fetchTweets(username: string, twitterId: string) {
       const now = Date.now();
-      const seed = `${username}-${now}`;
+      const seed = `${username}-mock`; // stable seed — same templates per username across runs
       const rng = seededRandom(seed);
 
       const count = 2 + Math.floor(rng() * 6); // 2-7 tweets

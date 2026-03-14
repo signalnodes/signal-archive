@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getDb, supporters } from "@taa/db";
 import { eq } from "drizzle-orm";
 import { getMirrorBase } from "@/lib/hedera-server";
 import { getHbarUsdRate, hbarToUsd } from "@/lib/hbar-rate";
 import { createBatchEntry, type DonationTemplate } from "@/lib/batch-store";
+
+const prepareSchema = z.object({
+  walletAddress: z.string().min(1),
+  asset: z.enum(["hbar", "usdc"]),
+  amount: z.number().positive(),
+});
 
 const DONATION_ACCOUNT_ID = process.env.NEXT_PUBLIC_DONATION_ACCOUNT_ID ?? "";
 const BADGE_TOKEN_ID = process.env.NEXT_PUBLIC_BADGE_TOKEN_ID ?? "";
@@ -42,23 +49,14 @@ async function alreadyHasBadge(walletAddress: string): Promise<boolean> {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { walletAddress, asset, amount } = body;
-
-    if (!walletAddress || !asset || !amount) {
+    const parsed = prepareSchema.safeParse(await request.json());
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: parsed.error.issues[0]?.message ?? "Invalid request" },
         { status: 400 },
       );
     }
-
-    if (asset !== "hbar" && asset !== "usdc") {
-      return NextResponse.json({ error: "Invalid asset" }, { status: 400 });
-    }
-
-    if (typeof amount !== "number" || amount <= 0) {
-      return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
-    }
+    const { walletAddress, asset, amount } = parsed.data;
 
     if (!DONATION_ACCOUNT_ID) {
       return NextResponse.json(

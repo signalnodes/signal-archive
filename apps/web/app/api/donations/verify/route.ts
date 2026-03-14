@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getDb, donations, supporters } from "@taa/db";
 import { eq, sql } from "drizzle-orm";
 import { verifyDonationTransaction } from "@/lib/wallet/hedera-mirror";
 import { setSupporter, MIN_HBAR, MIN_USDC } from "@/lib/supporter-cache";
+
+const verifySchema = z.object({
+  transactionId: z.string().min(1),
+  walletAddress: z.string().min(1),
+  asset: z.enum(["hbar", "usdc"]),
+});
 
 const DONATION_ACCOUNT_ID = process.env.NEXT_PUBLIC_DONATION_ACCOUNT_ID ?? "";
 const USDC_TOKEN_ID = process.env.NEXT_PUBLIC_USDC_TOKEN_ID ?? "0.0.456858";
@@ -13,19 +20,14 @@ function meetsThreshold(asset: "hbar" | "usdc", amount: number): boolean {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { transactionId, walletAddress, asset } = body;
-
-    if (!transactionId || !walletAddress || !asset) {
+    const parsed = verifySchema.safeParse(await request.json());
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: parsed.error.issues[0]?.message ?? "Invalid request" },
         { status: 400 },
       );
     }
-
-    if (asset !== "hbar" && asset !== "usdc") {
-      return NextResponse.json({ error: "Invalid asset" }, { status: 400 });
-    }
+    const { transactionId, walletAddress, asset } = parsed.data;
 
     const db = getDb();
 

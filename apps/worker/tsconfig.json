@@ -2,9 +2,16 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": "../..",
     "module": "ESNext",
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@taa/db": ["../../packages/db/src/index.ts"],
+      "@taa/db/*": ["../../packages/db/src/*"],
+      "@taa/shared": ["../../packages/shared/src/index.ts"],
+      "@taa/shared/*": ["../../packages/shared/src/*"]
+    }
   },
   "include": ["src"]
 }

@@ -10,7 +10,7 @@ import {
 export const trackedAccounts = pgTable("tracked_accounts", {
   id: uuid("id").primaryKey().defaultRandom(),
   twitterId: text("twitter_id").unique().notNull(),
-  username: text("username").notNull(),
+  username: text("username").unique().notNull(),
   displayName: text("display_name"),
   category: text("category").notNull(),
   subcategory: text("subcategory"),

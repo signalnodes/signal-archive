@@ -4,7 +4,6 @@ import {
   TIER_INTERVALS,
   TIER_PRIORITIES,
   QUEUE_NAMES,
-  applyJitter,
   type TrackingTier,
 } from "@taa/shared";
 import { ingestionQueue, deletionCheckQueue } from "./queues";
@@ -39,8 +38,7 @@ export async function registerScheduledJobs() {
 
   for (const account of accounts) {
     const tier = account.trackingTier as TrackingTier;
-    const baseInterval = TIER_INTERVALS[tier];
-    const interval = applyJitter(baseInterval);
+    const interval = TIER_INTERVALS[tier]; // jitter applied per-execution in the worker
 
     // Stable jobId prevents duplicate registration on restart
     const jobId = `ingest:${account.username}`;

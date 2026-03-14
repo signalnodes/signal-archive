@@ -39,6 +39,9 @@ export const TIER_PRIORITIES: Record<TrackingTier, number> = {
 /** Jitter factor for anti-detection (±30%) */
 export const JITTER_FACTOR = 0.3;
 
+/** Max tweets to check per deletion-check cycle */
+export const DELETION_CHECK_BATCH_SIZE = 100;
+
 /** Mass deletion detection thresholds */
 export const MASS_DELETION = {
   /** Minimum deletions within the window to flag as a mass deletion event */

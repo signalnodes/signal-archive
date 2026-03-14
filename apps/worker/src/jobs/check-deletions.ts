@@ -1,15 +1,14 @@
 import { Worker, Job } from "bullmq";
 import { eq, and, lte, gt, sql } from "drizzle-orm";
 import { connection, hcsSubmitQueue } from "../queues";
-import { QUEUE_NAMES, DELETION_CHECK_THRESHOLDS } from "@taa/shared";
+import { QUEUE_NAMES, DELETION_CHECK_THRESHOLDS, DELETION_CHECK_BATCH_SIZE } from "@taa/shared";
 import { getDb, tweets, deletionEvents, trackedAccounts } from "@taa/db";
 import type { DeletionChecker } from "../services/deletion-checker";
 import { detectMassDeletion } from "./detect-mass-deletions";
 
 const WORKER_LAST_SEEN_KEY = "worker:last-seen";
 const WORKER_LAST_SEEN_TTL = 1800; // 30 min — expires if worker dies
-
-const MAX_BATCH_SIZE = 25;
+const CYCLE_COUNT_KEY = "worker:deletion-cycle-count";
 
 export interface CheckDeletionsJobData {
   cycleCount: number;
@@ -19,7 +18,8 @@ async function processDeletionCheck(
   job: Job<CheckDeletionsJobData>,
   checker: DeletionChecker
 ) {
-  const cycleCount = job.data.cycleCount ?? 0;
+  const raw = await connection.get(CYCLE_COUNT_KEY);
+  const cycleCount = raw !== null ? parseInt(raw, 10) : 0;
   const db = getDb();
   const now = new Date();
   const {
@@ -88,13 +88,13 @@ async function processDeletionCheck(
     .leftJoin(trackedAccounts, eq(tweets.accountId, trackedAccounts.id))
     .where(sql`(${sql.join(conditions, sql` OR `)})`)
     .orderBy(tweets.postedAt)
-    .limit(MAX_BATCH_SIZE);
+    .limit(DELETION_CHECK_BATCH_SIZE);
 
   if (tweetsToCheck.length === 0) {
     console.log(
       `[deletion-check] Cycle ${cycleCount}: no tweets to check`
     );
-    await job.updateData({ cycleCount: cycleCount + 1 });
+    await connection.set(CYCLE_COUNT_KEY, String(cycleCount + 1));
     return;
   }
 
@@ -127,13 +127,17 @@ async function processDeletionCheck(
       })
       .where(eq(tweets.id, tweet.id));
 
-    await db.insert(deletionEvents).values({
-      tweetId: tweet.id,
-      accountId: tweet.accountId,
-      detectedAt,
-      tweetAgeHours: String(tweetAgeHours),
-      contentPreview,
-    });
+    if (!tweet.accountId) {
+      console.warn(`[deletion-check] Tweet ${tweet.tweetId} has no accountId, skipping deletion event`);
+    } else {
+      await db.insert(deletionEvents).values({
+        tweetId: tweet.id,
+        accountId: tweet.accountId,
+        detectedAt,
+        tweetAgeHours: String(tweetAgeHours),
+        contentPreview,
+      });
+    }
 
     await hcsSubmitQueue.add(`hcs:deletion:${tweet.tweetId}`, {
       dbId: tweet.id,
@@ -160,7 +164,7 @@ async function processDeletionCheck(
   // Record liveness — health endpoint reads this to detect a silent worker
   await connection.set(WORKER_LAST_SEEN_KEY, Date.now().toString(), "EX", WORKER_LAST_SEEN_TTL);
 
-  await job.updateData({ cycleCount: cycleCount + 1 });
+  await connection.set(CYCLE_COUNT_KEY, String(cycleCount + 1));
 }
 
 export function createDeletionCheckWorker(checker: DeletionChecker) {
