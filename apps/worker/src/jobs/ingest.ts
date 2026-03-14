@@ -1,5 +1,5 @@
 import { Worker, Job } from "bullmq";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { connection, hcsSubmitQueue, mediaArchiveQueue } from "../queues";
 import {
   QUEUE_NAMES,
@@ -43,25 +43,29 @@ async function processIngestion(
     return;
   }
 
+  // Per-execution jitter — randomizes actual run time within the polling window
+  // to avoid thundering herd when many accounts fire at the same scheduled moment
+  await new Promise((r) => setTimeout(r, Math.random() * 5000));
+
   const scraped = await provider.fetchTweets(username, account.twitterId);
   let newCount = 0;
   let dupeCount = 0;
   let skippedCount = 0;
 
-  for (const tweet of scraped) {
-    // Skip tweets before the archive cutoff date
-    if (tweet.postedAt < ARCHIVE_SINCE) {
-      skippedCount++;
-      continue;
-    }
+  const eligible = scraped.filter((t) => {
+    if (t.postedAt < ARCHIVE_SINCE) { skippedCount++; return false; }
+    return true;
+  });
 
-    // Dedup: check if tweet already exists
-    const existing = await db.query.tweets.findFirst({
-      where: eq(tweets.tweetId, tweet.tweetId),
-      columns: { id: true },
-    });
+  // Batch dedup: single query for all tweet IDs instead of N individual queries
+  const scrapedIds = eligible.map((t) => t.tweetId);
+  const existingRows = scrapedIds.length > 0
+    ? await db.select({ tweetId: tweets.tweetId }).from(tweets).where(inArray(tweets.tweetId, scrapedIds))
+    : [];
+  const existingSet = new Set(existingRows.map((r) => r.tweetId));
 
-    if (existing) {
+  for (const tweet of eligible) {
+    if (existingSet.has(tweet.tweetId)) {
       dupeCount++;
       continue;
     }
@@ -77,21 +81,32 @@ async function processIngestion(
     };
     const contentHash = computeContentHash(canonical);
 
-    // Insert into DB
-    const [inserted] = await db
-      .insert(tweets)
-      .values({
-        tweetId: tweet.tweetId,
-        accountId,
-        authorId: tweet.authorId,
-        content: tweet.content,
-        rawJson: tweet,
-        tweetType: tweet.tweetType,
-        mediaUrls: tweet.mediaUrls,
-        postedAt: tweet.postedAt,
-        contentHash,
-      })
-      .returning({ id: tweets.id });
+    // Insert into DB — catch concurrent duplicate inserts gracefully
+    let inserted: { id: string } | undefined;
+    try {
+      const rows = await db
+        .insert(tweets)
+        .values({
+          tweetId: tweet.tweetId,
+          accountId,
+          authorId: tweet.authorId,
+          content: tweet.content,
+          rawJson: tweet,
+          tweetType: tweet.tweetType,
+          mediaUrls: tweet.mediaUrls,
+          postedAt: tweet.postedAt,
+          contentHash,
+        })
+        .returning({ id: tweets.id });
+      inserted = rows[0];
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes("unique") || msg.includes("duplicate")) {
+        dupeCount++;
+        continue;
+      }
+      throw e;
+    }
 
     newCount++;
 

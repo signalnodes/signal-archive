@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@taa/db";
 import { sql } from "drizzle-orm";
 import { createConnection } from "net";
+import { connect as tlsConnect } from "tls";
 
 const WORKER_STALE_MS = 20 * 60 * 1000; // alert if worker hasn't checked in for 20 min
 const FAILED_JOBS_THRESHOLD = 10;
@@ -48,11 +49,14 @@ async function redisQuery(
 ): Promise<(string | null)[]> {
   return new Promise((resolve) => {
     const url = process.env.REDIS_URL ?? "redis://localhost:6379";
+    const isTls = url.startsWith("rediss://");
     const match = url.match(/rediss?:\/\/(?:[^@]+@)?([^:]+):(\d+)/);
     const host = match?.[1] ?? "localhost";
     const port = parseInt(match?.[2] ?? "6379", 10);
 
-    const socket = createConnection({ host, port });
+    const socket = isTls
+      ? tlsConnect({ host, port, rejectUnauthorized: false })
+      : createConnection({ host, port });
     let buffer = "";
 
     const timer = setTimeout(() => {
@@ -60,7 +64,8 @@ async function redisQuery(
       resolve(commands.map(() => null));
     }, 2000);
 
-    socket.on("connect", () => {
+    const connectEvent = isTls ? "secureConnect" : "connect";
+    socket.on(connectEvent, () => {
       const pipeline = commands.map(buildRespCommand).join("");
       socket.write(pipeline);
     });

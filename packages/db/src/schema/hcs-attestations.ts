@@ -14,6 +14,7 @@ export const hcsAttestations = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     tweetId: uuid("tweet_id").references(() => tweets.id),
+    messageType: text("message_type").notNull().default("tweet_attestation"),
     topicId: text("topic_id").notNull(),
     sequenceNumber: bigint("sequence_number", { mode: "number" }).notNull(),
     transactionId: text("transaction_id").notNull(),
@@ -23,6 +24,6 @@ export const hcsAttestations = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
-    uniqueIndex("idx_hcs_tweet").on(table.tweetId),
+    uniqueIndex("idx_hcs_tweet_type").on(table.tweetId, table.messageType),
   ]
 );

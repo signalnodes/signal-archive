@@ -129,7 +129,14 @@ export default async function TweetDetailPage({ params }: Props) {
           )}
           <div className="mt-3 flex items-center justify-between">
             <Timestamp date={tweet.postedAt} />
-            {!tweet.isDeleted && account && (
+            {tweet.isDeleted ? (
+              <span className="text-xs text-muted-foreground">
+                Removed from X
+                {deletion?.detectedAt && (
+                  <> · <Timestamp date={new Date(deletion.detectedAt)} /></>
+                )}
+              </span>
+            ) : account && (
               <Link
                 href={`https://x.com/${account.username}/status/${tweet.tweetId}`}
                 target="_blank"

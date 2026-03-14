@@ -27,21 +27,24 @@ export interface CanonicalTweet {
   tweet_type: TweetType;
 }
 
-export interface HcsAttestationMessage {
-  version: "1.0";
+/** Payload written to HCS for both tweet attestations and deletion events. */
+interface HcsBasePayload {
   type: "tweet_attestation" | "deletion_detected";
-  tweet_id: string;
-  author_id: string;
-  content_hash: string;
-  captured_at: string; // ISO 8601
-  posted_at: string; // ISO 8601
+  tweetId: string;
+  authorId: string;
+  username: string;
+  postedAt: string; // ISO 8601
+  contentHash: string;
+  topicId: string;
+  submittedAt: string; // ISO 8601
 }
 
-export interface HcsDeletionMessage {
-  version: "1.0";
-  type: "deletion_detected";
-  tweet_id: string;
-  original_hash: string;
-  detected_at: string; // ISO 8601
-  tweet_age_hours: number;
+export interface HcsTweetAttestationPayload extends HcsBasePayload {
+  type: "tweet_attestation";
 }
+
+export interface HcsDeletionPayload extends HcsBasePayload {
+  type: "deletion_detected";
+}
+
+export type HcsPayload = HcsTweetAttestationPayload | HcsDeletionPayload;

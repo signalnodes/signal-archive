@@ -45,7 +45,9 @@ export function TweetCard({ tweet, username }: TweetCardProps) {
           </p>
         )}
         <div className="flex items-center justify-end gap-3">
-          {!tweet.isDeleted && (
+          {tweet.isDeleted ? (
+            <span className="text-xs text-muted-foreground">Removed from X</span>
+          ) : (
             <Link
               href={`https://x.com/${username}/status/${tweet.tweetId}`}
               target="_blank"

@@ -43,7 +43,7 @@ export const JITTER_FACTOR = 0.3;
 export const DELETION_CHECK_INTERVAL_MS = 15 * 60 * 1000;
 
 /** Max tweets to check per deletion-check cycle */
-export const DELETION_CHECK_BATCH_SIZE = 25;
+export const DELETION_CHECK_BATCH_SIZE = 100;
 
 /** SocialData.tools API rate limit (requests per minute) */
 export const SOCIALDATA_RATE_LIMIT = 120;

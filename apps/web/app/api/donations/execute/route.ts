@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import {
   BatchTransaction,
   TokenMintTransaction,
@@ -20,6 +21,11 @@ import {
 } from "@/lib/hedera-server";
 import { getBatchEntry, markBatchEntryUsed } from "@/lib/batch-store";
 import { setSupporter } from "@/lib/supporter-cache";
+
+const executeSchema = z.object({
+  batchId: z.string().min(1),
+  transferTransactionId: z.string().min(1),
+});
 
 const DONATION_ACCOUNT_ID = process.env.NEXT_PUBLIC_DONATION_ACCOUNT_ID ?? "";
 const BADGE_TOKEN_ID = process.env.NEXT_PUBLIC_BADGE_TOKEN_ID ?? "";
@@ -76,27 +82,16 @@ async function verifyTransferOnChain(
   throw new Error("Transfer not confirmed on mirror node after retries");
 }
 
-/** Query mirror node for current badge token total supply. */
-async function getBadgeTokenSupply(): Promise<number> {
-  const res = await fetch(
-    `${getMirrorBase()}/api/v1/tokens/${BADGE_TOKEN_ID}`,
-  );
-  if (!res.ok) throw new Error(`Mirror node token query failed: ${res.status}`);
-  const data = await res.json();
-  return Number(data.total_supply ?? 0);
-}
-
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { batchId, transferTransactionId } = body;
-
-    if (!batchId || !transferTransactionId) {
+    const parsed = executeSchema.safeParse(await request.json());
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: parsed.error.issues[0]?.message ?? "Invalid request" },
         { status: 400 },
       );
     }
+    const { batchId, transferTransactionId } = parsed.data;
 
     if (!process.env.HEDERA_OPERATOR_ID || !process.env.HEDERA_OPERATOR_KEY) {
       console.error("[donate/execute] Missing HEDERA_OPERATOR_ID or HEDERA_OPERATOR_KEY");
@@ -165,11 +160,8 @@ export async function POST(request: Request) {
     // same batch). Running the transfer as a follow-up transaction avoids
     // this ordering issue.
     let mintTx: TokenMintTransaction | null = null;
-    let predictedSerial: number | null = null;
 
     if (entry.template === "B" && BADGE_TOKEN_ID) {
-      predictedSerial = (await getBadgeTokenSupply()) + 1;
-
       mintTx = await new TokenMintTransaction()
         .setTokenId(BADGE_TOKEN_ID)
         .setMetadata([

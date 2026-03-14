@@ -21,7 +21,7 @@ export const tweets = pgTable(
     rawJson: jsonb("raw_json").notNull(),
     tweetType: text("tweet_type").default("tweet").notNull(),
     mediaUrls: text("media_urls").array(),
-    engagement: jsonb("engagement"),
+    // engagement column removed — was never written to
     postedAt: timestamp("posted_at", { withTimezone: true }).notNull(),
     capturedAt: timestamp("captured_at", { withTimezone: true }).defaultNow().notNull(),
     contentHash: text("content_hash").notNull(),
@@ -37,6 +37,10 @@ export const tweets = pgTable(
     index("idx_tweets_fts").using(
       "gin",
       sql`to_tsvector('english', ${table.content})`
+    ),
+    // Partial index — dramatically speeds up deletion check queries as table grows
+    index("idx_tweets_not_deleted").on(table.postedAt).where(
+      sql`${table.isDeleted} = false`
     ),
   ]
 );

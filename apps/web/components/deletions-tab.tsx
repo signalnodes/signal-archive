@@ -76,6 +76,9 @@ export function DeletionsTab({ username }: DeletionsTabProps) {
                 {e.deletionCount} tweets deleted within 1 hour,{" "}
                 {formatDistanceToNow(new Date(e.detectedAt), { addSuffix: true })}
               </span>
+              <span className="block mt-1 text-xs text-muted-foreground">
+                This may indicate coordinated cleanup. Review individual deletions below for context.
+              </span>
             </div>
           ))}
         </div>

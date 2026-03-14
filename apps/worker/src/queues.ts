@@ -26,7 +26,19 @@ connection.on("reconnecting", () => {
   console.warn("[redis] reconnecting...");
 });
 
-export const ingestionQueue = new Queue(QUEUE_NAMES.INGESTION, { connection });
-export const deletionCheckQueue = new Queue(QUEUE_NAMES.DELETION_CHECK, { connection });
-export const hcsSubmitQueue = new Queue(QUEUE_NAMES.HCS_SUBMIT, { connection });
-export const mediaArchiveQueue = new Queue(QUEUE_NAMES.MEDIA_ARCHIVE, { connection });
+export const ingestionQueue = new Queue(QUEUE_NAMES.INGESTION, {
+  connection,
+  defaultJobOptions: { attempts: 5, backoff: { type: "exponential", delay: 1000 } },
+});
+export const deletionCheckQueue = new Queue(QUEUE_NAMES.DELETION_CHECK, {
+  connection,
+  defaultJobOptions: { attempts: 3, backoff: { type: "exponential", delay: 5000 } },
+});
+export const hcsSubmitQueue = new Queue(QUEUE_NAMES.HCS_SUBMIT, {
+  connection,
+  defaultJobOptions: { attempts: 3, backoff: { type: "exponential", delay: 5000 } },
+});
+export const mediaArchiveQueue = new Queue(QUEUE_NAMES.MEDIA_ARCHIVE, {
+  connection,
+  defaultJobOptions: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
+});

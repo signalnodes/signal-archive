@@ -140,7 +140,6 @@ CREATE TABLE tweets (
     raw_json        JSONB NOT NULL,                 -- Complete API / scrape response
     tweet_type      TEXT DEFAULT 'tweet',           -- 'tweet', 'reply', 'retweet', 'quote'
     media_urls      TEXT[],
-    engagement      JSONB,                          -- DEPRECATED: column exists, never written to
     posted_at       TIMESTAMPTZ NOT NULL,
     captured_at     TIMESTAMPTZ DEFAULT now(),
     content_hash    TEXT NOT NULL,                  -- SHA-256 of canonical JSON
@@ -160,6 +159,7 @@ CREATE INDEX idx_tweets_content_hash ON tweets (content_hash);
 CREATE TABLE hcs_attestations (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tweet_id        UUID REFERENCES tweets(id),
+    message_type    TEXT NOT NULL DEFAULT 'tweet_attestation', -- 'tweet_attestation' | 'deletion_detected'
     topic_id        TEXT NOT NULL,                  -- HCS Topic ID
     sequence_number BIGINT NOT NULL,               -- HCS message sequence number
     transaction_id  TEXT NOT NULL,                  -- Hedera transaction ID
@@ -169,19 +169,19 @@ CREATE TABLE hcs_attestations (
     created_at      TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE UNIQUE INDEX idx_hcs_tweet ON hcs_attestations (tweet_id);
+-- Unique per tweet+type so deletion attestations don't conflict with tweet attestations
+CREATE UNIQUE INDEX idx_hcs_tweet_type ON hcs_attestations (tweet_id, message_type);
 
 -- Deletion events
 CREATE TABLE deletion_events (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tweet_id        UUID REFERENCES tweets(id),
-    account_id      UUID REFERENCES tracked_accounts(id),
+    tweet_id        UUID NOT NULL REFERENCES tweets(id) UNIQUE, -- one deletion event per tweet
+    account_id      UUID NOT NULL REFERENCES tracked_accounts(id),
     detected_at     TIMESTAMPTZ DEFAULT now(),
     tweet_age_hours NUMERIC,
     content_preview TEXT,                           -- First 280 chars for quick display
     category_tags   TEXT[],
-    severity_score  INTEGER,                        -- 1-10 (future: AI-assessed)
-    hcs_proof_txn   TEXT,
+    severity_score  INTEGER,                        -- 1-10 (AI-scored via Claude Haiku)
     metadata        JSONB
 );
 
@@ -242,7 +242,7 @@ CREATE TABLE tracked_wallets (
 - Supporter status checked via in-process cache (`apps/web/lib/supporter-cache.ts`) — 1hr TTL for supporters, 60s for non-supporters
 - API routes `/api/research/wallets` and `/api/research/accounts` verify supporter status server-side via wallet address query param
 
-> **Note:** An `engagement_snapshots` table exists in the schema file but is not populated and is not used. It is effectively abandoned.
+> **Dropped tables:** `engagement_snapshots` and `tracking_requests` were removed in migration 0006 — they had no readers or writers.
 
 ---
 
@@ -311,14 +311,14 @@ Keys are sorted deterministically before SHA-256 hashing. This hash is independe
 **Message Format (submitted to HCS):**
 ```json
 {
-  "version": "1.0",
   "type": "tweet_attestation",
-  "tweet_id": "1893456789012345678",
-  "author_id": "123456789",
-  "content_hash": "a1b2c3d4e5f6...",
-  "captured_at": "2026-02-24T15:30:00Z",
-  "posted_at": "2026-02-24T14:00:00Z",
-  "username": "realDonaldTrump"
+  "tweetId": "1893456789012345678",
+  "authorId": "123456789",
+  "username": "realDonaldTrump",
+  "postedAt": "2026-02-24T14:00:00Z",
+  "contentHash": "a1b2c3d4e5f6...",
+  "topicId": "0.0.10301350",
+  "submittedAt": "2026-02-24T15:30:00Z"
 }
 ```
 
@@ -330,17 +330,7 @@ Keys are sorted deterministically before SHA-256 hashing. This hash is independe
 5. If match → tweet data is proven authentic and unaltered since `consensus_timestamp`
 
 **Deletion Attestation:**
-When a deletion is detected, submit a second HCS message:
-```json
-{
-  "version": "1.0",
-  "type": "deletion_detected",
-  "tweet_id": "1893456789012345678",
-  "original_hash": "a1b2c3d4e5f6...",
-  "detected_at": "2026-02-25T10:00:00Z",
-  "tweet_age_hours": 20.0
-}
-```
+When a deletion is detected, a second HCS message is submitted with the same schema but `type: "deletion_detected"`. Both attestation and deletion records share the `hcs_attestations` table, distinguished by the `message_type` column — the unique index is on `(tweet_id, message_type)`.
 
 ### 3. Deletion Detection Agent
 
@@ -445,7 +435,7 @@ Accounts have a `trackingMode` derived from `metadata.trackingMode` JSONB field 
 
 ### Anti-Detection Strategy
 
-All polling intervals have ±30% jitter applied. The browser-ingest script uses:
+All ingestion jobs apply a random 0-5s startup delay per execution. The browser-ingest script uses:
 - Real Chromium (not headless) with persistent profile
 - Randomized mouse movements and scroll delays
 - Random 50-220 second delay between accounts
@@ -484,9 +474,11 @@ At Phase 1 volume (~40 accounts, ~30-minute intervals) actual cost is < $5/mo.
 **Ingestion queue priorities** (lower number = higher priority, set via `TIER_PRIORITIES`):
 | Tier | BullMQ Priority | Interval |
 |------|----------------|----------|
-| priority | 1 | 30 min ± 30% jitter |
-| standard | 5 | 2 hr ± 30% jitter |
-| low | 10 | 6 hr ± 30% jitter |
+| priority | 1 | 30 min (±5s per-execution jitter) |
+| standard | 5 | 2 hr (±5s per-execution jitter) |
+| low | 10 | 6 hr (±5s per-execution jitter) |
+
+> Jitter is applied at job execution time (random 0-5s delay), not at registration time, so repeatable job intervals remain stable across worker restarts.
 
 ---
 
@@ -525,10 +517,9 @@ signal-archive/
 │   │       ├── tracked-wallets.ts
 │   │       ├── hcs-attestations.ts
 │   │       ├── deletion-events.ts
+│   │       ├── mass-deletion-events.ts
 │   │       ├── supporters.ts
-│   │       ├── donations.ts
-│   │       ├── tracking-requests.ts
-│   │       └── engagement-snapshots.ts  (abandoned — not populated)
+│   │       └── donations.ts
 │   └── shared/                 # Types, canonical hash utils, constants
 ├── scripts/
 │   ├── seed-accounts.ts        # Bulk load tracked accounts
@@ -598,10 +589,10 @@ External services:
 | Item | Priority |
 |------|----------|
 | Twitter/X bot auto-posting deletions | High — biggest growth lever |
-| Mass deletion event detection | High — newsworthy, automatic flagging |
+| Mass deletion event detection | **IMPLEMENTED** — 5+ deletions in 1hr window, `mass_deletion_events` table |
 | Research: admin scripts to add wallets + donor-only accounts (with HCS attestation to `0.0.10307943`) | High — research topic exists but nothing writes to it yet |
 | Media archival to Cloudflare R2 | Medium — images die when tweets deleted |
 | Phase 2: Congress bulk onboarding (~535 accounts) | Medium |
 | Worker health monitoring (Better Stack) | Medium |
-| AI severity scoring | Phase 3 |
+| AI severity scoring | **IMPLEMENTED** — Claude Haiku 3.5, 1-10 scale, heuristic fallback |
 | Freemium / API for journalists | Phase 4 |

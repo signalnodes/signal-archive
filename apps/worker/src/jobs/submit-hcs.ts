@@ -5,7 +5,7 @@ import {
   AccountId,
   PrivateKey,
 } from "@hashgraph/sdk";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { connection } from "../queues";
 import { QUEUE_NAMES } from "@taa/shared";
 import { getDb, hcsAttestations } from "@taa/db";
@@ -49,11 +49,11 @@ async function processHcsSubmission(job: Job<SubmitHcsJobData>) {
   const { dbId, tweetId, authorId, contentHash, type, username, postedAt } = job.data;
   const db = getDb();
 
-  // Skip if already attested (idempotency guard)
+  // Skip if already attested for this message type (idempotency guard)
   const existing = await db
     .select({ id: hcsAttestations.id })
     .from(hcsAttestations)
-    .where(eq(hcsAttestations.tweetId, dbId))
+    .where(and(eq(hcsAttestations.tweetId, dbId), eq(hcsAttestations.messageType, type)))
     .limit(1);
 
   if (existing.length > 0) {
@@ -104,6 +104,7 @@ async function processHcsSubmission(job: Job<SubmitHcsJobData>) {
 
     await db.insert(hcsAttestations).values({
       tweetId: dbId,
+      messageType: type,
       topicId,
       sequenceNumber,
       transactionId,
