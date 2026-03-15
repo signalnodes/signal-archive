@@ -1,0 +1,71 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createOEmbedDeletionChecker } from "./oembed-deletion-checker";
+
+const mockFetch = vi.fn();
+vi.stubGlobal("fetch", mockFetch);
+
+function mockResponse(status: number): Response {
+  return { status, ok: status >= 200 && status < 300 } as Response;
+}
+
+beforeEach(() => {
+  mockFetch.mockReset();
+});
+
+describe("OEmbedDeletionChecker", () => {
+  it("marks tweet as existing on 200", async () => {
+    mockFetch.mockResolvedValue(mockResponse(200));
+    const checker = createOEmbedDeletionChecker();
+    const result = await checker.checkTweets(["123"]);
+    expect(result.get("123")).toBe(true);
+  });
+
+  it("marks tweet as deleted on 404", async () => {
+    mockFetch.mockResolvedValue(mockResponse(404));
+    const checker = createOEmbedDeletionChecker();
+    const result = await checker.checkTweets(["456"]);
+    expect(result.get("456")).toBe(false);
+  });
+
+  it("conservatively marks tweet as existing on 403 (protected account)", async () => {
+    mockFetch.mockResolvedValue(mockResponse(403));
+    const checker = createOEmbedDeletionChecker();
+    const result = await checker.checkTweets(["789"]);
+    expect(result.get("789")).toBe(true);
+  });
+
+  it("conservatively marks tweet as existing on 429 (rate limited)", async () => {
+    mockFetch.mockResolvedValue(mockResponse(429));
+    const checker = createOEmbedDeletionChecker();
+    const result = await checker.checkTweets(["101"]);
+    expect(result.get("101")).toBe(true);
+  });
+
+  it("conservatively marks tweet as existing on network error", async () => {
+    mockFetch.mockRejectedValue(new Error("network failure"));
+    const checker = createOEmbedDeletionChecker();
+    const result = await checker.checkTweets(["202"]);
+    expect(result.get("202")).toBe(true);
+  });
+
+  it("uses x.com URL format in the request", async () => {
+    mockFetch.mockResolvedValue(mockResponse(200));
+    const checker = createOEmbedDeletionChecker();
+    await checker.checkTweets(["999"]);
+    const url = mockFetch.mock.calls[0][0] as string;
+    expect(url).toContain("x.com/i/web/status/999");
+    expect(url).not.toContain("twitter.com/i/web/status");
+  });
+
+  it("handles multiple tweet IDs", async () => {
+    mockFetch
+      .mockResolvedValueOnce(mockResponse(200))
+      .mockResolvedValueOnce(mockResponse(404))
+      .mockResolvedValueOnce(mockResponse(200));
+    const checker = createOEmbedDeletionChecker();
+    const result = await checker.checkTweets(["a", "b", "c"]);
+    expect(result.get("a")).toBe(true);
+    expect(result.get("b")).toBe(false);
+    expect(result.get("c")).toBe(true);
+  });
+});

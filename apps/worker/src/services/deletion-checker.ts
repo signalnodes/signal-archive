@@ -43,7 +43,9 @@ export function createDeletionChecker(): DeletionChecker {
     return createSocialDataDeletionChecker();
   }
 
-  throw new Error("SOCIALDATA_API_KEY is required for deletion checking.");
+  const { createOEmbedDeletionChecker } = require("./oembed-deletion-checker");
+  console.log("[deletion-checker] No SOCIALDATA_API_KEY — using oEmbed fallback");
+  return createOEmbedDeletionChecker();
 }
 
 // Keep schema export in case it's referenced elsewhere
