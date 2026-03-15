@@ -250,21 +250,22 @@ CREATE TABLE tracked_wallets (
 
 ### 1. Tweet Ingestion Agent
 
-**Primary data source: [SocialData.tools](https://api.socialdata.tools) REST API**
+**Primary data source: [SocialData.tools](https://api.socialdata.tools) REST API** *(optional)*
 - `GET /twitter/user/{user_id}/tweets-and-replies` — fetches recent tweets per account
 - Response format mirrors Twitter v1.1 (`id_str`, `full_text`, `tweet_created_at`)
 - Cost: ~$0.0002/request, shared 120 req/min rate limit
 - Retweets are skipped — we track what people say, not what they amplify
 
 **Worker behavior when `SOCIALDATA_API_KEY` is missing:**
-- `createProvider()` throws immediately — the worker will not start
-- There is no automatic fallback; SocialData is required for automated ingestion
+- `createProvider()` falls back to a no-op stub — ingestion jobs are skipped silently
+- The worker continues to run; HCS attestation and deletion-check jobs are unaffected
+- `SOCIALDATA_API_KEY` is optional; remove it from Railway env vars without consequence
 
 **Local backfill: `scripts/browser-ingest.ts`**
-- Playwright + persistent Chromium profile (real authenticated X account)
-- Intercepts X's internal `UserTweets` GraphQL API — no DOM parsing
+- Connects to Windows Chrome via CDP (WSL2: auto-launches Chrome if not running)
+- Intercepts X's internal `UserTweets` GraphQL API via CDP Network events — no DOM parsing
 - Used to backfill historical tweets without API cost
-- See `docs/BROWSER_INGESTION_LIFEHACK.md`
+- Run `scripts/check-ingest-gap.ts` first to see per-account gaps and get the exact backfill command
 
 **Responsibilities:**
 - Poll tracked accounts for new tweets on a configurable schedule
@@ -334,10 +335,16 @@ When a deletion is detected, a second HCS message is submitted with the same sch
 
 ### 3. Deletion Detection Agent
 
-**Primary: SocialData.tools API**
+**Primary: [SocialData.tools](https://api.socialdata.tools) API** *(when `SOCIALDATA_API_KEY` is set)*
 - `GET /twitter/tweets/{id}` — returns 404 when tweet is deleted
 - Conservative: HTTP 403 (private) / 5xx → assume tweet exists; only 404 → mark deleted
 - Token-bucket rate limiter (120 req/min shared limit)
+
+**Fallback: oEmbed API** *(free, no API key required)*
+- `GET https://publish.twitter.com/oembed?url=...` — 404 means deleted
+- Activated automatically when `SOCIALDATA_API_KEY` is not set
+- Same conservative logic: 403/5xx treated as alive, only 404 → mark deleted
+- Rate limited to 60 req/min with 429 backoff
 
 **Approach:**
 - BullMQ scheduled job runs every 15 minutes
@@ -431,7 +438,7 @@ Accounts have a `trackingMode` derived from `metadata.trackingMode` JSONB field 
 - **Basic tier ($100-200/mo)**: ~10K-15K tweets/month read, 7-day search window only
 - **Pro tier ($5,000/mo)**: ~1M tweets/month read, full archive search
 
-**Decision: Use SocialData.tools as primary.** It mirrors the Twitter v1 API format and is significantly cheaper than official API access for our volume. Browser automation remains a fallback and for local backfill.
+**Decision: Use SocialData.tools as primary when available.** It mirrors the Twitter v1 API format and is significantly cheaper than official API access for our volume. The worker runs without it — SocialData is additive, not required. Browser automation (CDP) is used for manual backfills.
 
 ### Anti-Detection Strategy
 
@@ -504,10 +511,12 @@ signal-archive/
 │       │   ├── submit-hcs.ts
 │       │   └── archive-media.ts
 │       └── services/
-│           ├── scraper.ts          # TweetProvider interface + Stagehand fallback
-│           ├── socialdata-provider.ts  # Primary: SocialData.tools API
-│           ├── mock-provider.ts    # Dev/test only
+│           ├── scraper.ts                  # TweetProvider interface + provider factory
+│           ├── socialdata-provider.ts      # Optional: SocialData.tools API (when API key set)
+│           ├── oembed-deletion-checker.ts  # Free fallback deletion checker (no API key needed)
+│           ├── mock-provider.ts            # Dev/test only
 │           ├── rate-limiter.ts
+│           ├── heartbeat.ts               # Better Stack heartbeat (HEARTBEAT_URL env var)
 │           └── hedera.ts
 ├── packages/
 │   ├── db/                     # Drizzle schema + migrations
@@ -522,8 +531,9 @@ signal-archive/
 │   │       └── donations.ts
 │   └── shared/                 # Types, canonical hash utils, constants
 ├── scripts/
-│   ├── seed-accounts.ts        # Bulk load tracked accounts
-│   ├── browser-ingest.ts       # Local Playwright backfill (no API cost)
+│   ├── seed-accounts.ts              # Bulk load tracked accounts
+│   ├── browser-ingest.ts             # CDP backfill via Windows Chrome (auto-launches if needed)
+│   ├── check-ingest-gap.ts           # Diagnostic: per-account gap since last capture + backfill cmd
 │   ├── backfill-mainnet-attestations.ts
 │   ├── create-hcs-topic.ts
 │   ├── lookup-twitter-ids.ts
@@ -566,7 +576,7 @@ External services:
 - Hedera operator key: ED25519, stored in Railway env vars only
 - HCS submit-key locked — only operator can write to the topic
 - No user accounts or auth on the public site (read-only)
-- SocialData API key: Railway env only
+- SocialData API key: Railway env only *(optional — worker runs without it)*
 - Database credentials: Railway env only
 
 ---
@@ -575,8 +585,8 @@ External services:
 
 | Risk | Mitigation |
 |------|-----------|
-| X bot detection | SocialData.tools API (server-to-server, no browser); browser-ingest uses real Chromium + anti-detection measures |
-| SocialData goes down | browser-ingest for manual recovery; no automated fallback — worker requires `SOCIALDATA_API_KEY` |
+| X bot detection | SocialData.tools API (server-to-server, no browser); browser-ingest uses real Windows Chrome via CDP with anti-detection measures |
+| SocialData goes down | oEmbed deletion checker activates automatically (free fallback); browser-ingest for manual ingestion backfill |
 | Hedera network issues | BullMQ retry logic; content hashes stored locally regardless |
 | Legal challenges | Public interest defense; only track public statements from public figures |
 | Database growth | Age-based deletion check frequency; ARCHIVE_SINCE cutoff on ingestion |
@@ -593,6 +603,6 @@ External services:
 | Research: admin scripts to add wallets + donor-only accounts (with HCS attestation to `0.0.10307943`) | High — research topic exists but nothing writes to it yet |
 | Media archival to Cloudflare R2 | Medium — images die when tweets deleted |
 | Phase 2: Congress bulk onboarding (~535 accounts) | Medium |
-| Worker health monitoring (Better Stack) | Medium |
+| Worker health monitoring (Better Stack) | **IMPLEMENTED** — heartbeat pings every 60s; set `HEARTBEAT_URL` in Railway worker env |
 | AI severity scoring | **IMPLEMENTED** — Claude Haiku 3.5, 1-10 scale, heuristic fallback |
 | Freemium / API for journalists | Phase 4 |
