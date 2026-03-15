@@ -160,13 +160,31 @@ async function detectVpn(): Promise<{ active: boolean; method: string } | null> 
  * Returns true if Chrome was already running, false if it was launched.
  */
 async function ensureCdpChrome(cdpUrl: string): Promise<boolean> {
-  // Check if already reachable
+  // Check if already reachable with CDP
   try {
     const res = await fetch(`${cdpUrl}/json/version`, { signal: AbortSignal.timeout(2000) });
     if (res.ok) return true;
-  } catch { /* not running yet */ }
+  } catch { /* not running with CDP */ }
 
-  // Try known Windows Chrome paths
+  // Check if Chrome is already running WITHOUT CDP (WSL → Windows process list)
+  try {
+    const out = execSync("tasklist.exe /fi \"imagename eq chrome.exe\" 2>/dev/null", {
+      encoding: "utf8",
+      timeout: 4000,
+    }).toLowerCase();
+    if (out.includes("chrome.exe")) {
+      throw new Error(
+        "\n  Chrome is already open but was NOT started with --remote-debugging-port=9222.\n" +
+        "  Close all Chrome windows, then run this script again.\n" +
+        "  The script will relaunch Chrome automatically with the right flags.\n"
+      );
+    }
+  } catch (e) {
+    // Re-throw our own errors; swallow tasklist errors (non-WSL env)
+    if ((e as Error).message.includes("Close all Chrome")) throw e;
+  }
+
+  // Chrome not running — auto-launch with CDP flags
   const chromePaths = [
     "/mnt/c/Program Files/Google/Chrome/Application/chrome.exe",
     "/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe",
@@ -175,12 +193,12 @@ async function ensureCdpChrome(cdpUrl: string): Promise<boolean> {
 
   if (!chromePath) {
     throw new Error(
-      "Chrome not found at standard paths and CDP is not reachable.\n" +
+      "Chrome not found at standard paths.\n" +
       "Launch manually: chrome.exe --remote-debugging-port=9222 --user-data-dir=\"C:\\\\signal-archive-chrome\""
     );
   }
 
-  console.log(`[browser-ingest] CDP not reachable — launching Chrome…`);
+  console.log(`[browser-ingest] Launching Chrome with CDP…`);
   const child = spawn(chromePath, [
     "--remote-debugging-port=9222",
     "--user-data-dir=C:\\signal-archive-chrome",
@@ -200,7 +218,7 @@ async function ensureCdpChrome(cdpUrl: string): Promise<boolean> {
       }
     } catch { /* still starting */ }
   }
-  throw new Error("Chrome launched but CDP not reachable after 15s — check if another Chrome instance is already running without CDP.");
+  throw new Error("Chrome launched but CDP not reachable after 15s — is port 9222 blocked by Windows Firewall?");
 }
 
 /** Pause and wait for the user to press Enter before continuing. */
