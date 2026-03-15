@@ -18,10 +18,11 @@ export const KNOWN_IDS: Record<string, string> = {
   USTreasury:      "27228153",
   StateDept:       "26566375",
   StephenMillerAL: "371784440",
-  RepTomEmmer:     "318099491",
+  justinsuntron:   "911017811666030592",
+  JDVance:         "2336787612",
 };
 
-// Still need lookup
+// Still need lookup (placeholder twitterIds in DB — resolve when SocialData key available)
 const PLACEHOLDER_ACCOUNTS = [
   "LaraLeaTrump",
   "TiffanyATrump",
@@ -32,12 +33,14 @@ const PLACEHOLDER_ACCOUNTS = [
   "ZakFolkman",
   "Kash_Patel",
   "PamBondi",
+  "AGPamBondi",
   "RobertKennedyJr",
   "SebGorka",
   "PressSec",
   "SteveWitkoff",
   "SenLummis",
   "SenBillHagerty",
+  "GOPMajorityWhip",
 ];
 
 async function lookupUser(username: string): Promise<{ id: string; name: string } | null> {

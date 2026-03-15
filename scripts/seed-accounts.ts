@@ -41,7 +41,8 @@ const PHASE_1_ACCOUNTS: SeedAccount[] = [
   // Category 3: Key Political Appointees (PRIORITY)
   { twitterId: "0300000001", username: "Kash_Patel", displayName: "Kash Patel", category: "political_appointee", trackingTier: "priority", metadata: { role: "FBI Director" } },
   { twitterId: "44196397", username: "elonmusk", displayName: "Elon Musk", category: "political_appointee", trackingTier: "priority", metadata: { role: "DOGE head" } },
-  { twitterId: "0300000003", username: "PamBondi", displayName: "Pam Bondi", category: "political_appointee", trackingTier: "priority", metadata: { role: "Attorney General" } },
+  { twitterId: "0300000003", username: "PamBondi", displayName: "Pam Bondi", category: "political_appointee", trackingTier: "priority", metadata: { role: "Attorney General (personal account)" } },
+  { twitterId: "0300000009", username: "AGPamBondi", displayName: "AG Pam Bondi", category: "political_appointee", trackingTier: "priority", metadata: { role: "Attorney General (official account)" } },
   { twitterId: "61633009", username: "PeteHegseth", displayName: "Pete Hegseth", category: "political_appointee", trackingTier: "priority", metadata: { role: "Defense Secretary" } },
   { twitterId: "0300000005", username: "RobertKennedyJr", displayName: "Robert F. Kennedy Jr.", category: "political_appointee", trackingTier: "priority", metadata: { role: "HHS Secretary" } },
   { twitterId: "26637348", username: "TulsiGabbard", displayName: "Tulsi Gabbard", category: "political_appointee", trackingTier: "priority", metadata: { role: "DNI" } },
@@ -51,6 +52,7 @@ const PHASE_1_ACCOUNTS: SeedAccount[] = [
   { twitterId: "822215679726100480", username: "WhiteHouse", displayName: "The White House", category: "white_house", trackingTier: "standard" },
   { twitterId: "1349149096909668363", username: "POTUS", displayName: "President of the United States", category: "white_house", trackingTier: "standard" },
   { twitterId: "1346524486936080386", username: "VP", displayName: "Vice President", category: "white_house", trackingTier: "standard" },
+  { twitterId: "2336787612", username: "JDVance", displayName: "JD Vance", category: "white_house", trackingTier: "priority", metadata: { role: "Vice President (personal account)" } },
   { twitterId: "0400000004", username: "PressSec", displayName: "Press Secretary", category: "white_house", trackingTier: "standard" },
   { twitterId: "0400000005", username: "StephenMillerAL", displayName: "Stephen Miller", category: "white_house", trackingTier: "standard", metadata: { role: "Senior Advisor" } },
   { twitterId: "0400000006", username: "SteveWitkoff", displayName: "Steve Witkoff", category: "white_house", trackingTier: "standard", metadata: { role: "Special Envoy" } },
@@ -69,7 +71,7 @@ const PHASE_1_ACCOUNTS: SeedAccount[] = [
   { twitterId: "25943661", username: "RepMaxineWaters", displayName: "Maxine Waters", category: "congress", subcategory: "house", trackingTier: "standard", metadata: { party: "D" } },
   { twitterId: "0600000005", username: "SenLummis", displayName: "Cynthia Lummis", category: "congress", subcategory: "senate", trackingTier: "standard", metadata: { party: "R" } },
   { twitterId: "30354991", username: "SenTedCruz", displayName: "Ted Cruz", category: "congress", subcategory: "senate", trackingTier: "standard", metadata: { party: "R" } },
-  { twitterId: "0600000007", username: "RepTomEmmer", displayName: "Tom Emmer", category: "congress", subcategory: "house", trackingTier: "standard", metadata: { party: "R" } },
+  { twitterId: "0600000007", username: "GOPMajorityWhip", displayName: "Tom Emmer", category: "congress", subcategory: "house", trackingTier: "standard", metadata: { party: "R", role: "House Majority Whip" } },
   { twitterId: "0600000008", username: "SenBillHagerty", displayName: "Bill Hagerty", category: "congress", subcategory: "senate", trackingTier: "standard", metadata: { party: "R" } },
 
   // Category 7: Crypto Industry Connected to Trump (STANDARD)
