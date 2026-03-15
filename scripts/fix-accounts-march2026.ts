@@ -50,7 +50,7 @@ async function main() {
   await db
     .insert(trackedAccounts)
     .values({
-      twitterId: "0300000009", // placeholder — run lookup-twitter-ids to resolve
+      twitterId: "1886531809284173824",
       username: "AGPamBondi",
       displayName: "AG Pam Bondi",
       category: "political_appointee",
