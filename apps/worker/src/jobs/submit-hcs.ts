@@ -67,8 +67,13 @@ async function processHcsSubmission(job: Job<SubmitHcsJobData>) {
   const client = getHederaClient();
 
   const { severity, severityModel, severityConfidence } = job.data;
+  const submittedAt = new Date().toISOString();
 
-  const payload: Record<string, unknown> = {
+  // Fields are declared in explicit canonical order — do not reorder.
+  // This ensures independent verifiability: anyone reconstructing the message
+  // will produce identical JSON regardless of language or runtime.
+  const basePayload = {
+    version: 1,
     type,
     tweetId,
     authorId,
@@ -76,15 +81,13 @@ async function processHcsSubmission(job: Job<SubmitHcsJobData>) {
     postedAt,
     contentHash,
     topicId,
-    submittedAt: new Date().toISOString(),
+    submittedAt,
   };
 
-  // Include AI severity data in on-chain attestation for deletion events
-  if (type === "deletion_detected" && severity != null) {
-    payload.severity = severity;
-    payload.severityModel = severityModel ?? null;
-    payload.severityConfidence = severityConfidence ?? null;
-  }
+  const payload =
+    type === "deletion_detected" && severity != null
+      ? { ...basePayload, severity, severityModel: severityModel ?? null, severityConfidence: severityConfidence ?? null }
+      : basePayload;
 
   try {
     console.log(`[submit-hcs] Submitting ${type} for tweet ${tweetId}`);

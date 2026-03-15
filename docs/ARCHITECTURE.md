@@ -457,13 +457,24 @@ All ingestion jobs apply a random 0-5s startup delay per execution. The browser-
 - Topic ID: `0.0.10301350` (Hedera Mainnet)
 - Submit-key locked to operator key; topic is publicly readable
 
+### Future: Immutable Topic (HIP-1139)
+HIP-1139 will allow permanently disabling the admin key so the attestation topic becomes truly immutable — nobody (including the operator) can ever modify or delete it. This is a significant trust/credibility signal. **Not yet live on mainnet as of March 2026.** Plan to apply to `0.0.10301350` once the HIP lands.
+
+### SDK Migration Note
+The Hedera JS SDK is migrating from `@hashgraph/sdk` to `@hiero-ledger/sdk`. No breaking HCS changes are expected. Monitor for a migration window when the new package stabilizes.
+
 ### Cost
+ConsensusSubmitMessage is priced at **$0.0008 USD per message** as of January 2026 (HIP-991, mainnet v0.69 — increased from $0.0001).
+
 | Volume | Monthly HCS Cost |
 |--------|-----------------|
 | 10,000 attestations/mo | ~$8.00 |
 | 100,000 attestations/mo | ~$80.00 |
 
 At Phase 1 volume (~40 accounts, ~30-minute intervals) actual cost is < $5/mo.
+
+### Message Size Limit
+HCS messages are capped at **1 KB (1,024 bytes)** per submission. Current payloads are 220–300 bytes. If a message exceeds 1 KB, chunking per HCS-1 standard is required.
 
 ---
 
@@ -606,3 +617,6 @@ External services:
 | Worker health monitoring (Better Stack) | **IMPLEMENTED** — heartbeat pings every 60s; set `HEARTBEAT_URL` in Railway worker env |
 | AI severity scoring | **IMPLEMENTED** — Claude Haiku 3.5, 1-10 scale, heuristic fallback |
 | Freemium / API for journalists | Phase 4 |
+| HCS-13 schema registry — publish attestation schema to HCS for third-party validation | Deferred — confer with ecosystem builders before implementing |
+| Add `categoryTags` to deletion HCS messages (currently DB-only) | Deferred — implications under consideration |
+| HIP-1139 immutable topic — disable admin key on `0.0.10301350` | Deferred — HIP not yet live on mainnet (as of March 2026) |
