@@ -1,13 +1,13 @@
 import type { DeletionChecker } from "./deletion-checker";
-import { RateLimiter } from "./rate-limiter";
-
-// Conservative limit — oEmbed has no published rate limit.
-// Actual usage is ~7 req/min at current batch size, well under this.
-const oEmbedLimiter = new RateLimiter(30, 30 / 60_000);
+import { RateLimiter, withBackoff } from "./rate-limiter";
 
 const OEMBED_BASE = "https://publish.twitter.com/oembed?url=";
 
 export function createOEmbedDeletionChecker(): DeletionChecker {
+  // Conservative limit — oEmbed has no published rate limit.
+  // Actual usage is ~7 req/min at current batch size, well under this.
+  const oEmbedLimiter = new RateLimiter(30, 30 / 60_000);
+
   return {
     async checkTweets(tweetIds: string[]) {
       const results = new Map<string, boolean>();
@@ -18,9 +18,9 @@ export function createOEmbedDeletionChecker(): DeletionChecker {
         const url = `${OEMBED_BASE}https://x.com/i/web/status/${tweetId}`;
 
         try {
-          const response = await fetch(url, {
-            signal: AbortSignal.timeout(8000),
-          });
+          const response = await withBackoff(() =>
+            fetch(url, { signal: AbortSignal.timeout(8000) })
+          );
 
           if (response.status === 404) {
             results.set(tweetId, false);
