@@ -155,16 +155,45 @@ async function detectVpn(): Promise<{ active: boolean; method: string } | null> 
 }
 
 /**
- * Ensure Chrome is running with CDP on the given URL.
- * If not reachable, auto-launches Windows Chrome from WSL with the right flags.
- * Returns true if Chrome was already running, false if it was launched.
+ * In WSL2, Chrome binds to the Windows loopback (127.0.0.1) which is not the
+ * same as the WSL2 VM's localhost. Derive the Windows host IP from resolv.conf
+ * (the nameserver entry is always the WSL2 gateway = Windows host).
  */
-async function ensureCdpChrome(cdpUrl: string): Promise<boolean> {
-  // Check if already reachable with CDP
+function getWindowsHostCdpUrl(cdpUrl: string): string | null {
   try {
-    const res = await fetch(`${cdpUrl}/json/version`, { signal: AbortSignal.timeout(2000) });
-    if (res.ok) return true;
-  } catch { /* not running with CDP */ }
+    const resolv = fs.readFileSync("/etc/resolv.conf", "utf8");
+    const match = resolv.match(/nameserver\s+(\d+\.\d+\.\d+\.\d+)/);
+    if (!match) return null;
+    const port = new URL(cdpUrl).port || "9222";
+    return `http://${match[1]}:${port}`;
+  } catch {
+    return null;
+  }
+}
+
+async function probeCdp(url: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${url}/json/version`, { signal: AbortSignal.timeout(2000) });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Ensure Chrome is running with CDP.
+ * Returns the reachable CDP URL (may differ from cdpUrl in WSL2 due to host routing).
+ * Launches Chrome automatically if it's not running.
+ */
+async function ensureCdpChrome(cdpUrl: string): Promise<{ url: string; launched: boolean }> {
+  const windowsHostUrl = getWindowsHostCdpUrl(cdpUrl);
+
+  // Try localhost first, then Windows host IP (WSL2 routing fallback)
+  if (await probeCdp(cdpUrl)) return { url: cdpUrl, launched: false };
+  if (windowsHostUrl && await probeCdp(windowsHostUrl)) {
+    console.log(`[browser-ingest] Reached Chrome via Windows host IP (${windowsHostUrl})`);
+    return { url: windowsHostUrl, launched: false };
+  }
 
   // Check if Chrome is already running WITHOUT CDP (WSL → Windows process list)
   try {
@@ -180,7 +209,6 @@ async function ensureCdpChrome(cdpUrl: string): Promise<boolean> {
       );
     }
   } catch (e) {
-    // Re-throw our own errors; swallow tasklist errors (non-WSL env)
     if ((e as Error).message.includes("Close all Chrome")) throw e;
   }
 
@@ -207,18 +235,23 @@ async function ensureCdpChrome(cdpUrl: string): Promise<boolean> {
   ], { detached: true, stdio: "ignore" });
   child.unref();
 
-  // Poll until Chrome is ready (up to 15s)
+  // Poll both URLs until Chrome is ready (up to 15s)
   for (let i = 0; i < 15; i++) {
     await new Promise((r) => setTimeout(r, 1000));
-    try {
-      const res = await fetch(`${cdpUrl}/json/version`, { signal: AbortSignal.timeout(1000) });
-      if (res.ok) {
-        console.log("[browser-ingest] Chrome is ready.");
-        return false;
-      }
-    } catch { /* still starting */ }
+    if (await probeCdp(cdpUrl)) {
+      console.log("[browser-ingest] Chrome is ready.");
+      return { url: cdpUrl, launched: true };
+    }
+    if (windowsHostUrl && await probeCdp(windowsHostUrl)) {
+      console.log(`[browser-ingest] Chrome is ready (via Windows host IP: ${windowsHostUrl})`);
+      return { url: windowsHostUrl, launched: true };
+    }
   }
-  throw new Error("Chrome launched but CDP not reachable after 15s — is port 9222 blocked by Windows Firewall?");
+  throw new Error(
+    `Chrome launched but CDP not reachable after 15s.\n` +
+    `  Tried: ${cdpUrl}${windowsHostUrl ? ` and ${windowsHostUrl}` : ""}\n` +
+    `  Check: is port 9222 blocked by Windows Firewall?`
+  );
 }
 
 /** Pause and wait for the user to press Enter before continuing. */
@@ -677,12 +710,14 @@ async function main() {
   }
 
   console.log();
+  let activeCdpUrl = CDP_URL;
   if (USE_CDP) {
-    const alreadyRunning = await ensureCdpChrome(CDP_URL);
-    if (alreadyRunning) {
-      console.log(`  Chrome (CDP) : already running at ${CDP_URL}`);
+    const { url, launched } = await ensureCdpChrome(CDP_URL);
+    activeCdpUrl = url;
+    if (!launched) {
+      console.log(`  Chrome (CDP) : already running at ${activeCdpUrl}`);
     } else {
-      console.log(`  Chrome (CDP) : launched at ${CDP_URL}`);
+      console.log(`  Chrome (CDP) : launched at ${activeCdpUrl}`);
     }
     console.log();
   } else {
@@ -697,7 +732,7 @@ async function main() {
 
   if (USE_CDP) {
     // Connect to an already-running Chrome via CDP (e.g. Windows Chrome from WSL)
-    const cdpBrowser = await chromium.connectOverCDP(CDP_URL);
+    const cdpBrowser = await chromium.connectOverCDP(activeCdpUrl);
     const contexts = cdpBrowser.contexts();
     browser = contexts[0] ?? await cdpBrowser.newContext();
     const pages = browser.pages();
