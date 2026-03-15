@@ -50,7 +50,7 @@ import { eq } from "drizzle-orm";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
-import { execSync } from "node:child_process";
+import { execSync, spawn } from "node:child_process";
 import * as readline from "node:readline";
 
 // ---------------------------------------------------------------------------
@@ -152,6 +152,55 @@ async function detectVpn(): Promise<{ active: boolean; method: string } | null> 
   } catch {
     return null; // Can't determine
   }
+}
+
+/**
+ * Ensure Chrome is running with CDP on the given URL.
+ * If not reachable, auto-launches Windows Chrome from WSL with the right flags.
+ * Returns true if Chrome was already running, false if it was launched.
+ */
+async function ensureCdpChrome(cdpUrl: string): Promise<boolean> {
+  // Check if already reachable
+  try {
+    const res = await fetch(`${cdpUrl}/json/version`, { signal: AbortSignal.timeout(2000) });
+    if (res.ok) return true;
+  } catch { /* not running yet */ }
+
+  // Try known Windows Chrome paths
+  const chromePaths = [
+    "/mnt/c/Program Files/Google/Chrome/Application/chrome.exe",
+    "/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe",
+  ];
+  const chromePath = chromePaths.find((p) => fs.existsSync(p));
+
+  if (!chromePath) {
+    throw new Error(
+      "Chrome not found at standard paths and CDP is not reachable.\n" +
+      "Launch manually: chrome.exe --remote-debugging-port=9222 --user-data-dir=\"C:\\\\signal-archive-chrome\""
+    );
+  }
+
+  console.log(`[browser-ingest] CDP not reachable — launching Chrome…`);
+  const child = spawn(chromePath, [
+    "--remote-debugging-port=9222",
+    "--user-data-dir=C:\\signal-archive-chrome",
+    "--no-first-run",
+    "--no-default-browser-check",
+  ], { detached: true, stdio: "ignore" });
+  child.unref();
+
+  // Poll until Chrome is ready (up to 15s)
+  for (let i = 0; i < 15; i++) {
+    await new Promise((r) => setTimeout(r, 1000));
+    try {
+      const res = await fetch(`${cdpUrl}/json/version`, { signal: AbortSignal.timeout(1000) });
+      if (res.ok) {
+        console.log("[browser-ingest] Chrome is ready.");
+        return false;
+      }
+    } catch { /* still starting */ }
+  }
+  throw new Error("Chrome launched but CDP not reachable after 15s — check if another Chrome instance is already running without CDP.");
 }
 
 /** Pause and wait for the user to press Enter before continuing. */
@@ -611,10 +660,16 @@ async function main() {
 
   console.log();
   if (USE_CDP) {
-    console.log("  Make sure Chrome is running with --remote-debugging-port=9222");
-    console.log("  then press Enter to connect.");
+    const alreadyRunning = await ensureCdpChrome(CDP_URL);
+    if (alreadyRunning) {
+      console.log(`  Chrome (CDP) : already running at ${CDP_URL}`);
+    } else {
+      console.log(`  Chrome (CDP) : launched at ${CDP_URL}`);
+    }
+    console.log();
+  } else {
+    await waitForEnter("  Press Enter when ready to start… ");
   }
-  await waitForEnter("  Press Enter when ready to start… ");
   console.log();
 
   let browser: import("playwright").BrowserContext;
