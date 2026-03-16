@@ -10,7 +10,7 @@ export const workerEnvSchema = baseSchema.extend({
   HEDERA_OPERATOR_KEY: z.string().min(1),
   HEDERA_NETWORK: z.enum(["testnet", "mainnet"]).default("testnet"),
   HEDERA_TOPIC_ID: z.string().min(1),
-  SOCIALDATA_API_KEY: z.string().min(1),
+  SOCIALDATA_API_KEY: z.string().min(1).optional(),
   STAGEHAND_ENV: z.enum(["LOCAL", "BROWSERBASE"]).default("LOCAL"),
   BROWSERBASE_API_KEY: z.string().optional(),
   BROWSERBASE_PROJECT_ID: z.string().optional(),
