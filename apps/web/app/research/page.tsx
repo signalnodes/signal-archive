@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { IconExternalLink } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useWallet } from "@/lib/wallet/context";
@@ -75,7 +75,7 @@ function WalletWatchTable({ wallets }: { wallets: TrackedWallet[] }) {
                     className="flex items-center gap-1 font-mono text-xs hover:underline"
                   >
                     {w.address.slice(0, 12)}…{w.address.slice(-6)}
-                    <ExternalLink className="size-3 shrink-0" />
+                    <IconExternalLink size={12} className="shrink-0" />
                   </a>
                 ) : (
                   <span className="font-mono text-xs text-muted-foreground">

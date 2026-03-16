@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { IconMenu2, IconX } from "@tabler/icons-react";
 import { WalletButton } from "@/components/wallet-button";
 import { useWallet } from "@/lib/wallet/context";
 
@@ -49,7 +49,7 @@ export function HeaderNav() {
         aria-label={open ? "Close menu" : "Open menu"}
         aria-expanded={open}
       >
-        {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        {open ? <IconX size={20} /> : <IconMenu2 size={20} />}
       </button>
 
       {/* Mobile dropdown */}

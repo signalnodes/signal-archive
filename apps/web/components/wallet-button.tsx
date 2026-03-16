@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Wallet, LogOut, ChevronDown, FlaskConical } from "lucide-react";
+import { IconWallet, IconLogout, IconChevronDown, IconFlask } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/lib/wallet/context";
 import { SupporterBadge } from "@/components/supporter-badge";
@@ -37,7 +37,7 @@ export function WalletButton() {
         onClick={connect}
         disabled={isConnecting}
       >
-        <Wallet className="size-4" />
+        <IconWallet size={16} />
         {isConnecting ? "Connecting..." : "Connect Wallet"}
       </Button>
     );
@@ -52,7 +52,7 @@ export function WalletButton() {
       >
         {isSupporter && <SupporterBadge />}
         <span className="font-mono text-xs">{accountId}</span>
-        <ChevronDown className="size-3" />
+        <IconChevronDown size={12} />
       </Button>
 
       {dropdownOpen && (
@@ -63,7 +63,7 @@ export function WalletButton() {
               className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               onClick={() => setDropdownOpen(false)}
             >
-              <FlaskConical className="size-4" />
+              <IconFlask size={16} />
               Research
             </Link>
           )}
@@ -74,7 +74,7 @@ export function WalletButton() {
               await disconnect();
             }}
           >
-            <LogOut className="size-4" />
+            <IconLogout size={16} />
             Disconnect
           </button>
         </div>

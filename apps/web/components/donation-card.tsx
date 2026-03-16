@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { ExternalLink, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { IconExternalLink, IconCircleCheck, IconAlertCircle, IconLoader2 } from "@tabler/icons-react";
 import {
   Card,
   CardHeader,
@@ -126,7 +126,7 @@ export function DonationCard() {
     return (
       <Card>
         <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
-          <CheckCircle className="size-10 text-emerald-400" />
+          <IconCircleCheck size={40} className="text-emerald-400" />
           <div>
             <p className="font-semibold text-lg">Thank you for supporting the Archive.</p>
             <p className="text-sm text-muted-foreground mt-1">
@@ -159,7 +159,7 @@ export function DonationCard() {
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              View on HashScan <ExternalLink className="size-3" />
+              View on HashScan <IconExternalLink size={12} />
             </a>
           )}
           <Button
@@ -251,7 +251,7 @@ export function DonationCard() {
         {/* Error */}
         {flowState === "error" && (
           <div className="flex items-center gap-2 text-destructive text-sm">
-            <AlertCircle className="size-4 shrink-0" />
+            <IconAlertCircle size={16} className="shrink-0" />
             <span>{errorMsg || "Something went wrong. Please try again."}</span>
           </div>
         )}
@@ -263,7 +263,7 @@ export function DonationCard() {
           onClick={handleDonate}
           disabled={isBusy || (!effectiveAmount && !!accountId)}
         >
-          {isBusy && <Loader2 className="size-4 animate-spin" />}
+          {isBusy && <IconLoader2 size={16} className="animate-spin" />}
           {ctaLabel}
         </Button>
 
@@ -275,7 +275,7 @@ export function DonationCard() {
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             Donations go to {DONATION_ACCOUNT_ID}
-            <ExternalLink className="size-3" />
+            <IconExternalLink size={12} />
           </a>
         )}
       </CardFooter>

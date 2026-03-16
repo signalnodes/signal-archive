@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart } from "lucide-react";
+import { IconHeart } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +12,7 @@ export function SupporterBadge({ className }: { className?: string }) {
         className,
       )}
     >
-      <Heart className="size-2.5 fill-emerald-400 text-emerald-400" />
+      <IconHeart size={10} className="fill-emerald-400 text-emerald-400" />
       Supporter
     </Badge>
   );

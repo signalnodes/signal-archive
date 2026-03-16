@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { IconSearch } from "@tabler/icons-react";
 import { count, eq } from "drizzle-orm";
 import { getDb, trackedAccounts } from "@taa/db";
 import { LiveIndicator } from "@/components/live-indicator";
@@ -27,7 +27,7 @@ export async function SiteHeader() {
 
         <form method="GET" action="/search" className="shrink-0 hidden sm:block">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+            <IconSearch size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               name="q"
               type="text"

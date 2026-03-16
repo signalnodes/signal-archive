@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { Heart } from "lucide-react";
+import { IconHeart } from "@tabler/icons-react";
 
 export const metadata: Metadata = {
   title: "About",
@@ -248,7 +248,7 @@ export default function AboutPage() {
           href="/donate"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
         >
-          <Heart className="size-4" />
+          <IconHeart size={16} />
           Donate to Signal Archive
         </Link>
       </section>
