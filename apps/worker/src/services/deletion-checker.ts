@@ -1,8 +1,13 @@
 import { z } from "zod";
 import { seededRandom } from "@taa/shared";
 
+export interface TweetRef {
+  tweetId: string;
+  username: string;
+}
+
 export interface DeletionChecker {
-  checkTweets(tweetIds: string[]): Promise<Map<string, boolean>>;
+  checkTweets(tweets: TweetRef[]): Promise<Map<string, boolean>>;
 }
 
 const TweetStatusSchema = z.object({
@@ -11,11 +16,11 @@ const TweetStatusSchema = z.object({
 
 function createMockDeletionChecker(): DeletionChecker {
   return {
-    async checkTweets(tweetIds: string[]) {
+    async checkTweets(tweets: TweetRef[]) {
       const results = new Map<string, boolean>();
       const rng = seededRandom(`deletion-${Date.now()}`);
 
-      for (const tweetId of tweetIds) {
+      for (const { tweetId } of tweets) {
         // ~15% chance of being detected as deleted
         const stillExists = rng() > 0.15;
         results.set(tweetId, stillExists);
@@ -23,7 +28,7 @@ function createMockDeletionChecker(): DeletionChecker {
 
       const deletedCount = [...results.values()].filter((v) => !v).length;
       console.log(
-        `[mock-deletion-checker] Checked ${tweetIds.length} tweets, ${deletedCount} marked as deleted`
+        `[mock-deletion-checker] Checked ${tweets.length} tweets, ${deletedCount} marked as deleted`
       );
 
       return results;

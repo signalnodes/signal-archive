@@ -1,4 +1,4 @@
-import type { DeletionChecker } from "./deletion-checker";
+import type { DeletionChecker, TweetRef } from "./deletion-checker";
 import { socialDataLimiter, withBackoff } from "./rate-limiter";
 
 const BASE_URL = "https://api.socialdata.tools";
@@ -12,10 +12,10 @@ export function createSocialDataDeletionChecker(): DeletionChecker {
   }
 
   return {
-    async checkTweets(tweetIds: string[]) {
+    async checkTweets(tweets: TweetRef[]) {
       const results = new Map<string, boolean>();
 
-      for (const tweetId of tweetIds) {
+      for (const { tweetId } of tweets) {
         await socialDataLimiter.acquire();
 
         try {
@@ -55,7 +55,7 @@ export function createSocialDataDeletionChecker(): DeletionChecker {
       const deletedCount = [...results.values()].filter((v) => !v).length;
       if (deletedCount > 0) {
         console.log(
-          `[socialdata-deletion] Checked ${tweetIds.length} tweets, ${deletedCount} detected as deleted`,
+          `[socialdata-deletion] Checked ${tweets.length} tweets, ${deletedCount} detected as deleted`,
         );
       }
 

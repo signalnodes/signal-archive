@@ -107,8 +107,25 @@ async function processDeletionCheck(
     return;
   }
 
-  const tweetIds = tweetsToCheck.map((t) => t.tweetId);
-  const statusMap = await checker.checkTweets(tweetIds);
+  const tweetRefs = tweetsToCheck.map((t) => ({
+    tweetId: t.tweetId,
+    username: t.username ?? "unknown",
+  }));
+  const statusMap = await checker.checkTweets(tweetRefs);
+
+  // Sanity guard: if >50% of batch shows as deleted, something is wrong with the
+  // checker (e.g. oEmbed URL format broken, rate-limited, network issue). Abort
+  // the cycle rather than recording hundreds of false positive deletions on HCS.
+  const rawDeletedCount = [...statusMap.values()].filter((v) => !v).length;
+  if (rawDeletedCount > tweetsToCheck.length * 0.5) {
+    console.error(
+      `[deletion-check] Cycle ${cycleCount}: SANITY CHECK FAILED — ` +
+      `${rawDeletedCount}/${tweetsToCheck.length} tweets flagged as deleted (>50%). ` +
+      `Aborting cycle to avoid false positive HCS attestations. Check oEmbed connectivity.`
+    );
+    await connection.set(CYCLE_COUNT_KEY, String(cycleCount + 1));
+    return;
+  }
 
   let deletionCount = 0;
   const affectedAccountIds = new Set<string>();

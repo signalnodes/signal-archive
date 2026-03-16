@@ -1,4 +1,4 @@
-import type { DeletionChecker } from "./deletion-checker";
+import type { DeletionChecker, TweetRef } from "./deletion-checker";
 import { RateLimiter, withBackoff } from "./rate-limiter";
 
 const OEMBED_BASE = "https://publish.twitter.com/oembed?url=";
@@ -9,13 +9,14 @@ export function createOEmbedDeletionChecker(): DeletionChecker {
   const oEmbedLimiter = new RateLimiter(30, 30 / 60_000);
 
   return {
-    async checkTweets(tweetIds: string[]) {
+    async checkTweets(tweets: TweetRef[]) {
       const results = new Map<string, boolean>();
 
-      for (const tweetId of tweetIds) {
+      for (const { tweetId, username } of tweets) {
         await oEmbedLimiter.acquire();
 
-        const url = `${OEMBED_BASE}https://x.com/i/web/status/${tweetId}`;
+        // Use canonical username-based URL — /i/web/status/ returns 404 for existing tweets
+        const url = `${OEMBED_BASE}https://x.com/${username}/status/${tweetId}`;
 
         try {
           const response = await withBackoff(() =>
@@ -44,7 +45,7 @@ export function createOEmbedDeletionChecker(): DeletionChecker {
       const deletedCount = [...results.values()].filter((v) => !v).length;
       if (deletedCount > 0) {
         console.log(
-          `[oembed-deletion] Checked ${tweetIds.length} tweets, ${deletedCount} detected as deleted`
+          `[oembed-deletion] Checked ${tweets.length} tweets, ${deletedCount} detected as deleted`
         );
       }
 
