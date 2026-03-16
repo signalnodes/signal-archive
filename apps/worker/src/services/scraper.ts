@@ -78,7 +78,13 @@ export function createProvider(): TweetProvider {
     return createSocialDataProvider();
   }
 
-  throw new Error("SOCIALDATA_API_KEY is required. For local backfill use scripts/browser-ingest.ts instead.");
+  // No API key — return a no-op provider. Ingestion is handled locally via browser-ingest.ts.
+  console.log("[scraper] No SOCIALDATA_API_KEY — ingestion worker will be a no-op (use browser-ingest.ts locally)");
+  return {
+    async fetchTweets() {
+      return [];
+    },
+  };
 }
 
 // Re-export schema and types used by socialdata-provider
