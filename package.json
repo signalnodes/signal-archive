@@ -18,11 +18,13 @@
   },
   "packageManager": "npm@11.6.2",
   "devDependencies": {
+    "@types/node-cron": "^3.0.11",
     "playwright": "^1.58.2",
     "turbo": "^2.4.0",
     "typescript": "^5.7.0"
   },
   "dependencies": {
-    "@hiero-ledger/proto": "^2.25.0"
+    "@hiero-ledger/proto": "^2.25.0",
+    "node-cron": "^4.2.1"
   }
 }
