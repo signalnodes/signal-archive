@@ -30,7 +30,7 @@ console.log(`[worker] ${workers.length} workers registered`);
 
 for (const worker of workers) {
   worker.on("failed", (job, err) => {
-    console.error(`[worker] job failed — queue=${worker.name} id=${job?.id} err=${err?.message}`);
+    console.error(`[worker] job failed — queue=${worker.name} id=${job?.id} data=${JSON.stringify(job?.data)} err=${err?.message}`);
   });
 }
 
