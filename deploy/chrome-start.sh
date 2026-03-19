@@ -19,7 +19,7 @@ CHROME_PID=$!
 echo "[chrome-start] Chrome PID=$CHROME_PID, waiting for CDP..."
 sleep 4
 
-node /app/deploy/chrome-proxy.js &
+node /app/deploy/chrome-proxy.cjs &
 echo "[chrome-start] CDP proxy started on :9223"
 
 wait $CHROME_PID
