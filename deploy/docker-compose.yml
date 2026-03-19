@@ -57,8 +57,8 @@ services:
       --proxy-server=${SOCKS5_PROXY_URL}
     volumes:
       - chrome-profile:/data/chrome-profile
-    expose:
-      - "9222"
+    ports:
+      - "9222:9222"
     logging:
       driver: json-file
       options:
