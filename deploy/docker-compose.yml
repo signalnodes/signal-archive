@@ -2,7 +2,7 @@
 #
 # Services:
 #   redis   — BullMQ state store (replaces Railway Redis)
-#   chrome  — Headless Google Chrome, CDP on :9222 (scraping target)
+#   chrome  — Headless Google Chrome, CDP on :9223 via chrome-proxy.cjs
 #   worker  — BullMQ workers: deletion detection, HCS attestation, severity scoring
 #   ingest  — node-cron daemon: schedules browser-ingest.ts --cdp on tier schedule
 #
@@ -17,8 +17,6 @@
 #   The chrome-profile volume is mounted to /data/chrome-profile in the chrome service.
 #   Session cookies and login state survive container restarts.
 #   One-time login required on first deploy (see docs/plans/2026-03-17-vps-migration.md Task 9).
-
-version: "3.9"
 
 services:
 
@@ -58,7 +56,7 @@ services:
   # ── Worker (BullMQ) ────────────────────────────────────────────────────────
   # Processes: deletion detection, HCS attestation submission, severity scoring.
   # Connects to Neon Postgres (DATABASE_URL) and VPS Redis (REDIS_URL).
-  # Do NOT start until Railway worker is confirmed stopped (prevents duplicate consumers).
+  # Railway worker has been deleted — VPS worker is the sole consumer.
   worker:
     build:
       context: ..
@@ -75,7 +73,7 @@ services:
 
   # ── Ingest (cron daemon) ───────────────────────────────────────────────────
   # Schedules browser-ingest.ts --cdp on a tier-based cron.
-  # Connects to chrome container via CDP_URL=http://chrome:9222.
+  # Connects to chrome container via CDP_URL=http://chrome:9223.
   ingest:
     build:
       context: ..

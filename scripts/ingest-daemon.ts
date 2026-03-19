@@ -14,7 +14,7 @@
  *
  * Env vars:
  *   CDP_URL   — Chrome CDP endpoint (default: http://localhost:9222)
- *               In Docker: http://chrome:9222
+ *               In Docker: http://chrome:9223 (via chrome-proxy.cjs)
  */
 
 import cron from "node-cron";
@@ -29,6 +29,14 @@ const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, "..");
 const SCRIPT = path.join(ROOT, "scripts", "browser-ingest.ts");
 const ENV_FILE = path.join(ROOT, ".env");
+
+// Rolling --since window: use ARCHIVE_SINCE env var, or default to 48h ago.
+// Prevents full-timeline scrapes on every cron cycle.
+function getSinceDate(): string {
+  if (process.env.ARCHIVE_SINCE) return process.env.ARCHIVE_SINCE;
+  const d = new Date(Date.now() - 48 * 60 * 60 * 1000);
+  return d.toISOString().slice(0, 10); // YYYY-MM-DD
+}
 
 const PRIORITY_LIST = path.join(ROOT, "accounts-priority.txt");
 const STANDARD_LIST = path.join(ROOT, "accounts-standard.txt");
@@ -59,9 +67,10 @@ function runIngest(listFile: string, label: string): Promise<void> {
     const started = new Date().toISOString();
     console.log(`[daemon] ${started} — starting ${label} (${path.basename(listFile)})`);
 
+    const since = getSinceDate();
     const child = spawn(
       "npx",
-      ["tsx", `--env-file=${ENV_FILE}`, SCRIPT, "--list", listFile, "--cdp", "--skip-vpn-check"],
+      ["tsx", `--env-file=${ENV_FILE}`, SCRIPT, "--list", listFile, "--cdp", "--skip-vpn-check", "--since", since],
       { cwd: ROOT, stdio: "inherit", env: process.env }
     );
 

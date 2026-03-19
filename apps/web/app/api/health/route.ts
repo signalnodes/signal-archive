@@ -133,12 +133,16 @@ async function checkRedisAndWorker(): Promise<RedisChecks> {
 // --- Route -------------------------------------------------------------------
 
 export async function GET() {
-  const [db, { ok: redis, worker, queues }] = await Promise.all([
+  const [db, redisResult] = await Promise.all([
     checkDb(),
     checkRedisAndWorker(),
   ]);
 
-  const ok = db && redis && worker.alive && queues.failed < FAILED_JOBS_THRESHOLD;
+  const { ok: redis, worker, queues } = redisResult;
+
+  // Redis/worker checks are best-effort — Railway web can't reach VPS Redis.
+  // DB health is the primary indicator; Redis degradation is informational only.
+  const ok = db && (!redis || (worker.alive && queues.failed < FAILED_JOBS_THRESHOLD));
 
   return NextResponse.json(
     {

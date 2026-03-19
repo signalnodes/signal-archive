@@ -3,7 +3,7 @@
 #
 # Google Chrome is included so the same image serves both:
 #   - ingest service: runs ingest-daemon.ts → spawns browser-ingest.ts --cdp
-#   - chrome service: runs Chrome headless with --remote-debugging-port=9222
+#   - chrome service: runs Chrome headless with CDP proxied on :9223 (chrome-proxy.cjs)
 #
 # Profile persistence: mount a volume to /data/chrome-profile in the chrome service.
 # Session cookies survive container restarts as long as the volume persists.
@@ -30,7 +30,6 @@ RUN apt-get update && apt-get install -y \
     libxdamage1 \
     libxrandr2 \
     xdg-utils \
-    socat \
     --no-install-recommends \
  && wget -q -O - https://dl.google.com/linux/linux_signing_key.pub \
     | gpg --dearmor > /usr/share/keyrings/google-chrome.gpg \
@@ -60,6 +59,8 @@ RUN npx playwright install chromium --with-deps
 # ── Source ────────────────────────────────────────────────────────────────────
 COPY . .
 
-# ── Default: run the ingest daemon ────────────────────────────────────────────
-# The chrome service overrides this CMD in docker-compose.yml
-CMD ["npx", "tsx", "scripts/ingest-daemon.ts"]
+# ── Default: generate tier lists then start the ingest daemon ────────────────
+# gen-accounts-list.ts queries the DB for tracked accounts and writes
+# accounts-priority.txt, accounts-standard.txt, accounts.txt.
+# The chrome service overrides this CMD in docker-compose.yml.
+CMD ["sh", "-c", "npx tsx --env-file=.env scripts/gen-accounts-list.ts && npx tsx scripts/ingest-daemon.ts"]
