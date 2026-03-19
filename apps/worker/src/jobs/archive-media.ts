@@ -9,8 +9,9 @@ export interface ArchiveMediaJobData {
 
 async function processMediaArchive(job: Job<ArchiveMediaJobData>) {
   const { tweetId, mediaUrls } = job.data;
-  console.log(`[archive-media] Archiving ${mediaUrls.length} media files for tweet ${tweetId}`);
+  console.warn(`[archive-media] Not yet implemented — skipping ${mediaUrls.length} media files for tweet ${tweetId}`);
   // TODO: implement media download + storage (Cloudflare R2 / S3)
+  // For now, log and return so the job completes without losing track of what was queued.
 }
 
 export function createMediaArchiveWorker() {

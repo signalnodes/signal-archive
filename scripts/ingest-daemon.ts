@@ -125,6 +125,18 @@ if (hasStandardList) {
 }
 console.log(`[daemon] next priority run at next :00 boundary`);
 
+// Run priority accounts once immediately on startup (after brief delay for Chrome to stabilize)
+setTimeout(async () => {
+  if (isRunningPriority) return;
+  console.log("[daemon] running initial priority ingest on startup");
+  isRunningPriority = true;
+  try {
+    await runIngest(priorityList, `${priorityLabel} (startup)`);
+  } finally {
+    isRunningPriority = false;
+  }
+}, 10_000);
+
 // ── Graceful shutdown ──────────────────────────────────────────────────────────
 function shutdown(signal: string) {
   console.log(`[daemon] ${signal} received — shutting down gracefully`);
