@@ -54,6 +54,7 @@ services:
       --remote-debugging-address=0.0.0.0
       --user-data-dir=/data/chrome-profile
       --disable-blink-features=AutomationControlled
+      --remote-allow-origins=*
       --proxy-server=${SOCKS5_PROXY_URL}
     volumes:
       - chrome-profile:/data/chrome-profile
