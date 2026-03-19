@@ -44,22 +44,11 @@ services:
       context: ..
       dockerfile: deploy/Dockerfile.ingest
     restart: on-failure
-    command: >
-      google-chrome-stable
-      --headless=new
-      --no-sandbox
-      --disable-gpu
-      --disable-dev-shm-usage
-      --remote-debugging-port=9222
-      --remote-debugging-address=0.0.0.0
-      --user-data-dir=/data/chrome-profile
-      --disable-blink-features=AutomationControlled
-      --remote-allow-origins=*
-      --proxy-server=${SOCKS5_PROXY_URL}
+    command: ["sh", "/app/deploy/chrome-start.sh"]
     volumes:
       - chrome-profile:/data/chrome-profile
-    ports:
-      - "9222:9222"
+    expose:
+      - "9223"
     logging:
       driver: json-file
       options:
