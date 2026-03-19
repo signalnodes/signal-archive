@@ -75,7 +75,7 @@ services:
       context: ..
       dockerfile: deploy/Dockerfile.worker
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     depends_on:
       - redis
     logging:
@@ -92,7 +92,7 @@ services:
       context: ..
       dockerfile: deploy/Dockerfile.ingest
     restart: on-failure
-    env_file: .env
+    env_file: ../.env
     depends_on:
       - chrome
       - redis
