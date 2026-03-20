@@ -9,7 +9,16 @@ import { DeletionPagination } from "@/components/deletion-pagination";
 import { CATEGORY_LABELS } from "@/lib/category";
 import type { AccountCategory } from "@taa/shared";
 
-export const metadata: Metadata = { title: "Deletion Feed" };
+export const metadata: Metadata = {
+  title: "Deletion Feed",
+  description:
+    "Live feed of deleted tweets from politicians and public figures, cryptographically attested on the Hedera Consensus Service.",
+  openGraph: {
+    title: "Deletion Feed - Signal Archive",
+    description:
+      "Live feed of deleted tweets from politicians and public figures, cryptographically attested on the Hedera Consensus Service.",
+  },
+};
 
 const PAGE_SIZE = 25;
 

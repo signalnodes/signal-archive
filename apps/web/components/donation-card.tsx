@@ -240,6 +240,7 @@ export function DonationCard() {
             type="number"
             min="0"
             step="any"
+            aria-label={`Custom ${asset.toUpperCase()} amount`}
             placeholder={asset === "usdc" ? "0.00 USD" : "0 HBAR"}
             value={customAmount}
             onChange={(e) => handleCustomChange(e.target.value)}

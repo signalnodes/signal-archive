@@ -5,7 +5,16 @@ import { and, count, eq } from "drizzle-orm";
 import { getDb, trackedAccounts, tweets, deletionEvents } from "@taa/db";
 import { AccountsGrid } from "@/components/accounts-grid";
 
-export const metadata: Metadata = { title: "Tracked Accounts" };
+export const metadata: Metadata = {
+  title: "Tracked Accounts",
+  description:
+    "40 politicians and public figures monitored by Signal Archive. Every tweet archived and attested on Hedera.",
+  openGraph: {
+    title: "Tracked Accounts - Signal Archive",
+    description:
+      "40 politicians and public figures monitored by Signal Archive. Every tweet archived and attested on Hedera.",
+  },
+};
 
 export default async function AccountsPage() {
   const db = getDb();

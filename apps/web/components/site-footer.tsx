@@ -33,6 +33,22 @@ export function SiteFooter() {
             .
           </p>
           <a
+            href="https://x.com/signalarchives"
+            className="underline underline-offset-2 hover:text-foreground transition-colors"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            X/Twitter
+          </a>
+          <a
+            href="https://github.com/signalnodes/signal-archive"
+            className="underline underline-offset-2 hover:text-foreground transition-colors"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GitHub
+          </a>
+          <a
             href="/rss.xml"
             className="underline underline-offset-2 hover:text-foreground transition-colors"
             title="RSS feed"

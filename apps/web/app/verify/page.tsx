@@ -1,7 +1,16 @@
 import type { Metadata } from "next";
 import { VerifyInput } from "@/components/verify-input";
 
-export const metadata: Metadata = { title: "Verify Hash" };
+export const metadata: Metadata = {
+  title: "Verify Hash",
+  description:
+    "Independently verify any archived tweet by checking its SHA-256 content hash against the Hedera Consensus Service.",
+  openGraph: {
+    title: "Verify Hash - Signal Archive",
+    description:
+      "Independently verify any archived tweet by checking its SHA-256 content hash against the Hedera Consensus Service.",
+  },
+};
 
 export default function VerifyPage() {
   return (
