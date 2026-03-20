@@ -76,7 +76,7 @@ export async function GET() {
       <link>${escapeXml(link)}</link>
       <guid isPermaLink="true">${escapeXml(link)}</guid>
       <pubDate>${rfc822(row.deletion.detectedAt)}</pubDate>
-      <description>${escapeXml(description)}</description>
+      <description>${description}</description>
       <author>noreply@signalarchive.org (@${escapeXml(username)})</author>
     </item>`;
     })

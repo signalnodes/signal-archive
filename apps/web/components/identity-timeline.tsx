@@ -54,12 +54,11 @@ export function IdentityTimeline({ account }: IdentityTimelineProps) {
         </dl>
       </div>
 
-      {/* Handle history — placeholder until tracking is live */}
+      {/* Handle history */}
       <div>
         <h3 className="text-sm font-medium mb-2">Handle history</h3>
         <p className="text-xs text-muted-foreground">
-          Handle history not yet available. Prospective tracking will log changes
-          going forward once enabled.
+          No handle changes recorded. Future changes will be logged automatically.
         </p>
       </div>
     </div>

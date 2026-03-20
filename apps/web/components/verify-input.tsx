@@ -17,7 +17,7 @@ export function VerifyInput({ defaultHash }: { defaultHash?: string }) {
     }
   }
 
-  const isValid = hash.trim().length === 64;
+  const isValid = /^[0-9a-fA-F]{64}$/.test(hash.trim());
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-2">

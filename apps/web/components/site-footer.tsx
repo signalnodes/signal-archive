@@ -13,7 +13,7 @@ export function SiteFooter() {
             About
           </Link>
           <Link
-            href="/donate"
+            href="/support"
             className="underline underline-offset-2 hover:text-foreground transition-colors"
           >
             Support

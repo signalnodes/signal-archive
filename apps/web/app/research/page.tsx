@@ -21,7 +21,7 @@ interface TrackedWallet {
 function GateNotConnected({ connect, isConnecting }: { connect: () => void; isConnecting: boolean }) {
   return (
     <div className="container mx-auto max-w-screen-sm px-4 py-20 text-center">
-      <h1 className="text-2xl font-bold mb-3">Research</h1>
+      <h2 className="text-2xl font-bold mb-3">Research</h2>
       <p className="text-muted-foreground mb-6">Connect your wallet to access Research.</p>
       <Button onClick={connect} disabled={isConnecting}>
         {isConnecting ? "Connecting…" : "Connect Wallet"}
@@ -33,7 +33,7 @@ function GateNotConnected({ connect, isConnecting }: { connect: () => void; isCo
 function GateNotSupporter() {
   return (
     <div className="container mx-auto max-w-screen-sm px-4 py-20 text-center">
-      <h1 className="text-2xl font-bold mb-3">Research</h1>
+      <h2 className="text-2xl font-bold mb-3">Research</h2>
       <p className="text-muted-foreground mb-6">
         Research is available to Signal Archive supporters.
       </p>
@@ -125,7 +125,7 @@ export default function ResearchPage() {
   return (
     <div className="container mx-auto max-w-screen-xl px-4 py-8">
       <h1 className="text-2xl font-bold mb-1">Research</h1>
-      <p className="text-muted-foreground mb-8">Supporter-only intelligence tools.</p>
+      <p className="text-muted-foreground mb-8">Wallet tracking and donor-only accounts for supporters.</p>
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
