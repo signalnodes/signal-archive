@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { RecentDeletionsFeed } from "@/components/recent-deletions-feed";
 import { DeletionFilters } from "@/components/deletion-filters";
 import type { DeletionRow } from "@/components/recent-deletions-feed";
 
-export const metadata: Metadata = { title: "Deletion Feed — Preview" };
+export const metadata: Metadata = { title: "Deletion Feed - Preview" };
 
 const FIXTURE_DELETIONS: DeletionRow[] = [
   {
@@ -199,6 +200,10 @@ const FIXTURE_CATEGORIES = [
 ];
 
 export default function DeletionsPreviewPage() {
+  if (process.env.NODE_ENV === "production") {
+    notFound();
+  }
+
   return (
     <div className="container mx-auto max-w-screen-xl px-4 py-8">
       <div className="mb-6 px-3 py-2 rounded border border-yellow-500/40 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 text-xs font-mono">

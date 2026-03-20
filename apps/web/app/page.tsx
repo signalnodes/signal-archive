@@ -100,7 +100,7 @@ export default async function HomePage() {
               {
                 step: "01",
                 title: "Capture",
-                body: "Our worker continuously monitors high-value accounts on X/Twitter. Every new tweet is archived to our database within minutes of posting — before anyone can delete it.",
+                body: "Our worker continuously monitors high-value accounts on X/Twitter. Every new tweet is archived to our database within the hour — before anyone can delete it.",
               },
               {
                 step: "02",

@@ -37,7 +37,7 @@ export default function AboutPage() {
             className="underline underline-offset-2 hover:text-foreground"
           >
             Hedera Consensus Service
-          </a>{" "}
+          </a>
           , a public, immutable ledger operated by a global network of independent nodes.
         </p>
         <p className="text-muted-foreground leading-relaxed">
@@ -54,7 +54,7 @@ export default function AboutPage() {
             {
               step: "1. Continuous monitoring",
               detail:
-                "We poll tracked accounts at regular intervals: every 30 minutes for high-priority accounts, every 2-6 hours for others. Each poll captures the full tweet text and metadata at time of capture.",
+                "We poll tracked accounts at regular intervals: every hour for high-priority accounts, every four hours for others. Each poll captures the full tweet text and metadata at time of capture.",
             },
             {
               step: "2. Cryptographic hashing",
@@ -192,8 +192,8 @@ export default function AboutPage() {
           </li>
           <li>
             <span className="text-foreground font-medium">Fast deletions.</span> Ingestion runs
-            every 30 minutes for priority accounts, every 2–6 hours for others. A tweet deleted
-            within minutes of posting may not be captured before it disappears.
+            every hour for priority accounts, every four hours for others. A tweet deleted
+            shortly after posting may not be captured before it disappears.
           </li>
           <li>
             <span className="text-foreground font-medium">90-day deletion window.</span> Tweets

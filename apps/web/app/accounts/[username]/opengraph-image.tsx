@@ -52,7 +52,7 @@ export default async function Image({
   const categoryLabel = CATEGORY_LABELS[category] ?? category;
   const archived = tweetCount[0]?.count ?? 0;
   const deletions = deletionCount[0]?.count ?? 0;
-  const hasDeleteions = deletions > 0;
+  const hasDeletions = deletions > 0;
 
   return new ImageResponse(
     (
@@ -158,7 +158,7 @@ export default async function Image({
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             <span
               style={{
-                color: hasDeleteions ? "#ef4444" : "#ffffff",
+                color: hasDeletions ? "#ef4444" : "#ffffff",
                 fontSize: "36px",
                 fontWeight: 700,
               }}
