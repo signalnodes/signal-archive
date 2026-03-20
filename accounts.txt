@@ -1,12 +1,14 @@
 # Signal Archive — browser-ingest account list
-# Generated: 2026-03-15T19:09:28.922Z
+# Generated: 2026-03-16T00:57:14.213Z
 # priority tier first, then standard, then low
 
 # --- priority ---
+AGPamBondi
 ChaseHerro
 DonaldJTrumpJr
 EricTrump
 IvankaTrump
+JDVance
 JaredKushner
 Kash_Patel
 LaraLeaTrump
@@ -26,11 +28,11 @@ worldlibertyfi
 # --- standard ---
 ChrisMurphyCT
 FBI
+GOPMajorityWhip
 POTUS
 PressSec
 RepMaxineWaters
 RepRoKhanna
-RepTomEmmer
 SECGov
 SenLummis
 SenTedCruz

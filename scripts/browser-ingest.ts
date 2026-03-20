@@ -77,13 +77,14 @@ const LOGIN_MODE = hasFlag("--login");
 const SKIP_VPN_CHECK = hasFlag("--skip-vpn-check");
 const USE_CDP = hasFlag("--cdp");
 const CDP_URL = process.env.CDP_URL ?? "http://localhost:9222";
+const MAX_EMPTY_SCROLLS_ARG = getArg("--max-empty-scrolls");
 
 const SINCE: Date | null = SINCE_RAW ? new Date(SINCE_RAW) : null;
 const PROFILE_DIR =
   process.env.BROWSER_PROFILE_DIR ??
   path.join(os.homedir(), ".signal-archive-browser");
 
-const MAX_EMPTY_SCROLLS = 3;  // Stop after this many scrolls with no new tweets
+const MAX_EMPTY_SCROLLS = MAX_EMPTY_SCROLLS_ARG ? parseInt(MAX_EMPTY_SCROLLS_ARG, 10) : 3;  // Stop after this many scrolls with no new tweets
 const MAX_SCROLLS = 200;      // Hard cap to prevent infinite loops
 const SCROLL_DELAY_MS = 3000; // Base delay between scrolls (jitter applied)
 // Account delay range: 50–220 seconds, random uniform distribution
