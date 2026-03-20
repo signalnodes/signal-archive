@@ -95,16 +95,16 @@ Live at **signalarchive.org** — Twitter **@signalarchives**
 | Hash Algorithm | **SHA-256** | Deterministic canonical JSON |
 
 ### Infrastructure (Live)
-| Component | Provider | Plan |
+| Component | Provider | Notes |
 |-----------|---------|------|
 | Web frontend | Railway | Hobby (~$5/mo) |
-| BullMQ worker | Railway | Hobby (~$5/mo) |
-| PostgreSQL | Neon | Free tier (pooled URL for web, direct for worker/migrations) |
-| Redis | Railway (internal) | Railway-managed Redis (`redis.railway.internal:6379`) |
+| Worker + Ingestion | Hetzner VPS | Docker Compose stack (worker, ingest, chrome, redis) |
+| PostgreSQL | Neon | Launch plan (pooled URL for web, direct for worker/migrations) |
+| Redis | VPS Docker | Local container, no external dependency |
 | Blockchain | Hedera Mainnet | Pay-per-use |
 | CDN / DNS | Cloudflare | Free |
 
-**Estimated monthly cost: ~$15-25** (Railway + Hedera fees; everything else free tier)
+**Estimated monthly cost: ~$15-25** (Railway + VPS + Hedera fees)
 
 ---
 
@@ -277,9 +277,8 @@ CREATE TABLE tracked_wallets (
 **Scheduling Tiers:**
 | Tier | Interval | Accounts |
 |------|----------|----------|
-| Priority | Every 30 minutes | Trump family, active controversy accounts |
-| Standard | Every 2 hours | General political, agency accounts |
-| Low | Every 6 hours | Lower-priority tracked accounts |
+| Priority | Every 1 hour | Trump family, active controversy accounts |
+| Standard | Every 4 hours | General political, agency accounts |
 
 **Canonical JSON for Hashing:**
 ```typescript
@@ -492,9 +491,8 @@ HCS messages are capped at **1 KB (1,024 bytes)** per submission. Current payloa
 **Ingestion queue priorities** (lower number = higher priority, set via `TIER_PRIORITIES`):
 | Tier | BullMQ Priority | Interval |
 |------|----------------|----------|
-| priority | 1 | 30 min (±5s per-execution jitter) |
-| standard | 5 | 2 hr (±5s per-execution jitter) |
-| low | 10 | 6 hr (±5s per-execution jitter) |
+| priority | 1 | 1 hr (±5s per-execution jitter) |
+| standard | 5 | 4 hr (±5s per-execution jitter) |
 
 > Jitter is applied at job execution time (random 0-5s delay), not at registration time, so repeatable job intervals remain stable across worker restarts.
 
@@ -563,12 +561,16 @@ signal-archive/
 
 ```
 Railway
-├── web service    (Next.js, npm run start -w apps/web)
-└── worker service (tsup CJS bundle, node dist/index.js)
+└── web service    (Next.js, npm run start -w apps/web)
+
+Hetzner VPS (/opt/signal-archive, Docker Compose)
+├── worker         (BullMQ consumers: deletion detection, HCS, severity scoring)
+├── ingest         (node-cron daemon: browser-ingest.ts --cdp on tier schedule)
+├── chrome         (Headless Chrome CDP target, SOCKS5 proxy for residential egress)
+└── redis          (VPS-local Redis for BullMQ state)
 
 External services:
 ├── Neon Postgres   (pooled URL for web, direct URL for worker + migrations)
-├── Railway Redis   (internal: redis.railway.internal:6379)
 ├── Hedera Mainnet  (HCS topics: 0.0.10301350 / 0.0.10307943 / 0.0.10310903)
 └── Cloudflare      (DNS, SSL proxy)
 ```

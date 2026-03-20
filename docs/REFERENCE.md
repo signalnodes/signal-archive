@@ -6,10 +6,10 @@ Structured lookup tables for agents and humans. See `docs/ARCHITECTURE.md` for d
 - **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS v4, shadcn/ui
 - **Backend**: TypeScript, Node.js
 - **Database**: PostgreSQL 16 (Neon in prod, Docker locally), Drizzle ORM
-- **Job queue**: BullMQ + Redis (Railway-managed in prod, Docker locally)
+- **Job queue**: BullMQ + Redis (VPS Docker in prod, Docker locally)
 - **Blockchain**: Hedera Consensus Service + NFT badges (@hashgraph/sdk)
-- **Tweet ingestion**: SocialData.tools API (optional, when `SOCIALDATA_API_KEY` set), Windows Chrome CDP scraping for manual backfill
-- **Deletion detection**: SocialData.tools API (primary, when key set) → oEmbed API (free fallback, no key needed)
+- **Tweet ingestion**: VPS headless Chrome via CDP (ingest-daemon.ts cron), SocialData.tools API (optional)
+- **Deletion detection**: SocialData.tools API (primary, when key set), oEmbed API (free fallback, no key needed)
 - **Worker health**: Better Stack heartbeat every 60s (`HEARTBEAT_URL` env var)
 
 ## Monorepo structure

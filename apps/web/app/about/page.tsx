@@ -245,7 +245,7 @@ export default function AboutPage() {
           Hedera network fees, infrastructure, and ongoing development.
         </p>
         <Link
-          href="/donate"
+          href="/support"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
         >
           <IconHeart size={16} />
