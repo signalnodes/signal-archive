@@ -6,7 +6,11 @@ import { getDb, tweets, trackedAccounts, hcsAttestations } from "@taa/db";
 import { VerifyInput } from "@/components/verify-input";
 import { VerifyResult } from "@/components/verify-result";
 
-export const metadata: Metadata = { title: "Verify Hash" };
+export const metadata: Metadata = {
+  title: "Verify Hash",
+  description:
+    "Verification result for a SHA-256 content hash against Signal Archive's Hedera HCS attestations.",
+};
 
 interface Props {
   params: Promise<{ hash: string }>;

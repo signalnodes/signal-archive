@@ -38,6 +38,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    site: "@signalarchives",
     title: "Signal Archive: Public Statements. Permanent Record.",
     description:
       "Monitoring public figures. Cryptographic proof of every tweet. Deletion is never the last word.",

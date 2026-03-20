@@ -68,10 +68,10 @@ describe("workerEnvSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects missing SOCIALDATA_API_KEY", () => {
+  it("allows optional SOCIALDATA_API_KEY", () => {
     const { SOCIALDATA_API_KEY, ...rest } = validWorkerEnv;
     const result = workerEnvSchema.safeParse(rest);
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("allows optional BROWSERBASE_API_KEY", () => {
