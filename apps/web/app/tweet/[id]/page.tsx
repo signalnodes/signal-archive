@@ -11,6 +11,7 @@ import { CategoryBadge } from "@/components/category-badge";
 import { Timestamp } from "@/components/timestamp";
 import { TweetMetaPanel } from "@/components/tweet-meta-panel";
 import { HcsProofPanel } from "@/components/hcs-proof-panel";
+import { MediaAttachment } from "@/components/media-attachment";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -122,22 +123,13 @@ export default async function TweetDetailPage({ params }: Props) {
             {tweet.content}
           </p>
           {tweet.mediaUrls && tweet.mediaUrls.length > 0 && (
-            <div className="mt-3 flex flex-col gap-1">
+            <div className="mt-3 flex flex-col gap-2">
               {tweet.mediaUrls.map((url, i) => (
-                <a
-                  key={i}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-muted-foreground hover:text-foreground hover:underline truncate"
-                  title={url}
-                >
-                  [media {i + 1}{tweet.mediaUrls!.length > 1 ? ` of ${tweet.mediaUrls!.length}` : ""}] {url}
-                </a>
+                <MediaAttachment key={i} url={url} index={i} />
               ))}
               {tweet.isDeleted && (
                 <p className="text-xs text-muted-foreground/50 italic">
-                  Media may be unavailable — original URLs recorded but not archived.
+                  Media URLs recorded at capture time — may become unavailable if CDN purges.
                 </p>
               )}
             </div>
