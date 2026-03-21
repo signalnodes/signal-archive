@@ -71,9 +71,13 @@ export function TweetMetaPanel({ tweet, deletion }: TweetMetaPanelProps) {
               <dd className="flex items-center gap-3">
                 <SeverityBadge score={deletion.severityScore} />
                 {deletion.categoryTags && deletion.categoryTags.filter(t => t !== "heuristic_scored").length > 0 && (
-                  <span className="text-xs text-muted-foreground">
-                    {deletion.categoryTags.filter(t => t !== "heuristic_scored").join(", ")}
-                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {deletion.categoryTags.filter(t => t !== "heuristic_scored").map(tag => (
+                      <span key={tag} className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-border bg-muted/40 text-muted-foreground">
+                        {tag.replace(/_/g, " ")}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </dd>
             </div>
