@@ -2,6 +2,12 @@ import Link from "next/link";
 import { absoluteDate, formatTweetAge } from "@/lib/format";
 import { CopyButton } from "@/components/copy-button";
 
+interface AiMeta {
+  reasoning?: string;
+  confidence?: number;
+  model?: string;
+}
+
 interface TweetMetaPanelProps {
   tweet: {
     tweetType: string;
@@ -13,6 +19,9 @@ interface TweetMetaPanelProps {
   deletion?: {
     detectedAt: Date;
     tweetAgeHours: string | null;
+    severityScore?: number | null;
+    categoryTags?: string[] | null;
+    metadata?: { ai?: AiMeta } | null;
   } | null;
 }
 
@@ -55,6 +64,31 @@ export function TweetMetaPanel({ tweet, deletion }: TweetMetaPanelProps) {
             <dt className="text-xs text-muted-foreground mb-0.5">Age at Deletion</dt>
             <dd>{formatTweetAge(deletion.tweetAgeHours)}</dd>
           </div>
+          {deletion.severityScore != null && (
+            <div className="col-span-2">
+              <dt className="text-xs text-muted-foreground mb-0.5">AI Severity Score</dt>
+              <dd className="font-mono text-xs">{deletion.severityScore}/10
+                {deletion.categoryTags && deletion.categoryTags.length > 0 && (
+                  <span className="text-muted-foreground ml-2">
+                    [{deletion.categoryTags.filter(t => t !== "heuristic_scored").join(", ")}]
+                  </span>
+                )}
+              </dd>
+            </div>
+          )}
+          {deletion.metadata?.ai?.reasoning && (
+            <div className="col-span-2" id="ai-analysis">
+              <dt className="text-xs text-muted-foreground mb-0.5">
+                AI Analysis
+                {deletion.metadata.ai.model && (
+                  <span className="ml-1 opacity-50">({deletion.metadata.ai.model})</span>
+                )}
+              </dt>
+              <dd className="text-xs leading-relaxed text-muted-foreground italic">
+                {deletion.metadata.ai.reasoning}
+              </dd>
+            </div>
+          )}
         </>
       )}
     </dl>

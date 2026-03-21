@@ -69,11 +69,9 @@ function DeletionCard({ row }: { row: DeletionRow }) {
               )}
               {account && <CategoryBadge category={account.category} />}
             </div>
-            {deletion.contentPreview && (
-              <p className="text-sm text-muted-foreground line-clamp-3 font-mono leading-relaxed border-l-2 border-muted pl-3 mb-3">
-                {deletion.contentPreview}
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground line-clamp-3 font-mono leading-relaxed border-l-2 border-muted pl-3 mb-3">
+              {deletion.contentPreview ?? <span className="italic opacity-50">Content not available</span>}
+            </p>
             <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
               <span>
                 Detected <Timestamp date={deletion.detectedAt} />
@@ -93,8 +91,10 @@ function DeletionCard({ row }: { row: DeletionRow }) {
               )}
             </div>
           </div>
-          {deletion.severityScore != null && (
-            <SeverityBadge score={deletion.severityScore} />
+          {deletion.severityScore != null && deletion.tweetId && (
+            <Link href={`/tweet/${deletion.tweetId}#ai-analysis`}>
+              <SeverityBadge score={deletion.severityScore} className="hover:opacity-80 transition-opacity cursor-pointer" />
+            </Link>
           )}
         </div>
       </CardContent>

@@ -7,13 +7,14 @@
  *   npx tsx --env-file=.env scripts/backfill-severity-scores.ts --heuristic-only
  *
  * Options:
- *   --dry-run         Score but don't write to DB (preview results)
- *   --heuristic-only  Use heuristic scorer only (no LLM calls)
- *   --limit N         Max deletions to score (default: all)
- *   --delay N         Delay between LLM calls in ms (default: 1000)
+ *   --dry-run           Score but don't write to DB (preview results)
+ *   --heuristic-only    Use heuristic scorer only (no LLM calls)
+ *   --rescore-heuristic Also rescore rows that were previously heuristic-scored
+ *   --limit N           Max deletions to score (default: all)
+ *   --delay N           Delay between LLM calls in ms (default: 1000)
  */
 
-import { eq, isNull, desc } from "drizzle-orm";
+import { eq, isNull, desc, sql, or } from "drizzle-orm";
 import { getDb, deletionEvents, tweets, trackedAccounts } from "@taa/db";
 import type { ScoringContext, ScoringResult } from "@taa/shared";
 
@@ -21,6 +22,7 @@ import type { ScoringContext, ScoringResult } from "@taa/shared";
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
 const HEURISTIC_ONLY = args.includes("--heuristic-only");
+const RESCORE_HEURISTIC = args.includes("--rescore-heuristic");
 const limitIdx = args.indexOf("--limit");
 const LIMIT = limitIdx >= 0 ? parseInt(args[limitIdx + 1], 10) : 0;
 const delayIdx = args.indexOf("--delay");
@@ -46,6 +48,7 @@ function sleep(ms: number): Promise<void> {
 async function main() {
   console.log("=== Backfill Severity Scores ===");
   console.log(`Mode: ${HEURISTIC_ONLY ? "heuristic-only" : "AI (with heuristic fallback)"}`);
+  console.log(`Target: ${RESCORE_HEURISTIC ? "NULL scores + heuristic-scored rows" : "NULL scores only"}`);
   console.log(`Dry run: ${DRY_RUN}`);
   if (LIMIT > 0) console.log(`Limit: ${LIMIT}`);
   console.log(`Delay between calls: ${DELAY_MS}ms`);
@@ -73,7 +76,14 @@ async function main() {
     .from(deletionEvents)
     .leftJoin(tweets, eq(deletionEvents.tweetId, tweets.id))
     .leftJoin(trackedAccounts, eq(deletionEvents.accountId, trackedAccounts.id))
-    .where(isNull(deletionEvents.severityScore))
+    .where(
+      RESCORE_HEURISTIC
+        ? or(
+            isNull(deletionEvents.severityScore),
+            sql`${deletionEvents.categoryTags} @> ARRAY['heuristic_scored']::text[]`
+          )
+        : isNull(deletionEvents.severityScore)
+    )
     .orderBy(desc(deletionEvents.detectedAt));
 
   const rows = LIMIT > 0 ? await query.limit(LIMIT) : await query;

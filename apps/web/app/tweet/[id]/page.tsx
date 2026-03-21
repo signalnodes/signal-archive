@@ -81,7 +81,7 @@ export default async function TweetDetailPage({ params }: Props) {
   const attestation = attestationRows[0] ?? null;
   const deletion = deletionRows[0] ?? null;
 
-  const network = process.env.HEDERA_NETWORK ?? "testnet";
+  const network = process.env.NEXT_PUBLIC_HEDERA_NETWORK ?? process.env.HEDERA_NETWORK ?? "mainnet";
   const isTestnet = network === "testnet";
 
   return (
@@ -150,7 +150,7 @@ export default async function TweetDetailPage({ params }: Props) {
         </div>
 
         {/* Metadata */}
-        <TweetMetaPanel tweet={tweet} deletion={deletion} />
+        <TweetMetaPanel tweet={tweet} deletion={deletion ? { ...deletion, metadata: deletion.metadata as { ai?: { reasoning?: string; confidence?: number; model?: string } } | null } : null} />
 
         <Separator className="my-6" />
 
