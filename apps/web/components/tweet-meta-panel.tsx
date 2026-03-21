@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { absoluteDate, formatTweetAge } from "@/lib/format";
 import { CopyButton } from "@/components/copy-button";
+import { SeverityBadge } from "@/components/severity-badge";
 
 interface AiMeta {
   reasoning?: string;
@@ -66,11 +67,12 @@ export function TweetMetaPanel({ tweet, deletion }: TweetMetaPanelProps) {
           </div>
           {deletion.severityScore != null && (
             <div className="col-span-2">
-              <dt className="text-xs text-muted-foreground mb-0.5">AI Severity Score</dt>
-              <dd className="font-mono text-xs">{deletion.severityScore}/10
-                {deletion.categoryTags && deletion.categoryTags.length > 0 && (
-                  <span className="text-muted-foreground ml-2">
-                    [{deletion.categoryTags.filter(t => t !== "heuristic_scored").join(", ")}]
+              <dt className="text-xs text-muted-foreground mb-1.5">AI Severity Score</dt>
+              <dd className="flex items-center gap-3">
+                <SeverityBadge score={deletion.severityScore} />
+                {deletion.categoryTags && deletion.categoryTags.filter(t => t !== "heuristic_scored").length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {deletion.categoryTags.filter(t => t !== "heuristic_scored").join(", ")}
                   </span>
                 )}
               </dd>
