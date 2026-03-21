@@ -35,14 +35,15 @@ export function SeverityBadge({ score, className }: SeverityBadgeProps) {
   return (
     <div
       className={cn(
-        "text-xs font-mono border rounded px-2 py-1 shrink-0 cursor-default select-none",
+        "text-xs border rounded px-2 py-1 shrink-0 cursor-default select-none text-center leading-tight",
         color,
         className
       )}
       title={`AI severity: ${score}/10, ${label} public interest significance`}
       aria-label={`Severity score ${score} out of 10, ${label}`}
     >
-      {score}/10
+      <div className="text-[10px] opacity-70 uppercase tracking-wide">severity</div>
+      <div className="font-mono">{score}/10</div>
     </div>
   );
 }
