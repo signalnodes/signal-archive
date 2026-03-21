@@ -2,12 +2,11 @@
 // merges in application layer. No SQL UNION. No offset pagination across streams.
 // IDENTITY_ONLY accounts skip tweet/deletion fetches entirely.
 import { NextResponse } from "next/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, and } from "drizzle-orm";
 import { getDb, tweets, deletionEvents, hcsAttestations, trackedAccounts } from "@taa/db";
 import {
   tweetToEvent,
   deletionToEvent,
-  attestationToEvent,
   mergeEvents,
 } from "@/lib/adapters/account";
 
@@ -37,7 +36,9 @@ export async function GET(
   const isFullArchive = trackingMode === "FULL_ARCHIVE";
 
   // Fetch streams in parallel. IDENTITY_ONLY accounts skip tweet/deletion fetches.
-  const [tweetRows, deletionRows, attestationRows] = await Promise.all([
+  // Tweets are LEFT JOINed with their HCS attestation so captured+attested collapse
+  // into one event per tweet, sorted by capturedAt (not consensusTimestamp).
+  const [tweetRows, deletionRows] = await Promise.all([
     isFullArchive
       ? db
           .select({
@@ -45,8 +46,18 @@ export async function GET(
             content: tweets.content,
             capturedAt: tweets.capturedAt,
             contentHash: tweets.contentHash,
+            attestationTopicId: hcsAttestations.topicId,
+            attestationTransactionId: hcsAttestations.transactionId,
+            attestationSequenceNumber: hcsAttestations.sequenceNumber,
           })
           .from(tweets)
+          .leftJoin(
+            hcsAttestations,
+            and(
+              eq(hcsAttestations.tweetId, tweets.id),
+              eq(hcsAttestations.messageType, "tweet_attestation")
+            )
+          )
           .where(eq(tweets.accountId, account.id))
           .orderBy(desc(tweets.capturedAt))
           .limit(STREAM_LIMIT)
@@ -64,28 +75,12 @@ export async function GET(
           .orderBy(desc(deletionEvents.detectedAt))
           .limit(STREAM_LIMIT)
       : Promise.resolve([]),
-    db
-      .select({
-        id: hcsAttestations.id,
-        tweetId: hcsAttestations.tweetId,
-        topicId: hcsAttestations.topicId,
-        transactionId: hcsAttestations.transactionId,
-        contentHash: hcsAttestations.contentHash,
-        sequenceNumber: hcsAttestations.sequenceNumber,
-        consensusTimestamp: hcsAttestations.consensusTimestamp,
-      })
-      .from(hcsAttestations)
-      .innerJoin(tweets, eq(hcsAttestations.tweetId, tweets.id))
-      .where(eq(tweets.accountId, account.id))
-      .orderBy(desc(hcsAttestations.consensusTimestamp))
-      .limit(STREAM_LIMIT),
   ]);
 
   const events = mergeEvents(
     [
       tweetRows.map(tweetToEvent),
       deletionRows.map(deletionToEvent),
-      attestationRows.map(attestationToEvent),
     ],
     20
   );

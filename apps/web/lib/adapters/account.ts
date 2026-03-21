@@ -116,6 +116,9 @@ interface TweetRow {
   content: string;
   capturedAt: Date;
   contentHash: string;
+  attestationTopicId?: string | null;
+  attestationTransactionId?: string | null;
+  attestationSequenceNumber?: number | null;
 }
 
 interface DeletionRow {
@@ -125,25 +128,20 @@ interface DeletionRow {
   detectedAt: Date;
 }
 
-interface AttestationRow {
-  id: string;
-  tweetId: string | null;
-  topicId: string;
-  transactionId: string;
-  contentHash: string;
-  sequenceNumber: number;
-  consensusTimestamp: Date;
-}
-
 export function tweetToEvent(tweet: TweetRow): EventUI {
   const preview = tweet.content.slice(0, 80);
+  const attested = !!tweet.attestationTransactionId;
   return {
     id: `tweet-${tweet.id}`,
-    type: "STATEMENT_CAPTURED",
+    type: attested ? "ATTESTED" : "STATEMENT_CAPTURED",
     timestamp: tweet.capturedAt.toISOString(),
-    summary: preview.length < tweet.content.length ? `${preview}…` : preview,
+    summary: attested
+      ? `${preview.length < tweet.content.length ? `${preview}…` : preview}`
+      : (preview.length < tweet.content.length ? `${preview}…` : preview),
     proof: {
       hash: tweet.contentHash,
+      topicId: tweet.attestationTopicId ?? undefined,
+      transactionId: tweet.attestationTransactionId ?? undefined,
       proofUrl: `/tweet/${tweet.id}`,
     },
   };
@@ -159,21 +157,6 @@ export function deletionToEvent(deletion: DeletionRow): EventUI {
     proof: deletion.tweetId
       ? { proofUrl: `/tweet/${deletion.tweetId}` }
       : undefined,
-  };
-}
-
-export function attestationToEvent(attestation: AttestationRow): EventUI {
-  return {
-    id: `attestation-${attestation.id}`,
-    type: "ATTESTED",
-    timestamp: attestation.consensusTimestamp.toISOString(),
-    summary: `Attested to Hedera — seq #${attestation.sequenceNumber ?? ""}`,
-    proof: {
-      hash: attestation.contentHash,
-      topicId: attestation.topicId,
-      transactionId: attestation.transactionId,
-      proofUrl: attestation.tweetId ? `/tweet/${attestation.tweetId}` : undefined,
-    },
   };
 }
 
