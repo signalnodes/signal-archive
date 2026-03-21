@@ -119,7 +119,7 @@ export default async function TweetDetailPage({ params }: Props) {
 
         {/* Tweet content */}
         <div className="border rounded-lg p-6 mb-6">
-          <p className="text-base leading-relaxed whitespace-pre-wrap break-words">
+          <p className="text-base leading-relaxed whitespace-pre-wrap break-words font-editorial">
             {tweet.content}
           </p>
           {tweet.mediaUrls && tweet.mediaUrls.length > 0 && (

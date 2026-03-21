@@ -46,7 +46,7 @@ export default async function HomePage() {
     <div className="container mx-auto max-w-screen-xl px-4 py-12">
       {/* Hero */}
       <section className="mb-12">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl max-w-3xl leading-tight">
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl max-w-3xl leading-[1.05] font-editorial">
           Deleted.
           <br />
           Documented.

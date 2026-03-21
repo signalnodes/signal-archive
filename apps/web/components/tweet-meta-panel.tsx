@@ -30,19 +30,19 @@ export function TweetMetaPanel({ tweet, deletion }: TweetMetaPanelProps) {
   return (
     <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
       <div>
-        <dt className="text-xs text-muted-foreground mb-0.5">Posted</dt>
+        <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Posted</dt>
         <dd className="font-mono text-xs">{absoluteDate(tweet.postedAt)}</dd>
       </div>
       <div>
-        <dt className="text-xs text-muted-foreground mb-0.5">Captured</dt>
+        <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Captured</dt>
         <dd className="font-mono text-xs">{absoluteDate(tweet.capturedAt)}</dd>
       </div>
       <div>
-        <dt className="text-xs text-muted-foreground mb-0.5">Type</dt>
+        <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Type</dt>
         <dd className="capitalize">{tweet.tweetType}</dd>
       </div>
       <div>
-        <dt className="text-xs text-muted-foreground mb-0.5">Content Hash</dt>
+        <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Content Hash</dt>
         <dd className="flex items-center gap-2 font-mono text-xs">
           <Link
             href={`/verify/${tweet.contentHash}`}
@@ -62,12 +62,12 @@ export function TweetMetaPanel({ tweet, deletion }: TweetMetaPanelProps) {
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground mb-0.5">Age at Deletion</dt>
+            <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Age at Deletion</dt>
             <dd>{formatTweetAge(deletion.tweetAgeHours)}</dd>
           </div>
           {deletion.severityScore != null && (
             <div className="col-span-2">
-              <dt className="text-xs text-muted-foreground mb-1.5">AI Severity Score</dt>
+              <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1.5">AI Severity Score</dt>
               <dd className="flex items-center gap-3">
                 <SeverityBadge score={deletion.severityScore} />
                 {deletion.categoryTags && deletion.categoryTags.filter(t => t !== "heuristic_scored").length > 0 && (
@@ -84,7 +84,7 @@ export function TweetMetaPanel({ tweet, deletion }: TweetMetaPanelProps) {
           )}
           {deletion.metadata?.ai?.reasoning && (
             <div className="col-span-2" id="ai-analysis">
-              <dt className="text-xs text-muted-foreground mb-0.5">
+              <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">
                 AI Analysis
                 {deletion.metadata.ai.model && (
                   <span className="ml-1 opacity-50">({deletion.metadata.ai.model})</span>

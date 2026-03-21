@@ -17,7 +17,7 @@ export function Timestamp({ date }: { date: Date | string }) {
     <time
       dateTime={new Date(date).toISOString()}
       title={abs}
-      className="text-muted-foreground text-sm"
+      className="text-muted-foreground text-sm font-mono"
     >
       {relative ?? abs}
     </time>

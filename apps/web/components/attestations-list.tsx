@@ -76,15 +76,15 @@ export function AttestationsList({ username }: AttestationsListProps) {
           <div key={a.id} className="py-4">
             <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
               <div>
-                <dt className="text-muted-foreground mb-0.5">Consensus Timestamp</dt>
+                <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Consensus Timestamp</dt>
                 <dd className="font-mono">{absoluteDate(new Date(a.consensusTimestamp))}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground mb-0.5">Sequence #</dt>
+                <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Sequence #</dt>
                 <dd className="font-mono">{a.sequenceNumber}</dd>
               </div>
               <div className="col-span-2">
-                <dt className="text-muted-foreground mb-0.5">Transaction ID</dt>
+                <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Transaction ID</dt>
                 <dd className="font-mono break-all">
                   <a
                     href={`https://hashscan.io/${NETWORK}/transaction/${a.transactionId}`}
@@ -97,7 +97,7 @@ export function AttestationsList({ username }: AttestationsListProps) {
                 </dd>
               </div>
               <div className="col-span-2">
-                <dt className="text-muted-foreground mb-0.5">Content Hash</dt>
+                <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Content Hash</dt>
                 <dd className="flex items-center gap-1.5 font-mono break-all">
                   <span className="text-muted-foreground">{a.contentHash.slice(0, 20)}…</span>
                   <CopyButton text={a.contentHash} />

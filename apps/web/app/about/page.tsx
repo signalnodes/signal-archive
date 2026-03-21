@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <div className="container mx-auto max-w-screen-md px-4 py-12">
-      <h1 className="text-3xl font-bold tracking-tight mb-3">About Signal Archive</h1>
+      <h1 className="text-3xl font-bold tracking-tight mb-3 font-editorial">About Signal Archive</h1>
       <p className="text-lg text-muted-foreground leading-relaxed mb-10">
         Public figures delete tweets. We make sure that deletion is never the last word.
       </p>
@@ -25,7 +25,7 @@ export default function AboutPage() {
       <Separator className="mb-10" />
 
       <section className="mb-10">
-        <h2 className="text-xl font-semibold mb-3">What this is</h2>
+        <h2 className="text-xl font-semibold mb-3 font-editorial">What this is</h2>
         <p className="text-muted-foreground leading-relaxed mb-4">
           Signal Archive continuously monitors the public statements of politicians, government
           officials, and figures of public interest. Every tweet we capture is cryptographically
@@ -48,7 +48,7 @@ export default function AboutPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="text-xl font-semibold mb-4">How it works</h2>
+        <h2 className="text-xl font-semibold mb-4 font-editorial">How it works</h2>
         <ol className="space-y-5">
           {[
             {
@@ -83,7 +83,7 @@ export default function AboutPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="text-xl font-semibold mb-3">How to verify a tweet yourself</h2>
+        <h2 className="text-xl font-semibold mb-3 font-editorial">How to verify a tweet yourself</h2>
         <p className="text-sm text-muted-foreground leading-relaxed mb-4">
           You don&apos;t have to trust us. Every attestation is independently verifiable:
         </p>
@@ -121,7 +121,7 @@ export default function AboutPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="text-xl font-semibold mb-3">Why Hedera</h2>
+        <h2 className="text-xl font-semibold mb-3 font-editorial">Why Hedera</h2>
         <p className="text-sm text-muted-foreground leading-relaxed mb-3">
           Hedera Consensus Service was chosen because it answers the hardest question about an
           archive like this: <em>what stops you from altering or suppressing the records?</em>
@@ -150,7 +150,7 @@ export default function AboutPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="text-xl font-semibold mb-3">Methodology & scope</h2>
+        <h2 className="text-xl font-semibold mb-3 font-editorial">Methodology & scope</h2>
         <p className="text-sm text-muted-foreground leading-relaxed mb-3">
           Phase 1 tracks approximately 40 accounts: Trump family members, affiliated crypto project
           accounts (World Liberty Financial, $TRUMP, $MELANIA), key political appointees, and select
@@ -181,7 +181,7 @@ export default function AboutPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="text-xl font-semibold mb-3">Coverage & limitations</h2>
+        <h2 className="text-xl font-semibold mb-3 font-editorial">Coverage & limitations</h2>
         <p className="text-sm text-muted-foreground leading-relaxed mb-3">
           No archive is perfect. Here is what Signal Archive does and does not capture:
         </p>
@@ -209,7 +209,7 @@ export default function AboutPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="text-xl font-semibold mb-3">Transparency</h2>
+        <h2 className="text-xl font-semibold mb-3 font-editorial">Transparency</h2>
         <p className="text-sm text-muted-foreground leading-relaxed mb-4">
           All attestations are submitted to a single public HCS topic on Hedera Mainnet. Anyone can
           read the full message history independently, no account or login required.
@@ -238,7 +238,7 @@ export default function AboutPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="text-xl font-semibold mb-3">Support this project</h2>
+        <h2 className="text-xl font-semibold mb-3 font-editorial">Support this project</h2>
         <p className="text-sm text-muted-foreground leading-relaxed mb-4">
           Signal Archive is independently built and funded. If you find it useful, you can
           support it directly with HBAR or USDC via your Hedera wallet. Donations go toward

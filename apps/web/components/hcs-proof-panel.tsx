@@ -44,12 +44,12 @@ export function HcsProofPanel({ attestation, contentHash, tweetId }: HcsProofPan
   return (
     <div className="rounded-lg border border-border bg-card p-6">
       <div className="flex items-center gap-2 mb-4">
-        <h2 className="font-semibold">Hedera Consensus Service Proof</h2>
+        <h2 className="font-semibold font-editorial">Hedera Consensus Service Proof</h2>
         <Badge className="bg-green-600 hover:bg-green-600 text-white text-xs">VERIFIED</Badge>
       </div>
       <dl className="space-y-3 text-sm">
         <div>
-          <dt className="text-xs text-muted-foreground mb-0.5">Transaction ID</dt>
+          <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Transaction ID</dt>
           <dd className="font-mono text-xs">
             <a
               href={explorerUrl}
@@ -62,19 +62,19 @@ export function HcsProofPanel({ attestation, contentHash, tweetId }: HcsProofPan
           </dd>
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground mb-0.5">Topic ID</dt>
+          <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Topic ID</dt>
           <dd className="font-mono text-xs">{attestation.topicId}</dd>
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground mb-0.5">Sequence Number</dt>
+          <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Sequence Number</dt>
           <dd className="font-mono text-xs">{String(attestation.sequenceNumber)}</dd>
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground mb-0.5">Consensus Timestamp</dt>
+          <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Consensus Timestamp</dt>
           <dd className="font-mono text-xs">{absoluteDate(attestation.consensusTimestamp)}</dd>
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground mb-0.5">Content Hash (SHA-256)</dt>
+          <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Content Hash (SHA-256)</dt>
           <dd className="flex items-start gap-2">
             <span className="font-mono text-xs break-all text-muted-foreground">{contentHash}</span>
             <CopyButton text={contentHash} />

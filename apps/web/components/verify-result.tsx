@@ -95,7 +95,7 @@ export function VerifyResult({ hash, tweet, account, attestation }: VerifyResult
             <Separator className="my-4" />
             <dl className="text-xs space-y-2">
               <div>
-                <dt className="text-muted-foreground">Hedera Transaction</dt>
+                <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-0.5">Hedera Transaction</dt>
                 <dd className="font-mono break-all">
                   <a
                     href={`https://hashscan.io/${process.env.NEXT_PUBLIC_HEDERA_NETWORK ?? "mainnet"}/transaction/${attestation.transactionId}`}
@@ -108,11 +108,11 @@ export function VerifyResult({ hash, tweet, account, attestation }: VerifyResult
                 </dd>
               </div>
               <div>
-                <dt className="text-muted-foreground">Consensus Timestamp</dt>
+                <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-0.5">Consensus Timestamp</dt>
                 <dd className="font-mono">{absoluteDate(attestation.consensusTimestamp)}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground">Sequence Number</dt>
+                <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-0.5">Sequence Number</dt>
                 <dd className="font-mono">{String(attestation.sequenceNumber)}</dd>
               </div>
             </dl>

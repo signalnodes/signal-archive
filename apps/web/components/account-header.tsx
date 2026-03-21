@@ -34,7 +34,7 @@ export function AccountHeader({ account, stats, trackingMode = "FULL_ARCHIVE" }:
         <div className="flex items-start gap-4">
           <AccountAvatar username={account.username} avatarUrl={account.avatarUrl} size="lg" />
           <div>
-            <h1 className="text-3xl font-bold">@{account.username}</h1>
+            <h1 className="text-3xl font-bold font-editorial tracking-tight">@{account.username}</h1>
             {account.displayName && (
               <p className="text-lg text-muted-foreground mt-1">{account.displayName}</p>
             )}
