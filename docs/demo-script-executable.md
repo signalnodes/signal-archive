@@ -25,10 +25,10 @@ Before starting the screen recorder:
 
 1. Navigate to `https://signalarchive.org`
 2. Wait 3 seconds for page to fully load
-3. Slowly scroll down to reveal the stats section and any recent deletions on the homepage
-4. Pause 3 seconds on the stats (let the numbers register)
-5. Continue scrolling slowly to the "How it works" section
-6. Pause 2 seconds
+3. Slowly scroll down to reveal the stats section and recent deletions on the homepage
+4. Pause 3 seconds on the stats (let the numbers register — archived tweets, deletions detected, accounts tracked)
+5. Continue scrolling slowly through the recent deletions feed
+6. Pause 2 seconds on a deletion card to let it register
 7. Scroll back to top
 
 ---

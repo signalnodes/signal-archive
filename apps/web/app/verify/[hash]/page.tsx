@@ -17,7 +17,8 @@ interface Props {
 }
 
 export default async function VerifyHashPage({ params }: Props) {
-  const { hash } = await params;
+  const { hash: rawHash } = await params;
+  const hash = rawHash.toLowerCase();
   const db = getDb();
 
   const [tweetRow] = await db

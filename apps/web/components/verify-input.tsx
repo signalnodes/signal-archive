@@ -18,6 +18,7 @@ export function VerifyInput({ defaultHash }: { defaultHash?: string }) {
   }
 
   const isValid = /^[0-9a-fA-F]{64}$/.test(hash.trim());
+  const isUnchanged = defaultHash !== undefined && hash.trim().toLowerCase() === defaultHash.toLowerCase();
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-2">
@@ -29,7 +30,7 @@ export function VerifyInput({ defaultHash }: { defaultHash?: string }) {
         maxLength={64}
         spellCheck={false}
       />
-      <Button type="submit" disabled={!isValid}>
+      <Button type="submit" disabled={!isValid || isUnchanged}>
         Verify
       </Button>
     </form>
