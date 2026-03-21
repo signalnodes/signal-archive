@@ -28,7 +28,7 @@ function getClient(): Anthropic | null {
   return _client;
 }
 
-const MODEL = "claude-3-5-haiku-20241022";
+const MODEL = "claude-opus-4-6";
 const TIMEOUT_MS = 8_000; // hard timeout, never blocks deletion detection
 
 // ---------------------------------------------------------------------------
@@ -116,7 +116,7 @@ async function scoreDeletionWithLLM(
     : [];
   const reasoning =
     typeof parsed.reasoning === "string"
-      ? parsed.reasoning.slice(0, 500)
+      ? parsed.reasoning.slice(0, 1500)
       : "";
 
   return {
