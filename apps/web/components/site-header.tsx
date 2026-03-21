@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { IconSearch } from "@tabler/icons-react";
-import { count, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { getDb, trackedAccounts } from "@taa/db";
 import { LiveIndicator } from "@/components/live-indicator";
 import { HeaderNav } from "@/components/header-nav";
@@ -10,7 +10,7 @@ export async function SiteHeader() {
   const [result] = await db
     .select({ count: count() })
     .from(trackedAccounts)
-    .where(eq(trackedAccounts.isActive, true));
+    .where(and(eq(trackedAccounts.isActive, true), eq(trackedAccounts.donorOnly, false)));
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

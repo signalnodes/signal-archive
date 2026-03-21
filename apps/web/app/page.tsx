@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import { getDb, tweets, deletionEvents, trackedAccounts } from "@taa/db";
 import { StatCard } from "@/components/stat-card";
 import { RecentDeletionsFeed } from "@/components/recent-deletions-feed";
@@ -16,7 +16,7 @@ export default async function HomePage() {
     db
       .select({ count: count() })
       .from(trackedAccounts)
-      .where(eq(trackedAccounts.isActive, true)),
+      .where(and(eq(trackedAccounts.isActive, true), eq(trackedAccounts.donorOnly, false))),
     db
       .select({
         deletion: {
@@ -100,7 +100,7 @@ export default async function HomePage() {
               {
                 step: "01",
                 title: "Capture",
-                body: "Our worker continuously monitors high-value accounts on X/Twitter. Every new tweet is archived to our database within the hour — before anyone can delete it.",
+                body: "Our worker continuously monitors high-value accounts on X/Twitter. Every new tweet is archived to our database — priority accounts every hour, others every few hours.",
               },
               {
                 step: "02",
