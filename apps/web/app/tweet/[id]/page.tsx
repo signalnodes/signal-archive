@@ -122,10 +122,25 @@ export default async function TweetDetailPage({ params }: Props) {
             {tweet.content}
           </p>
           {tweet.mediaUrls && tweet.mediaUrls.length > 0 && (
-            <p className="mt-3 text-xs text-muted-foreground">
-              [{tweet.mediaUrls.length} media attachment
-              {tweet.mediaUrls.length > 1 ? "s" : ""}]
-            </p>
+            <div className="mt-3 flex flex-col gap-1">
+              {tweet.mediaUrls.map((url, i) => (
+                <a
+                  key={i}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-muted-foreground hover:text-foreground hover:underline truncate"
+                  title={url}
+                >
+                  [media {i + 1}{tweet.mediaUrls!.length > 1 ? ` of ${tweet.mediaUrls!.length}` : ""}] {url}
+                </a>
+              ))}
+              {tweet.isDeleted && (
+                <p className="text-xs text-muted-foreground/50 italic">
+                  Media may be unavailable — original URLs recorded but not archived.
+                </p>
+              )}
+            </div>
           )}
           <div className="mt-3 flex items-center justify-between">
             <Timestamp date={tweet.postedAt} />
