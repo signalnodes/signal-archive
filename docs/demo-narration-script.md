@@ -58,7 +58,7 @@ Here is the proof record. The hash. The consensus timestamp. The sequence number
 ## BEAT 5 - HashScan
 *Screen hold: 25 seconds*
 
-This is HashScan, Hedera's public ledger explorer. Hedera reaches consensus in seconds, at a fraction of a cent per message. That is why we chose it.
+This is Hash-Scan, Hedera's public ledger explorer. Hedera reaches consensus in seconds, at a fraction of a cent per message. That is why we chose it.
 
 That record is not on our servers. It is on the ledger. We cannot change it. The platform cannot change it. The politician cannot change it.
 
@@ -82,5 +82,5 @@ Deletion is never the last word.
 - If ElevenLabs runs faster or slower than expected, adjust the recording pauses in editing rather than changing the script
 - The quoted tweet text in Beat 3 should be read at a slightly slower pace. Consider using ElevenLabs emphasis or a pause marker before and after the quote if the platform supports it.
 - "SHA-256" will be read by TTS as "SHA two fifty-six" which is correct
-- "HashScan" will read naturally as written
+- "Hash-Scan" spelling forces correct two-syllable pronunciation in TTS
 - Do not add the topic ID number to the narration. "A public Hedera Consensus Service topic on mainnet" is sufficient and avoids an awkward number string in spoken audio
