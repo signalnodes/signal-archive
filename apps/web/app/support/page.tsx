@@ -18,13 +18,13 @@ export default function SupportPage() {
     <div className="container mx-auto max-w-screen-sm px-4 py-12">
       <h1 className="text-3xl font-bold tracking-tight mb-3 font-editorial">Support the Archive</h1>
       <p className="text-muted-foreground leading-relaxed mb-6">
-        Signal Archive is an independent, non-commercial project. No ads, no subscriptions, no
-        corporate backing. Donations go directly toward Hedera network fees, infrastructure
-        costs, and keeping the lights on.
+        Signal Archive is an independent, non-commercial public-interest archive. No ads, no
+        subscriptions, no corporate backing. Donations go directly toward Hedera attestation
+        fees, infrastructure, and keeping the record permanent.
       </p>
 
       <div className="mb-8 rounded-lg border border-border px-5 py-4">
-        <p className="text-sm font-semibold mb-3">What supporters unlock</p>
+        <p className="text-sm font-semibold mb-3">What your support enables</p>
         <ul className="space-y-2 text-sm text-muted-foreground">
           <li className="flex items-start gap-2">
             <span className="mt-0.5 shrink-0">→</span>
