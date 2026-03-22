@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { eq } from "drizzle-orm";
 import { getDb, tweets, trackedAccounts, hcsAttestations, deletionEvents } from "@taa/db";
-import { Badge } from "@/components/ui/badge";
+import { Chip } from "@/components/chip";
 import { Separator } from "@/components/ui/separator";
 import { CategoryBadge } from "@/components/category-badge";
 import { Timestamp } from "@/components/timestamp";
@@ -109,12 +109,8 @@ export default async function TweetDetailPage({ params }: Props) {
             </Link>
           )}
           {account && <CategoryBadge category={account.category} />}
-          {tweet.isDeleted && <Badge variant="destructive">DELETED</Badge>}
-          {isTestnet && (
-            <Badge variant="outline" className="text-xs text-yellow-500 border-yellow-500/40">
-              TESTNET
-            </Badge>
-          )}
+          {tweet.isDeleted && <Chip variant="deleted">Deleted</Chip>}
+          {isTestnet && <Chip variant="pending">Testnet</Chip>}
         </div>
 
         {/* Tweet content */}

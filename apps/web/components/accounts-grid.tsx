@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Chip } from "@/components/chip";
 import { CategoryBadge, TierBadge } from "@/components/category-badge";
 import { AccountAvatar } from "@/components/account-avatar";
 import { CATEGORY_LABELS } from "@/lib/category";
@@ -50,26 +50,28 @@ export function AccountsGrid({ accounts }: { accounts: AccountRow[] }) {
         onChange={(e) => setSearchQuery(e.target.value)}
         className="max-w-xs mb-4"
       />
-      <div className="flex flex-wrap gap-2 mb-6">
-        <Button
-          variant={activeCategory === null ? "default" : "outline"}
-          size="sm"
-          onClick={() => setActiveCategory(null)}
+      <div className="flex flex-wrap gap-1.5 mb-6">
+        <Chip
+          variant={activeCategory === null ? "filter-active" : "filter"}
+          asChild
         >
-          All ({searchFiltered.length})
-        </Button>
+          <button onClick={() => setActiveCategory(null)}>
+            All ({searchFiltered.length})
+          </button>
+        </Chip>
         {categories.map((cat) => {
           const catFiltered = searchFiltered.filter((a) => a.category === cat);
           return (
-            <Button
+            <Chip
               key={cat}
-              variant={activeCategory === cat ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveCategory(cat)}
+              variant={activeCategory === cat ? "filter-active" : "filter"}
+              asChild
             >
-              {CATEGORY_LABELS[cat as AccountCategory] ?? cat}
-              <span className="ml-1 text-xs opacity-60">({catFiltered.length})</span>
-            </Button>
+              <button onClick={() => setActiveCategory(cat)}>
+                {CATEGORY_LABELS[cat as AccountCategory] ?? cat}
+                <span className="opacity-50">({catFiltered.length})</span>
+              </button>
+            </Chip>
           );
         })}
       </div>

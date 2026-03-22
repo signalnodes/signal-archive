@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { Chip } from "@/components/chip";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { absoluteDate } from "@/lib/format";
@@ -29,9 +29,7 @@ export function VerifyResult({ hash, tweet, account, attestation }: VerifyResult
       <Card className="border-muted">
         <CardContent className="pt-6">
           <div className="flex items-center gap-2 mb-3">
-            <Badge variant="outline" className="text-muted-foreground">
-              NOT FOUND
-            </Badge>
+            <Chip variant="neutral">Not Found</Chip>
           </div>
           <p className="text-sm text-muted-foreground">
             No tweet with hash{" "}
@@ -50,18 +48,12 @@ export function VerifyResult({ hash, tweet, account, attestation }: VerifyResult
       <CardContent className="pt-6">
         <div className="flex items-center gap-2 mb-4">
           {hasProof ? (
-            <Badge className="bg-green-600 hover:bg-green-600 text-white">
-              HASH MATCH + HEDERA PROOF
-            </Badge>
+            <Chip variant="verified">Hash Match · Hedera Proof</Chip>
           ) : (
-            <Badge variant="outline" className="border-yellow-500/60 text-yellow-500">
-              HASH MATCH - ATTESTATION PENDING
-            </Badge>
+            <Chip variant="pending">Hash Match · Attestation Pending</Chip>
           )}
           {tweet.isDeleted && (
-            <Badge variant="destructive" className="text-xs">
-              DELETED
-            </Badge>
+            <Chip variant="deleted">Deleted</Chip>
           )}
         </div>
 

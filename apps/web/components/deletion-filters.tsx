@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/chip";
 import { Separator } from "@/components/ui/separator";
 import { CATEGORY_LABELS } from "@/lib/category";
 import type { AccountCategory } from "@taa/shared";
@@ -19,7 +19,7 @@ export function DeletionFilters({ categories, activeCategory, activeSort }: Dele
 
   function buildUrl(overrides: { category?: string | null; sort?: string }) {
     const params = new URLSearchParams(searchParams.toString());
-    params.delete("page"); // reset pagination on filter change
+    params.delete("page");
     if ("category" in overrides) {
       overrides.category ? params.set("category", overrides.category) : params.delete("category");
     }
@@ -33,42 +33,29 @@ export function DeletionFilters({ categories, activeCategory, activeSort }: Dele
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {/* Sort controls */}
-      <Button
-        variant={activeSort === "recent" ? "default" : "outline"}
-        size="sm"
-        onClick={() => router.push(buildUrl({ sort: "recent" }))}
-      >
-        Recent
-      </Button>
-      <Button
-        variant={activeSort === "severity" ? "default" : "outline"}
-        size="sm"
-        onClick={() => router.push(buildUrl({ sort: "severity" }))}
-      >
-        Highest Severity
-      </Button>
+    <div className="flex flex-wrap items-center gap-1.5">
+      <Chip variant={activeSort === "recent" ? "filter-active" : "filter"} asChild>
+        <button onClick={() => router.push(buildUrl({ sort: "recent" }))}>Recent</button>
+      </Chip>
+      <Chip variant={activeSort === "severity" ? "filter-active" : "filter"} asChild>
+        <button onClick={() => router.push(buildUrl({ sort: "severity" }))}>Highest Severity</button>
+      </Chip>
 
-      <Separator orientation="vertical" className="h-6 mx-1" />
+      <Separator orientation="vertical" className="h-4 mx-1" />
 
-      {/* Category filters */}
-      <Button
-        variant={!activeCategory ? "default" : "outline"}
-        size="sm"
-        onClick={() => router.push(buildUrl({ category: null }))}
-      >
-        All Categories
-      </Button>
+      <Chip variant={!activeCategory ? "filter-active" : "filter"} asChild>
+        <button onClick={() => router.push(buildUrl({ category: null }))}>All</button>
+      </Chip>
       {categories.map((cat) => (
-        <Button
+        <Chip
           key={cat}
-          variant={activeCategory === cat ? "default" : "outline"}
-          size="sm"
-          onClick={() => router.push(buildUrl({ category: cat }))}
+          variant={activeCategory === cat ? "filter-active" : "filter"}
+          asChild
         >
-          {CATEGORY_LABELS[cat as AccountCategory] ?? cat}
-        </Button>
+          <button onClick={() => router.push(buildUrl({ category: cat }))}>
+            {CATEGORY_LABELS[cat as AccountCategory] ?? cat}
+          </button>
+        </Chip>
       ))}
     </div>
   );

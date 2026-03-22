@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { Chip } from "@/components/chip";
 import { absoluteDate } from "@/lib/format";
 import { CopyButton } from "@/components/copy-button";
 
@@ -45,7 +45,7 @@ export function HcsProofPanel({ attestation, contentHash, tweetId }: HcsProofPan
     <div className="rounded-lg border border-border bg-card p-6">
       <div className="flex items-center gap-2 mb-4">
         <h2 className="font-semibold font-editorial">Hedera Consensus Service Proof</h2>
-        <Badge className="bg-green-600 hover:bg-green-600 text-white text-xs">VERIFIED</Badge>
+        <Chip variant="verified">Verified</Chip>
       </div>
       <dl className="space-y-3 text-sm">
         <div>

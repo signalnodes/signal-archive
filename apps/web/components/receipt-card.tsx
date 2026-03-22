@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Chip } from "@/components/chip";
 import { CopyButton } from "@/components/copy-button";
 import { CategoryBadge } from "@/components/category-badge";
 import type { AccountUI } from "@/lib/adapters/account";
@@ -36,12 +36,9 @@ export function ReceiptCard({ account, latestProofUrl }: ReceiptCardProps) {
                 <span className="text-sm text-muted-foreground">{account.displayName}</span>
               )}
               <CategoryBadge category={account.category as AccountCategory} />
-              <Badge
-                variant={isIdentityOnly ? "outline" : "secondary"}
-                className="font-mono text-xs"
-              >
-                {account.trackingMode === "FULL_ARCHIVE" ? "FULL ARCHIVE" : "IDENTITY ONLY"}
-              </Badge>
+              <Chip variant="neutral">
+                {account.trackingMode === "FULL_ARCHIVE" ? "Full Archive" : "Identity Only"}
+              </Chip>
             </div>
 
             {/* Stable ID row */}
