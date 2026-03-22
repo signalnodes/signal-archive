@@ -6,6 +6,7 @@ import { getDb, deletionEvents, trackedAccounts } from "@taa/db";
 import { RecentDeletionsFeed } from "@/components/recent-deletions-feed";
 import { DeletionFilters } from "@/components/deletion-filters";
 import { DeletionPagination } from "@/components/deletion-pagination";
+import { SectionOpener } from "@/components/section-opener";
 import { CATEGORY_LABELS } from "@/lib/category";
 import type { AccountCategory } from "@taa/shared";
 
@@ -94,20 +95,25 @@ export default async function DeletionsPage({ searchParams }: Props) {
 
   return (
     <div className="container mx-auto max-w-screen-xl px-4 py-8">
-      <h1 className="text-2xl font-bold mb-1">Deletion Feed</h1>
-      <p className="text-muted-foreground mb-6">
-        {sortBySeverity
-          ? "Deletions ranked by AI-assessed public interest significance."
-          : "Reverse-chronological record of all detected tweet deletions."}
-        {category && (
-          <span className="ml-1">
-            Filtered by:{" "}
-            <span className="text-foreground font-medium">
-              {CATEGORY_LABELS[category as AccountCategory] ?? category}
-            </span>
-          </span>
-        )}
-      </p>
+      <SectionOpener
+        eyebrow="Deletion Record"
+        title={sortBySeverity ? "Ranked by Severity" : "Detected Deletions"}
+        description={
+          <>
+            {sortBySeverity
+              ? "Deletions ranked by AI-assessed public interest significance."
+              : "Reverse-chronological record of all detected tweet deletions."}
+            {category && (
+              <span className="ml-1">
+                Filtered by:{" "}
+                <span className="text-foreground font-medium">
+                  {CATEGORY_LABELS[category as AccountCategory] ?? category}
+                </span>
+              </span>
+            )}
+          </>
+        }
+      />
       <DeletionFilters
         categories={categories}
         activeCategory={category ?? null}

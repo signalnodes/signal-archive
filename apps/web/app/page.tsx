@@ -46,6 +46,9 @@ export default async function HomePage() {
     <div className="container mx-auto max-w-screen-xl px-4 py-12">
       {/* Hero */}
       <section className="mb-12">
+        <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground/60 mb-3 leading-none">
+            Hedera Mainnet · Live
+          </p>
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl max-w-3xl leading-[1.05] font-editorial">
           Deleted.
           <br />
@@ -72,29 +75,42 @@ export default async function HomePage() {
       </section>
 
       {/* Stats */}
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
-        <StatCard label="Statements Archived" value={tweetCount[0]?.count ?? 0} href="/search" />
-        <StatCard label="Deletions Detected" value={deletionCount[0]?.count ?? 0} href="/deletions" />
-        <StatCard label="Accounts Tracked" value={accountCount[0]?.count ?? 0} href="/accounts" />
+      <section className="mb-12">
+        <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground/60 mb-4 leading-none">
+          Archive Status
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <StatCard label="Statements Archived" value={tweetCount[0]?.count ?? 0} href="/search" />
+          <StatCard label="Deletions Detected" value={deletionCount[0]?.count ?? 0} href="/deletions" />
+          <StatCard label="Accounts Tracked" value={accountCount[0]?.count ?? 0} href="/accounts" />
+        </div>
       </section>
 
       {/* Recent deletions — or How It Works when feed is empty */}
       {hasDeletions ? (
         <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Recent Deletions</h2>
-            <Link
-              href="/deletions"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              View all →
-            </Link>
+          <div className="mb-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground/60 mb-2 leading-none">
+              Latest Record
+            </p>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold font-editorial">Recent Deletions</h2>
+              <Link
+                href="/deletions"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                View all →
+              </Link>
+            </div>
           </div>
           <RecentDeletionsFeed deletions={recentDeletions} />
         </section>
       ) : (
         <section>
-          <h2 className="text-xl font-semibold mb-8">How it works</h2>
+          <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground/60 mb-2 leading-none">
+            Signal Archive
+          </p>
+          <h2 className="text-xl font-semibold mb-8 font-editorial">How it works</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {[
               {
