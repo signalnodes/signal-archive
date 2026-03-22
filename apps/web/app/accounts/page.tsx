@@ -5,16 +5,23 @@ import { and, count, eq } from "drizzle-orm";
 import { getDb, trackedAccounts, tweets, deletionEvents } from "@taa/db";
 import { AccountsGrid } from "@/components/accounts-grid";
 
-export const metadata: Metadata = {
-  title: "Tracked Accounts",
-  description:
-    "40 politicians and public figures monitored by Signal Archive. Every tweet archived and attested on Hedera.",
-  openGraph: {
-    title: "Tracked Accounts - Signal Archive",
-    description:
-      "40 politicians and public figures monitored by Signal Archive. Every tweet archived and attested on Hedera.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const db = getDb();
+  const [result] = await db
+    .select({ count: count() })
+    .from(trackedAccounts)
+    .where(and(eq(trackedAccounts.isActive, true), eq(trackedAccounts.donorOnly, false)));
+  const n = result?.count ?? 0;
+  const desc = `${n} politicians and public figures monitored by Signal Archive. Every tweet archived and attested on Hedera.`;
+  return {
+    title: "Tracked Accounts",
+    description: desc,
+    openGraph: {
+      title: "Tracked Accounts - Signal Archive",
+      description: desc,
+    },
+  };
+}
 
 export default async function AccountsPage() {
   const db = getDb();
