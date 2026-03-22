@@ -8,11 +8,11 @@ import { VerifyInput } from "@/components/verify-input";
 import { SectionOpener } from "@/components/section-opener";
 
 export const metadata: Metadata = {
-  title: "Verify Hash",
+  title: "Verify a Statement",
   description:
     "Independently verify any archived tweet by checking its SHA-256 content hash against the Hedera Consensus Service.",
   openGraph: {
-    title: "Verify Hash - Signal Archive",
+    title: "Verify a Statement - Signal Archive",
     description:
       "Independently verify any archived tweet by checking its SHA-256 content hash against the Hedera Consensus Service.",
   },

@@ -7,7 +7,7 @@ import { VerifyInput } from "@/components/verify-input";
 import { VerifyResult } from "@/components/verify-result";
 
 export const metadata: Metadata = {
-  title: "Verify Hash",
+  title: "Verification Result",
   description:
     "Verification result for a SHA-256 content hash against Signal Archive's Hedera HCS attestations.",
 };
@@ -54,10 +54,9 @@ export default async function VerifyHashPage({ params }: Props) {
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-12">
-      <h1 className="text-2xl font-bold mb-2 font-editorial">Verify Content Hash</h1>
+      <h1 className="text-2xl font-bold mb-2 font-editorial">Proof Record</h1>
       <p className="text-muted-foreground mb-8">
-        Enter a SHA-256 content hash to check if a matching tweet is in the archive with a
-        valid Hedera attestation.
+        Verification result for the hash below. To check a different statement, replace the hash.
       </p>
       <VerifyInput defaultHash={hash} />
       <div className="mt-8">
