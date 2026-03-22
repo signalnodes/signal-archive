@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { and, count, eq } from "drizzle-orm";
 import { getDb, trackedAccounts, tweets, deletionEvents } from "@taa/db";
 import { AccountsGrid } from "@/components/accounts-grid";
+import { SectionOpener } from "@/components/section-opener";
 
 export async function generateMetadata(): Promise<Metadata> {
   const db = getDb();
@@ -62,10 +63,11 @@ export default async function AccountsPage() {
 
   return (
     <div className="container mx-auto max-w-screen-xl px-4 py-8">
-      <h1 className="text-2xl font-bold mb-1">Tracked Accounts</h1>
-      <p className="text-muted-foreground mb-6">
-        {accounts.length} active accounts across {categoryCount} categories
-      </p>
+      <SectionOpener
+        eyebrow="Archive Scope"
+        title="Tracked Accounts"
+        description={`${accounts.length} active accounts across ${categoryCount} categories — continuously monitored, every statement archived and attested.`}
+      />
       <AccountsGrid accounts={enriched} />
     </div>
   );

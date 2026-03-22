@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default function SupportPage() {
   return (
     <div className="container mx-auto max-w-screen-sm px-4 py-12">
-      <h1 className="text-3xl font-bold tracking-tight mb-3">Support the Archive</h1>
+      <h1 className="text-3xl font-bold tracking-tight mb-3 font-editorial">Support the Archive</h1>
       <p className="text-muted-foreground leading-relaxed mb-6">
         Signal Archive is an independent, non-commercial project. No ads, no subscriptions, no
         corporate backing. Donations go directly toward Hedera network fees, infrastructure

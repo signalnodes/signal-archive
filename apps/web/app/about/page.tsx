@@ -49,7 +49,7 @@ export default function AboutPage() {
 
       <section className="mb-10">
         <h2 className="text-xl font-semibold mb-4 font-editorial">How it works</h2>
-        <ol className="space-y-5">
+        <ol className="list-none space-y-5">
           {[
             {
               step: "1. Continuous monitoring",
