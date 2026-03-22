@@ -49,7 +49,7 @@ That is exactly the right question.
 
 The moment Signal Archive archived this tweet, it computed a SHA-256 hash of the content. Then it submitted that hash to a public Hedera Consensus Service topic on mainnet.
 
-That message is permanent. Append-only. No one can alter or delete it.
+That message is permanent. Written once, readable forever. No one can alter or delete it.
 
 Here is the proof record. The hash. The consensus timestamp. The sequence number. Verifiable by anyone, right now, without going through us.
 
@@ -81,6 +81,6 @@ Deletion is never the last word.
 - Screen hold times above are targets. Match them to the ElevenLabs audio output after generation.
 - If ElevenLabs runs faster or slower than expected, adjust the recording pauses in editing rather than changing the script
 - The quoted tweet text in Beat 3 should be read at a slightly slower pace. Consider using ElevenLabs emphasis or a pause marker before and after the quote if the platform supports it.
-- "SHA-256" will be read by TTS as "SHA two fifty-six" which is correct
+- "SHA-256" is handled via ElevenLabs pronunciation dictionary alias: shah two fifty-six
 - "Hash-Scan" spelling forces correct two-syllable pronunciation in TTS
 - Do not add the topic ID number to the narration. "A public Hedera Consensus Service topic on mainnet" is sufficient and avoids an awkward number string in spoken audio
