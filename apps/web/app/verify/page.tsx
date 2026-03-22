@@ -2,8 +2,8 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { eq, isNotNull } from "drizzle-orm";
-import { getDb, tweets, hcsAttestations } from "@taa/db";
+import { desc, eq, isNotNull } from "drizzle-orm";
+import { getDb, tweets, hcsAttestations, deletionEvents, trackedAccounts } from "@taa/db";
 import { VerifyInput } from "@/components/verify-input";
 import { SectionOpener } from "@/components/section-opener";
 
@@ -20,11 +20,20 @@ export const metadata: Metadata = {
 
 export default async function VerifyPage() {
   const db = getDb();
-  const [example] = await db
-    .select({ contentHash: tweets.contentHash, tweetId: tweets.id })
-    .from(tweets)
+  const [featured] = await db
+    .select({
+      contentHash: tweets.contentHash,
+      contentPreview: deletionEvents.contentPreview,
+      detectedAt: deletionEvents.detectedAt,
+      username: trackedAccounts.username,
+      displayName: trackedAccounts.displayName,
+    })
+    .from(deletionEvents)
+    .innerJoin(tweets, eq(deletionEvents.tweetId, tweets.id))
+    .innerJoin(trackedAccounts, eq(deletionEvents.accountId, trackedAccounts.id))
     .innerJoin(hcsAttestations, eq(hcsAttestations.tweetId, tweets.id))
     .where(isNotNull(tweets.contentHash))
+    .orderBy(desc(deletionEvents.severityScore))
     .limit(1);
 
   return (
@@ -36,16 +45,37 @@ export default async function VerifyPage() {
       />
 
       <VerifyInput />
-      {example?.contentHash && (
-        <p className="mt-3 text-sm text-muted-foreground">
-          Don&apos;t have a hash?{" "}
-          <Link
-            href={`/verify/${example.contentHash}`}
-            className="underline underline-offset-2 hover:text-foreground transition-colors"
-          >
-            Try a real example →
-          </Link>
-        </p>
+
+      {featured?.contentHash && (
+        <Link
+          href={`/verify/${featured.contentHash}`}
+          className="group mt-5 flex flex-col gap-2 rounded-lg border border-border bg-muted/20 px-4 py-3 hover:border-border/80 hover:bg-muted/30 transition-colors"
+        >
+          <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground/60 leading-none">
+            Featured record
+          </p>
+          <p className="text-sm font-medium text-foreground">
+            @{featured.username}
+            {featured.detectedAt && (
+              <span className="font-normal text-muted-foreground">
+                {" "}· Deleted{" "}
+                {new Date(featured.detectedAt).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>
+            )}
+          </p>
+          {featured.contentPreview && (
+            <p className="text-sm text-muted-foreground font-editorial leading-snug line-clamp-2">
+              &ldquo;{featured.contentPreview}&rdquo;
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+            Verify this record →
+          </p>
+        </Link>
       )}
 
       <div className="mt-12 border-t pt-8">
