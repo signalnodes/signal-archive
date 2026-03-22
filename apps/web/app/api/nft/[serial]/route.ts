@@ -41,7 +41,7 @@ export async function GET(
     creator: "Signal Archive",
     creatorDID: APP_URL,
     description:
-      "Awarded to supporters of the Signal Archive — a permanent public record of political speech on Hedera.",
+      "Awarded to supporters of the Signal Archive, a permanent public record of political speech on Hedera.",
     image,
     type: "image/png",
     properties: {

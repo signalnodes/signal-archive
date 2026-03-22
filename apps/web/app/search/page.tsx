@@ -7,6 +7,7 @@ import { getDb, tweets, trackedAccounts } from "@taa/db";
 import { TweetCard } from "@/components/tweet-card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { SectionOpener } from "@/components/section-opener";
 
 export const metadata: Metadata = {
   title: "Search",
@@ -100,7 +101,7 @@ export default async function SearchPage({ searchParams }: Props) {
 
   return (
     <div className="container mx-auto max-w-screen-xl px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Search</h1>
+      <SectionOpener eyebrow="Archive" title="Search Statements" />
 
       {/* Search form */}
       <form method="GET" action="/search" className="flex gap-2 mb-6">

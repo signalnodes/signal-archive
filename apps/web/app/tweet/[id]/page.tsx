@@ -125,7 +125,7 @@ export default async function TweetDetailPage({ params }: Props) {
               ))}
               {tweet.isDeleted && (
                 <p className="text-xs text-muted-foreground/50 italic">
-                  Media URLs recorded at capture time — may become unavailable if CDN purges.
+                  Media URLs recorded at capture time. Links may break if the CDN purges the original.
                 </p>
               )}
             </div>
