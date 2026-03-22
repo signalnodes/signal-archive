@@ -69,7 +69,7 @@ function DeletionCard({ row }: { row: DeletionRow }) {
               )}
               {account && <CategoryBadge category={account.category} />}
             </div>
-            <p className="text-sm text-muted-foreground line-clamp-3 font-mono leading-relaxed border-l-2 border-muted pl-3 mb-3">
+            <p className="text-sm text-muted-foreground line-clamp-3 font-editorial leading-relaxed border-l-2 border-muted pl-3 mb-3">
               {deletion.contentPreview ?? <span className="italic opacity-50">Content not available</span>}
             </p>
             <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">

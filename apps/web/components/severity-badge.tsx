@@ -42,7 +42,7 @@ export function SeverityBadge({ score, className }: SeverityBadgeProps) {
       title={`AI severity: ${score}/10, ${label} public interest significance`}
       aria-label={`Severity score ${score} out of 10, ${label}`}
     >
-      <div className="text-[10px] font-bold uppercase tracking-wide">severity</div>
+      <div className="text-[10px] font-mono font-bold uppercase tracking-wide">severity</div>
       <div className="font-mono">{score}/10</div>
     </div>
   );

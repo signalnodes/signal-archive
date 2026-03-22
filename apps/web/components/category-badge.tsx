@@ -5,7 +5,7 @@ import type { AccountCategory } from "@taa/shared";
 export function CategoryBadge({ category }: { category: AccountCategory | string }) {
   const variant = getCategoryVariant(category as AccountCategory);
   const label = CATEGORY_LABELS[category as AccountCategory] ?? category;
-  return <Badge variant={variant}>{label}</Badge>;
+  return <Badge variant={variant} className="font-mono">{label}</Badge>;
 }
 
 export function TierBadge({ tier }: { tier: string }) {
