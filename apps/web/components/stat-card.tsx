@@ -12,7 +12,7 @@ export function StatCard({ label, value, href }: StatCardProps) {
   const card = (
     <Card className={href ? "cursor-pointer hover:border-border transition-colors" : ""}>
       <CardContent className="pt-6">
-        <div className="text-3xl font-bold font-mono tabular-nums">
+        <div className="text-3xl font-bold font-editorial tabular-nums">
           {formatNumber(value)}
         </div>
         <div className="text-sm text-muted-foreground mt-1">{label}</div>
