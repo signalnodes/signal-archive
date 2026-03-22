@@ -23,7 +23,7 @@ Signal Archive monitors high-value public figures on X. Each statement is archiv
 
 This is the deletion feed.
 
-This is a real deletion from the official White House account, detected on March twentieth, twenty twenty-six. Our AI scored it seven out of ten for public interest significance.
+A real deletion from the official White House account, detected on March twentieth, twenty twenty-six. Our AI scored it seven out of ten for public interest significance.
 
 A real account. A real deletion. A timestamped severity score. Not a simulation.
 
@@ -47,7 +47,7 @@ But why should you trust us? We run the database. We could fabricate this.
 
 That is exactly the right question.
 
-The moment Signal Archive archived this post, it computed a SHA-256 hash of the content. Then it submitted that hash to a public Hedera Consensus Service topic on mainnet.
+The moment Signal Archive archived this tweet, it computed a SHA-256 hash of the content. Then it submitted that hash to a public Hedera Consensus Service topic on mainnet.
 
 That message is permanent. Append-only. No one can alter or delete it.
 
@@ -58,7 +58,7 @@ Here is the proof record. The hash. The consensus timestamp. The sequence number
 ## BEAT 5 - HashScan
 *Screen hold: 25 seconds*
 
-This is HashScan, Hedera's public ledger explorer.
+This is HashScan, Hedera's public ledger explorer. Hedera reaches consensus in seconds, at a fraction of a cent per message. That is why we chose it.
 
 That record is not on our servers. It is on the ledger. We cannot change it. The platform cannot change it. The politician cannot change it.
 
