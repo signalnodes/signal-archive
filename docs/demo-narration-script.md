@@ -14,7 +14,7 @@ Public officials delete tweets every day. Statements with financial consequences
 
 Gone. Unless someone was watching.
 
-Signal Archive monitors high-value public figures on X. Every statement is archived, cryptographically hashed, and attested to Hedera before anyone hits delete.
+Signal Archive monitors high-value public figures on X. Each statement is archived, hashed, and attested on Hedera before anyone can delete it.
 
 ---
 
@@ -23,7 +23,7 @@ Signal Archive monitors high-value public figures on X. Every statement is archi
 
 This is the deletion feed.
 
-What you are looking at is a real deletion from the official White House account, detected on March 20th, 2026. Our AI scored it seven out of ten for public interest significance.
+This is a real deletion from the official White House account, detected on March twentieth, twenty twenty-six. Our AI scored it seven out of ten for public interest significance.
 
 A real account. A real deletion. A timestamped severity score. Not a simulation.
 
@@ -36,7 +36,7 @@ Here is the archived statement.
 
 "Democrats holding TSA officers hostage for political purposes is irresponsible and dangerous."
 
-It was posted by the White House. Then deleted. Without Signal Archive, this would just be a hole in the public record. Instead, we have it. Permanently.
+It was posted by the White House, then deleted. Without Signal Archive, this becomes a hole in the public record. Instead, we have it. Permanently.
 
 ---
 
@@ -47,20 +47,22 @@ But why should you trust us? We run the database. We could fabricate this.
 
 That is exactly the right question.
 
-The moment Signal Archive first archived this tweet, it computed a SHA-256 hash of the content and submitted it to a public Hedera Consensus Service topic on mainnet. That message is permanent. Append-only. No one can alter or delete it.
+The moment Signal Archive archived this post, it computed a SHA-256 hash of the content. Then it submitted that hash to a public Hedera Consensus Service topic on mainnet.
 
-Here is the proof record. Hash, consensus timestamp, sequence number. Verifiable by anyone, right now, without going through us.
+That message is permanent. Append-only. No one can alter or delete it.
+
+Here is the proof record. The hash. The consensus timestamp. The sequence number. Verifiable by anyone, right now, without going through us.
 
 ---
 
 ## BEAT 5 - HashScan
 *Screen hold: 25 seconds*
 
-This is HashScan. Hedera's public ledger explorer.
+This is HashScan, Hedera's public ledger explorer.
 
 That record is not on our servers. It is on the ledger. We cannot change it. The platform cannot change it. The politician cannot change it.
 
-That is what no screenshot, no database, and no archive without a cryptographic proof layer can offer.
+That is the difference a cryptographic proof layer makes.
 
 ---
 
