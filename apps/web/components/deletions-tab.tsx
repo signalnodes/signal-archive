@@ -71,7 +71,7 @@ export function DeletionsTab({ username }: DeletionsTabProps) {
               key={e.id}
               className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm"
             >
-              <span className="font-semibold text-destructive">Mass deletion detected — </span>
+              <span className="font-semibold text-destructive">Mass deletion detected: </span>
               <span className="text-foreground">
                 {e.deletionCount} tweets deleted within 1 hour,{" "}
                 {formatDistanceToNow(new Date(e.detectedAt), { addSuffix: true })}

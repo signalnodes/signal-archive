@@ -116,7 +116,7 @@ export default async function HomePage() {
               {
                 step: "01",
                 title: "Capture",
-                body: "Our worker continuously monitors high-value accounts on X/Twitter. Every new tweet is archived to our database — priority accounts every hour, others every few hours.",
+                body: "Our worker continuously monitors high-value accounts on X/Twitter. Every new tweet is archived to our database: priority accounts every hour, others every few hours.",
               },
               {
                 step: "02",
@@ -126,7 +126,7 @@ export default async function HomePage() {
               {
                 step: "03",
                 title: "Verify",
-                body: "Anyone can independently verify any tweet against the HCS record — no trust required. If a tweet is later deleted, the deletion itself is attested on-chain.",
+                body: "Anyone can independently verify any tweet against the HCS record. No trust required. If a tweet is later deleted, the deletion itself is attested on-chain.",
               },
             ].map(({ step, title, body }) => (
               <div key={step} className="flex flex-col gap-3">
@@ -147,7 +147,7 @@ export default async function HomePage() {
               >
                 HCS topic 0.0.10301350
               </a>{" "}
-              on Hedera mainnet — publicly readable by anyone.
+              on Hedera mainnet, publicly readable by anyone.
             </p>
           </div>
         </section>

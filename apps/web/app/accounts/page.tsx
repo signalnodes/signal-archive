@@ -66,7 +66,7 @@ export default async function AccountsPage() {
       <SectionOpener
         eyebrow="Archive Scope"
         title="Tracked Accounts"
-        description={`${accounts.length} active accounts across ${categoryCount} categories — continuously monitored, every statement archived and attested.`}
+        description={`${accounts.length} active accounts across ${categoryCount} categories, continuously monitored. Every statement archived and attested.`}
       />
       <AccountsGrid accounts={enriched} />
     </div>

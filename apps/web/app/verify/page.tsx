@@ -41,7 +41,7 @@ export default async function VerifyPage() {
       <SectionOpener
         eyebrow="Proof Verification"
         title="Verify a Statement"
-        description="Enter any SHA-256 content hash from our archive. If it matches an attested record, you'll see the full cryptographic proof — independently verifiable on Hedera, no login or trust required."
+        description="Enter any SHA-256 content hash from our archive. If it matches an attested record, you'll see the full cryptographic proof. Independently verifiable on Hedera, no login or trust required."
       />
 
       <VerifyInput />

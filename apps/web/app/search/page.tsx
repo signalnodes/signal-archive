@@ -107,7 +107,7 @@ export default async function SearchPage({ searchParams }: Props) {
         <Input
           name="q"
           defaultValue={rawQuery}
-          placeholder='Search tweets — try "executive order" or "from:realdonaldtrump"'
+          placeholder='Search tweets: try "executive order" or "from:realdonaldtrump"'
           className="max-w-xl"
           autoFocus={!rawQuery}
         />

@@ -5,7 +5,7 @@ import { SupporterResearchLink } from "./supporter-research-link";
 export const metadata: Metadata = {
   title: "Support",
   description:
-    "Support Signal Archive with HBAR or USDC. Donors get access to Research — wallet tracking, donor-only account monitoring, and more.",
+    "Support Signal Archive with HBAR or USDC. Donors get access to Research: wallet tracking, donor-only account monitoring, and more.",
   openGraph: {
     title: "Support Signal Archive",
     description:
@@ -28,15 +28,15 @@ export default function SupportPage() {
         <ul className="space-y-2 text-sm text-muted-foreground">
           <li className="flex items-start gap-2">
             <span className="mt-0.5 shrink-0">→</span>
-            <span><strong className="text-foreground">Research section</strong> — donor-only view with additional tracked accounts and analysis tools</span>
+            <span><strong className="text-foreground">Research section:</strong> donor-only view with additional tracked accounts and analysis tools</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="mt-0.5 shrink-0">→</span>
-            <span><strong className="text-foreground">Wallet Watch</strong> — labeled crypto wallets tied to persons of interest, with chain explorer links</span>
+            <span><strong className="text-foreground">Wallet Watch:</strong> labeled crypto wallets tied to persons of interest, with chain explorer links</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="mt-0.5 shrink-0">→</span>
-            <span><strong className="text-foreground">Donor-only account tracking</strong> — accounts monitored exclusively for supporters</span>
+            <span><strong className="text-foreground">Donor-only account tracking:</strong> accounts monitored exclusively for supporters</span>
           </li>
         </ul>
       </div>
