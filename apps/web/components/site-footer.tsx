@@ -19,6 +19,9 @@ export function SiteFooter() {
             <Link href="/about" className="hover:text-foreground transition-colors">
               About
             </Link>
+            <Link href="/registry" className="hover:text-foreground transition-colors">
+              Registry
+            </Link>
             <Link href="/support" className="hover:text-foreground transition-colors">
               Support
             </Link>

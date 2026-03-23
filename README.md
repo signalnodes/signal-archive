@@ -16,6 +16,7 @@ Signal Archive is submitted to the **Open Track** of the Hello Future Apex Hacka
 
 - **HCS Topic `0.0.10301350`** (mainnet) - tweet attestations and deletion records
 - **HCS Topic `0.0.10310903`** (mainnet) - donation receipts via HIP-551 atomic batch
+- **HCS-2 Topic Registry `0.0.10388911`** (mainnet) - standardized machine-readable registry of all Signal Archive HCS topics, independently discoverable at [signalarchive.org/registry](https://signalarchive.org/registry)
 - **HIP-551 Atomic Batch** - donation flow bundles HCS submission + optional NFT mint into a single atomic transaction
 - **HIP-657 dNFT** - supporter badge NFTs with dynamic metadata (`0.0.10314265`)
 - **3,000+ messages** live on mainnet as of March 2026
@@ -58,7 +59,7 @@ Claude AI scores each deletion on a 1-10 public interest severity scale, separat
 | Database | PostgreSQL 16 (Neon), Drizzle ORM |
 | Job Queue | BullMQ + Redis |
 | Blockchain | @hashgraph/sdk - HCS, HIP-551, HIP-657, NFT minting |
-| AI | Claude Haiku - deletion severity scoring |
+| AI | Claude AI (Anthropic) - deletion severity scoring |
 | Ingestion | Headless Chrome (CDP), tier-based cron scheduling |
 | Hosting | Railway (web), Hetzner VPS (worker, ingestion, Chrome) |
 | DNS/CDN | Cloudflare |
