@@ -72,6 +72,7 @@ Other blockchains are overkill, expensive, or slow. HCS is exactly right:
 | Permanent public record | Anyone can read topic 0.0.10301350 on HashScan. No trust required. |
 | No smart contract needed | Pure consensus layer. Simpler, cheaper, more robust. |
 | Independent verifiability | Any third party can verify a hash against HCS without going through us |
+| HCS-2 Topic Registry | Archive structure published through the HCS-2 standard — machine-readable and discoverable by third parties without relying on this website |
 
 Live today: 3,000+ attestations on Hedera mainnet. Growing every hour.
 
@@ -102,6 +103,7 @@ Heuristic fallback ensures scoring works even without API access.
 - 40 tracked accounts: Trump family, cabinet officials, White House, federal agencies, key crypto figures
 - Independent verification: any attestation verifiable on HashScan in seconds
 - Supporter tier: donors receive an NFT badge (SIGBADGE, token 0.0.10314265) minted via HIP-551 atomic batch transaction
+- HCS-2 topic registry live on mainnet (0.0.10388911): archive structure independently discoverable and standards-compliant
 
 Try it: go to signalarchive.org, open any archived statement, click Verify, confirm the hash on HashScan yourself.
 

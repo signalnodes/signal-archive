@@ -81,7 +81,15 @@ export default async function HomePage() {
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard label="Statements Archived" value={tweetCount[0]?.count ?? 0} href="/search" />
-          <StatCard label="Deletions Detected" value={deletionCount[0]?.count ?? 0} href="/deletions" />
+          <StatCard
+            label="Deletions Detected"
+            value={deletionCount[0]?.count ?? 0}
+            href={
+              deletionCount[0]?.count === 1 && recentDeletions[0]?.deletion.tweetId
+                ? `/tweet/${recentDeletions[0].deletion.tweetId}`
+                : "/deletions"
+            }
+          />
           <StatCard label="Accounts Tracked" value={accountCount[0]?.count ?? 0} href="/accounts" />
         </div>
       </section>
