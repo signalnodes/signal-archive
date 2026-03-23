@@ -25,7 +25,7 @@ This is the deletion feed.
 
 A real deletion from the official White House account, detected on March twentieth, twenty twenty-six. Our AI scored it seven out of ten for public interest significance.
 
-A real account. A real deletion. A timestamped severity score. Not a simulation.
+A real account. A real deletion. A timestamped severity score.
 
 ---
 

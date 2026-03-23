@@ -39,10 +39,7 @@ Do these steps before the recording begins. None of them should appear on camera
    - Tab 2: https://signalarchive.org/deletions?sort=severity
    - Tab 3: https://signalarchive.org/tweet/14c98cd6-4c31-4a84-bc0f-aaf493493dd3
    - Tab 4: https://signalarchive.org/verify/fca9ba30370c6c97f32383624435ea1fc691aa6518eea1f37fe5b2147e41199d
-   - Tab 5: https://hashscan.io (search for topic 0.0.10301350 and find this tweet's message, or navigate directly to the HCS message if you have the sequence number)
-4. Copy this hash to clipboard before recording starts:
-   `fca9ba30370c6c97f32383624435ea1fc691aa6518eea1f37fe5b2147e41199d`
-5. Start on Tab 1 (homepage) before starting OBS
+4. Start on Tab 1 (homepage) before starting OBS
 
 ---
 
@@ -53,7 +50,7 @@ Do these steps before the recording begins. None of them should appear on camera
 **Goal:** Establish what Signal Archive is before the judge has to ask
 **What to show:**
 - Let the hero sit: "Deleted. Documented. Permanent."
-- Slow scroll down to the stats bar (3,995 statements archived, 1 deletion detected, 41 accounts tracked)
+- Slow scroll down to the stats bar (stats are live — expect ~40 accounts tracked, 1 deletion detected)
 - Brief pause on stats, then stop scrolling
 **Pause:** 4-5 seconds on hero. 3 seconds on stats.
 **Do not:** Scroll past the stats into the lower page content. Keep it clean.
@@ -81,7 +78,8 @@ Do these steps before the recording begins. None of them should appear on camera
 - The account (@WhiteHouse), deletion detected timestamp (March 20, 2026), and severity score with rationale
 - Slow scroll if the card is tall so all key metadata is visible
 **Pause:** 4-5 seconds on the tweet content. Let the "deleted" status and timestamp register clearly.
-**Do not:** Click "View Proof" here yet. Pause first. Save the proof reveal for Step 4.
+**Do not:** Click anything here yet. Pause first. Save the proof reveal for Step 4.
+**Note:** The "Hedera Consensus Service Proof" section with the Transaction ID link is further down this page. You will return to it in Step 5.
 
 ---
 
@@ -97,14 +95,17 @@ Do these steps before the recording begins. None of them should appear on camera
 
 ---
 
-### Step 5 - HashScan
-**URL:** HashScan HCS message for this tweet (Tab 5, pre-loaded)
-**Goal:** Show the proof lives on Hedera, not on our servers
+### Step 5 - HashScan (live click from deletion detail)
+**Source:** Switch back to Tab 3 (deletion detail). Scroll down to the "Hedera Consensus Service Proof" section.
+**Goal:** Show that the Transaction ID link goes directly to the immutable ledger record — not our servers
 **What to show:**
-- The HCS topic message on hashscan.io: topic 0.0.10301350, consensus timestamp, the hash value
-- Hedera branding and the immutable record visible together
-**Pause:** 5-6 seconds. This is the second-highest impact view. The record is on a public ledger. No one can alter it.
+- The HCS proof section with Transaction ID `0.0.10301284@1774030633.952798320` visible on screen
+- Pause briefly so the judge can see the link. Then click it.
+- Wait for HashScan to load. Hold on the transaction record: consensus timestamp and attestation data visible. Hedera branding on screen.
+**Pause:** 2-3 seconds on the Transaction ID before clicking. 5-6 seconds on HashScan after it loads.
 **Do not:** Navigate around HashScan. Land on the record and let it sit.
+**Note:** HashScan shows the transaction record (consensus timestamp, hash) — not the tweet text. This is correct. The tweet content was already shown in Step 3. This step proves the record exists on-chain independent of Signal Archive.
+**Post-production note:** Beat 5 narration begins "This is Hash-Scan..." — do NOT start this narration while Tab 3 is still on screen. Hold the Tab 3 frame silently during the scroll and click. Start Beat 5 narration only after HashScan has loaded and the record is visible.
 
 ---
 
@@ -125,7 +126,8 @@ Do these steps before the recording begins. None of them should appear on camera
 - The RSS feed, sitemap, or any /api route
 - Typing the hash manually on camera
 - Opening devtools, extra browser tabs, or extensions
-- Cold page loads (all tabs must be pre-loaded before recording starts)
+- Cold page loads (all four tabs must be pre-loaded before recording starts)
+- Closing the HashScan tab that opens from the Transaction ID click — let it load naturally
 - Scrolling past useful content into empty or low-signal sections
 - The Accounts grid (skip unless there is leftover time and it loads cleanly)
 
@@ -143,10 +145,12 @@ Do these steps before the recording begins. None of them should appear on camera
 | 0:25 | Archived tweet content visible, slow scroll if needed | 4-5s |
 | 0:32 | Switch to Tab 4: verify page (proof pre-loaded) | — |
 | 0:35 | Hash and proof record visible | 4-5s |
-| 0:42 | Switch to Tab 5: HashScan HCS record | — |
-| 0:45 | Hedera record on screen | 5-6s |
-| 0:53 | Switch back to Tab 1: homepage hero | 5s |
-| ~1:00 | Recording ends (visual only) | — |
+| 0:42 | Switch back to Tab 3: scroll to HCS proof section | — |
+| 0:45 | Transaction ID visible on screen | 2-3s |
+| 0:48 | Click Transaction ID link → HashScan loads | — |
+| 0:51 | HashScan transaction record on screen | 5-6s |
+| 0:59 | Switch back to Tab 1: homepage hero | 5s |
+| ~1:05 | Recording ends (visual only) | — |
 
 **Note:** This is the visual-only runtime. With deliberate pauses this sits around 55-65 seconds of screen time. Narration and pacing in post-production will bring the final video to the 2:30-3:00 target.
 
@@ -177,4 +181,5 @@ Do these steps before the recording begins. None of them should appear on camera
 | Content hash (SHA-256) | fca9ba30370c6c97f32383624435ea1fc691aa6518eea1f37fe5b2147e41199d |
 | Verify URL | /verify/fca9ba30370c6c97f32383624435ea1fc691aa6518eea1f37fe5b2147e41199d |
 | HCS topic (mainnet) | 0.0.10301350 |
+| HCS transaction ID | 0.0.10301284@1774030633.952798320 |
 | HashScan explorer | https://hashscan.io |
