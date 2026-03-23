@@ -98,6 +98,9 @@ Heuristic fallback ensures scoring works even without API access.
 
 **Live in production. Right now.**
 
+> **Real deletion caught — @WhiteHouse, March 20, 2026**
+> The official White House account deleted a statement about TSA officers and Democratic leadership. Signal Archive detected the deletion, preserved the full content, and filed an on-chain attestation. AI severity score: 7/10. The proof is publicly verifiable right now at signalarchive.org/verify.
+
 - signalarchive.org: public, live, no login required
 - 3,000+ attestations on Hedera mainnet topic 0.0.10301350
 - 40 tracked accounts: Trump family, cabinet officials, White House, federal agencies, key crypto figures
