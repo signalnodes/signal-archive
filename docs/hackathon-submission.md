@@ -21,10 +21,16 @@ Signal Archive is a public accountability platform that cryptographically proves
 ## Live Demo Link
 https://signalarchive.org
 
+## HOL Registry
+- **UAID**: `uaid:aid:98gtn21G8xhjbQg4WYkVHHtyYsf6ko2V9YC2WLuh6rjTnD5J8qKxvux6CLGwMakhLH`
+- **Agent ID**: `signal-archive`
+- **Account**: `0.0.10301284` (hedera:mainnet)
+
 ## Submission Checklist
-- [ ] GitHub repository + README
-- [ ] Project description (100 words) - DONE (above)
-- [ ] Tech stack listing - DONE (above)
+- [x] GitHub repository + README
+- [x] Project description (100 words) - DONE (above)
+- [x] Tech stack listing - DONE (above)
+- [x] HOL Registry agent registration - DONE (UAID above)
 - [ ] Pitch deck (PDF)
 - [ ] Demo video (max 5 min, YouTube link)
-- [ ] Live demo link - DONE (signalarchive.org)
+- [x] Live demo link - DONE (signalarchive.org)

@@ -17,6 +17,7 @@ Signal Archive is submitted to the **Open Track** of the Hello Future Apex Hacka
 - **HCS Topic `0.0.10301350`** (mainnet) - tweet attestations and deletion records
 - **HCS Topic `0.0.10310903`** (mainnet) - donation receipts via HIP-551 atomic batch
 - **HCS-2 Topic Registry `0.0.10388911`** (mainnet) - standardized machine-readable registry of all Signal Archive HCS topics, independently discoverable at [signalarchive.org/registry](https://signalarchive.org/registry)
+- **HOL Registry** - Signal Archive registered as an AI agent on the Hashgraph Online registry (HCS-11 standard). UAID: `uaid:aid:98gtn21G8xhjbQg4WYkVHHtyYsf6ko2V9YC2WLuh6rjTnD5J8qKxvux6CLGwMakhLH`
 - **HIP-551 Atomic Batch** - donation flow bundles HCS submission + optional NFT mint into a single atomic transaction
 - **HIP-657 dNFT** - supporter badge NFTs with dynamic metadata (`0.0.10314265`)
 - **3,000+ messages** live on mainnet as of March 2026
@@ -47,7 +48,7 @@ The hash is submitted to Hedera HCS topic `0.0.10301350`. Hedera reaches consens
 A deletion detection worker checks archived tweets against X's oEmbed API on a regular cycle. When a tweet returns 404, it is flagged as deleted and a second HCS attestation is submitted confirming the deletion.
 
 ### 5. Score
-Claude AI scores each deletion on a 1-10 public interest severity scale, separating mundane corrections from politically significant removals. A heuristic fallback ensures scoring works without API access.
+Claude Opus scores each deletion on a 1-10 public interest severity scale, separating mundane corrections from politically significant removals. A heuristic fallback ensures scoring works without API access.
 
 ---
 
@@ -59,7 +60,7 @@ Claude AI scores each deletion on a 1-10 public interest severity scale, separat
 | Database | PostgreSQL 16 (Neon), Drizzle ORM |
 | Job Queue | BullMQ + Redis |
 | Blockchain | @hashgraph/sdk - HCS, HIP-551, HIP-657, NFT minting |
-| AI | Claude AI (Anthropic) - deletion severity scoring |
+| AI | Claude Opus (Anthropic) - deletion severity scoring |
 | Ingestion | Headless Chrome (CDP), tier-based cron scheduling |
 | Hosting | Railway (web), Hetzner VPS (worker, ingestion, Chrome) |
 | DNS/CDN | Cloudflare |

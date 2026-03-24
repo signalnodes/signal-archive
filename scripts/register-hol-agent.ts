@@ -16,6 +16,7 @@
  */
 
 import { RegistryBrokerClient } from "@hashgraphonline/standards-sdk";
+import { PrivateKey } from "@hashgraph/sdk";
 import {
   HOL_AGENT_PROFILE,
   HOL_AGENT_ENDPOINT,
@@ -24,11 +25,16 @@ import {
 
 const accountId =
   process.env.HOL_HEDERA_ACCOUNT_ID ?? process.env.HEDERA_OPERATOR_ID;
-const privateKey =
+const rawKey =
   process.env.HOL_HEDERA_PRIVATE_KEY ?? process.env.HEDERA_OPERATOR_KEY;
 const network = process.env.HEDERA_NETWORK ?? "testnet";
 
-if (!accountId || !privateKey) {
+// Force ED25519 parsing to avoid misdetection as ECDSA/Ledger key
+const privateKey = rawKey
+  ? PrivateKey.fromStringED25519(rawKey).toStringRaw()
+  : undefined;
+
+if (!accountId || !rawKey || !privateKey) {
   console.error(
     "HEDERA_OPERATOR_ID and HEDERA_OPERATOR_KEY are required (or HOL_HEDERA_ACCOUNT_ID / HOL_HEDERA_PRIVATE_KEY)"
   );
@@ -80,7 +86,7 @@ async function main() {
     autoTopUp: {
       accountId: accountId!,
       network: holNetwork,
-      hederaPrivateKey: privateKey!,
+      privateKey: privateKey!,
     },
   });
 

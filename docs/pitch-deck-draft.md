@@ -82,7 +82,7 @@ Live today: 3,000+ attestations on Hedera mainnet. Growing every hour.
 
 **Not all deletions are equal. Our AI knows the difference.**
 
-When a statement is deleted, Claude AI automatically scores it on a 1-10 public interest severity scale.
+When a statement is deleted, Claude Opus automatically scores it on a 1-10 public interest severity scale.
 
 - Score 1-3: Mundane corrections, typos, duplicate posts
 - Score 4-6: Potentially significant. Policy reversals, financial statements.
@@ -107,6 +107,7 @@ Heuristic fallback ensures scoring works even without API access.
 - Independent verification: any attestation verifiable on HashScan in seconds
 - Supporter tier: donors receive an NFT badge (SIGBADGE, token 0.0.10314265) minted via HIP-551 atomic batch transaction
 - HCS-2 topic registry live on mainnet (0.0.10388911): archive structure independently discoverable and standards-compliant
+- HOL Registry: Signal Archive registered as an AI agent on the Hashgraph Online registry (HCS-11 standard)
 
 Try it: go to signalarchive.org, open any archived statement, click Verify, confirm the hash on HashScan yourself.
 
@@ -138,7 +139,7 @@ Competitive landscape: Politwoops (OCCRP/ProPublica) tracked politician deletion
 **Phase 1 is live. The opportunity scales.**
 
 **Now (Phase 1 - Complete)**
-40 priority accounts. Full archive, deletion detection, HCS attestation, AI severity scoring.
+40 priority accounts. Full archive, deletion detection, HCS attestation, AI severity scoring. HOL Registry agent registration. HCS-2 topic registry.
 
 **Phase 2 - Government Accountability**
 All 535 US Congress members, agency heads, and press secretaries. 700-1,000 accounts. Bulk onboarding scripts ready.
