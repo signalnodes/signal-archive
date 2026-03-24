@@ -90,12 +90,8 @@ export function TweetMetaPanel({ tweet, deletion }: TweetMetaPanelProps) {
                   <span className="ml-1 opacity-50">({deletion.metadata.ai.model})</span>
                 )}
               </dt>
-              <dd>
-                <div className="rounded-md border border-border bg-muted/30 px-4 py-3">
-                  <p className="text-sm leading-relaxed text-foreground/80">
-                    {deletion.metadata.ai.reasoning}
-                  </p>
-                </div>
+              <dd className="text-xs leading-relaxed text-muted-foreground italic">
+                {deletion.metadata.ai.reasoning}
               </dd>
             </div>
           )}

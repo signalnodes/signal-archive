@@ -123,13 +123,14 @@ export default async function Image({
           </div>
           <div
             style={{
+              display: "flex",
               color: "#ffffff",
               fontSize: "64px",
               fontWeight: 700,
               lineHeight: 1.1,
             }}
           >
-            @{username}
+            {`@${username}`}
           </div>
         </div>
 

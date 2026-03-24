@@ -108,13 +108,14 @@ export default async function Image({
         {/* Username */}
         <div
           style={{
+            display: "flex",
             color: "#ffffff",
             fontSize: "26px",
             fontWeight: 700,
             marginBottom: "20px",
           }}
         >
-          @{username}
+          {`@${username}`}
         </div>
 
         {/* Tweet content */}
