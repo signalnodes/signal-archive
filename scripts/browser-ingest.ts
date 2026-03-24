@@ -913,9 +913,11 @@ async function main() {
     await browser.close();
   }
 
+  if (hcsQueue) await hcsQueue.close();
   if (redis) await redis.quit();
 
   console.log("\n[browser-ingest] All done.");
+  process.exit(0); // force exit — BullMQ/ioredis internal connections can keep the event loop alive
 }
 
 main().catch((err) => {

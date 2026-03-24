@@ -56,7 +56,13 @@ if (!hasPriorityList && !hasFallbackList) {
 let isRunningPriority = false;
 let isRunningStandard = false;
 
-function runIngest(listFile: string, label: string): Promise<void> {
+// Max wall-clock time per run before the child is killed.
+// Priority: 21 accounts × ~3 min max each + delays = ~90 min safe ceiling.
+// Standard: 21 accounts × ~3 min max each + delays = ~90 min, but runs less often.
+const PRIORITY_TIMEOUT_MS = 90 * 60 * 1000;  // 90 minutes
+const STANDARD_TIMEOUT_MS = 90 * 60 * 1000;  // 90 minutes
+
+function runIngest(listFile: string, label: string, timeoutMs: number): Promise<void> {
   return new Promise((resolve) => {
     if (!fs.existsSync(listFile)) {
       console.warn(`[daemon] ${label}: list file not found at ${listFile} — skipping`);
@@ -74,7 +80,13 @@ function runIngest(listFile: string, label: string): Promise<void> {
       { cwd: ROOT, stdio: "inherit", env: process.env }
     );
 
+    const watchdog = setTimeout(() => {
+      console.error(`[daemon] ${label} exceeded ${timeoutMs / 60000}m timeout — killing child process`);
+      child.kill("SIGTERM");
+    }, timeoutMs);
+
     child.on("close", (code) => {
+      clearTimeout(watchdog);
       const elapsed = ((Date.now() - new Date(started).getTime()) / 1000 / 60).toFixed(1);
       const status = code === 0 ? "OK" : `FAILED (exit ${code})`;
       console.log(`[daemon] ${new Date().toISOString()} — ${label} ${status} — ${elapsed}m elapsed`);
@@ -82,6 +94,7 @@ function runIngest(listFile: string, label: string): Promise<void> {
     });
 
     child.on("error", (err) => {
+      clearTimeout(watchdog);
       console.error(`[daemon] ${label} spawn error:`, err.message);
       resolve();
     });
@@ -99,7 +112,7 @@ cron.schedule("0 * * * *", async () => {
   }
   isRunningPriority = true;
   try {
-    await runIngest(priorityList, priorityLabel);
+    await runIngest(priorityList, priorityLabel, PRIORITY_TIMEOUT_MS);
   } finally {
     isRunningPriority = false;
   }
@@ -116,7 +129,7 @@ if (hasStandardList) {
     }
     isRunningStandard = true;
     try {
-      await runIngest(STANDARD_LIST, "standard");
+      await runIngest(STANDARD_LIST, "standard", STANDARD_TIMEOUT_MS);
     } finally {
       isRunningStandard = false;
     }
