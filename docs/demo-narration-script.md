@@ -36,7 +36,11 @@ Here is the archived statement.
 
 "Democrats holding TSA officers hostage for political purposes is irresponsible and dangerous."
 
-It was posted by the White House, then deleted. Without Signal Archive, this becomes a hole in the public record. Instead, we have it. Permanently.
+It was posted by the White House, then deleted five days later.
+
+Our AI flagged this as a records-retention concern. This came from an official White House account. Statements like this can carry public-record significance. Deleting them is not a minor edit.
+
+Without Signal Archive, this is a hole in the public record. Instead, we have it. Permanently.
 
 ---
 
@@ -58,7 +62,7 @@ Here is the proof record. The hash. The consensus timestamp. The sequence number
 ## BEAT 5 - HashScan
 *Screen hold: 25 seconds*
 
-This is Hash-Scan, Hedera's public ledger explorer. Hedera reaches consensus in seconds, at a fraction of a cent per message. That is why we chose it.
+This is Hash-Scan, Hedera's public ledger explorer. Hedera reaches consensus in seconds, at a fraction of a cent per message. That cost and speed is what makes attesting every tweet, at scale, economically viable.
 
 That record is not on our servers. It is on the ledger. We cannot change it. The platform cannot change it. The politician cannot change it.
 

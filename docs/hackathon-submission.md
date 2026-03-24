@@ -14,7 +14,8 @@ Signal Archive is a public accountability platform that cryptographically proves
 - BullMQ + Redis - job queue for ingestion, deletion detection, HCS submission
 - PostgreSQL (Neon) + Drizzle ORM
 - @hashgraph/sdk - HCS attestations, HIP-551 batch transactions, NFT minting
-- Claude AI (Haiku) - autonomous deletion severity scoring (1-10 scale)
+- @hashgraphonline/standards-sdk - HOL Registry agent registration (HCS-11)
+- Claude AI (Opus) - autonomous deletion severity scoring (1-10 scale)
 - Railway (web) + Hetzner VPS (worker, ingestion, Chrome CDP)
 
 ## Live Demo Link

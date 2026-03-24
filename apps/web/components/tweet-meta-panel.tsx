@@ -84,14 +84,18 @@ export function TweetMetaPanel({ tweet, deletion }: TweetMetaPanelProps) {
           )}
           {deletion.metadata?.ai?.reasoning && (
             <div className="col-span-2" id="ai-analysis">
-              <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">
+              <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-2">
                 AI Analysis
                 {deletion.metadata.ai.model && (
                   <span className="ml-1 opacity-50">({deletion.metadata.ai.model})</span>
                 )}
               </dt>
-              <dd className="text-xs leading-relaxed text-muted-foreground italic">
-                {deletion.metadata.ai.reasoning}
+              <dd>
+                <div className="rounded-md border border-border bg-muted/30 px-4 py-3">
+                  <p className="text-sm leading-relaxed text-foreground/80">
+                    {deletion.metadata.ai.reasoning}
+                  </p>
+                </div>
               </dd>
             </div>
           )}

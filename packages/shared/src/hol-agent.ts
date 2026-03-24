@@ -19,7 +19,7 @@ export const HOL_AGENT_PROFILE = {
   type: 1, // AI_AGENT
   display_name: "Signal Archive",
   alias: "signal-archive",
-  bio: "Monitors public officials on X/Twitter for deleted content. Every deletion is cryptographically attested on the Hedera Consensus Service — permanent, tamper-proof public record.",
+  bio: "Monitors public officials on X/Twitter for deleted content. Every deletion is severity-scored by Claude Opus and cryptographically attested on the Hedera Consensus Service. Permanent, tamper-proof public record.",
   socials: {
     twitter: "@signalarchives",
   },
@@ -34,8 +34,8 @@ export const HOL_AGENT_PROFILE = {
   },
   aiAgent: {
     type: 0, // MANUAL — responds to queries, not autonomous
-    capabilities: [6, 7, 8, 13, 14],
-    model: "claude-haiku-3-5",
+    capabilities: [6, 7, 8, 12, 14],
+    model: "claude-opus-4-6",
     creator: "Signal Archive",
   },
 } as const;
