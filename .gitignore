@@ -7,3 +7,10 @@ dist/
 .next/
 .turbo/
 .worktrees/
+
+# Root scratchpad / working files
+Demo prep.md
+apex transcript 2.md
+opus_vps_prompt.md
+repo-upgrade
+signal-archive-pitchdeck.pdf

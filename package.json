@@ -1,5 +1,6 @@
 {
-  "name": "tweet-accountability-archive",
+  "name": "signal-archive",
+  "description": "Cryptographic proof of public statements on Hedera — archives tweets, detects deletions, and attests both on-chain.",
   "private": true,
   "type": "module",
   "workspaces": [
