@@ -549,9 +549,12 @@ signal-archive/
 │   └── update-twitter-ids.ts
 ├── docs/
 │   ├── ARCHITECTURE.md
+│   ├── REFERENCE.md
 │   ├── SEED_ACCOUNTS.md
-│   ├── BROWSER_INGESTION_LIFEHACK.md
-│   └── REFACTOR_ASSESSMENT.md
+│   ├── DEVELOPMENT.md
+│   ├── HACKATHON.md
+│   ├── hackathon/      (hackathon artifacts)
+│   └── internal/       (implementation plans, historical docs)
 └── turbo.json
 ```
 
