@@ -5,6 +5,10 @@ Cryptographic proof of public statements on Hedera.
 **[signalarchive.org](https://signalarchive.org)** · [HashScan topic](https://hashscan.io/mainnet/topic/0.0.10301350)
 
 ---
+<p align="center">
+<img width="687" height="636" alt="image" src="https://github.com/user-attachments/assets/8aa87518-6b61-4ea4-865f-4196b4ec1a96" alt="Proof detail view showing deletion metadata, severity scoring, and Hedera HCS attestation." width="687" />
+</p>
+<p align="center"><em>Proof detail view showing deletion metadata, severity scoring, and Hedera HCS attestation.</em></p>
 
 ## What it does
 
