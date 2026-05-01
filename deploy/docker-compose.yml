@@ -83,6 +83,7 @@ services:
       dockerfile: deploy/Dockerfile.worker
     restart: unless-stopped
     env_file: ../.env
+    dns_search: []
     depends_on:
       - redis
       - postgres
@@ -100,6 +101,7 @@ services:
       dockerfile: deploy/Dockerfile.ingest
     restart: on-failure
     env_file: ../.env
+    dns_search: []
     depends_on:
       - chrome
       - redis

@@ -49,7 +49,7 @@ const PHASE_1_ACCOUNTS: SeedAccount[] = [
   { twitterId: "0300000007", username: "SebGorka", displayName: "Sebastian Gorka", category: "political_appointee", trackingTier: "priority", metadata: { role: "Senior Advisor" } },
 
   // Category 4: White House & Executive Office (STANDARD)
-  { twitterId: "822215679726100480", username: "WhiteHouse", displayName: "The White House", category: "white_house", trackingTier: "standard" },
+  { twitterId: "822215679726100480", username: "WhiteHouse", displayName: "The White House", category: "white_house", trackingTier: "priority" },
   { twitterId: "1349149096909668363", username: "POTUS", displayName: "President of the United States", category: "white_house", trackingTier: "standard" },
   { twitterId: "1346524486936080386", username: "VP", displayName: "Vice President", category: "white_house", trackingTier: "standard" },
   { twitterId: "2336787612", username: "JDVance", displayName: "JD Vance", category: "white_house", trackingTier: "priority", metadata: { role: "Vice President (personal account)" } },
