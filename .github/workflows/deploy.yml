@@ -1,0 +1,22 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inject env file
+        run: cp /opt/signal-archive/.env .env
+
+      - name: Build web image
+        run: |
+          set -a && source .env && set +a
+          docker compose -p signal-archive -f deploy/docker-compose.yml build web
+
+      - name: Deploy web
+        run: docker compose -p signal-archive -f deploy/docker-compose.yml up -d --no-deps web

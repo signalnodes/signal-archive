@@ -1,0 +1,3 @@
+signalarchive.org, www.signalarchive.org {
+	reverse_proxy web:3000
+}
