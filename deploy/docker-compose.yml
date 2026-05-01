@@ -158,12 +158,14 @@ services:
 
 volumes:
   pg-data:
-    driver: local
+    external: true
+    name: deploy_pg-data
   redis-data:
-    driver: local
+    external: true
+    name: deploy_redis-data
   chrome-profile:
-    driver: local
-    # Explicitly named to prevent accidental deletion.
+    external: true
+    name: deploy_chrome-profile
     # Contains the X/Twitter login session — treat as sensitive persistent state.
   caddy-data:
     driver: local

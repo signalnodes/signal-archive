@@ -63,4 +63,4 @@ COPY . .
 # gen-accounts-list.ts queries the DB for tracked accounts and writes
 # accounts-priority.txt, accounts-standard.txt, accounts.txt.
 # The chrome service overrides this CMD in docker-compose.yml.
-CMD ["sh", "-c", "npx tsx --env-file=.env scripts/gen-accounts-list.ts && npx tsx scripts/ingest-daemon.ts"]
+CMD ["sh", "-c", "npx tsx scripts/gen-accounts-list.ts && npx tsx scripts/ingest-daemon.ts"]

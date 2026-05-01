@@ -28,7 +28,6 @@ const __dirname = path.dirname(__filename);
 
 const ROOT = path.resolve(__dirname, "..");
 const SCRIPT = path.join(ROOT, "scripts", "browser-ingest.ts");
-const ENV_FILE = path.join(ROOT, ".env");
 
 // Rolling --since window: use ARCHIVE_SINCE env var, or default to 48h ago.
 // Prevents full-timeline scrapes on every cron cycle.
@@ -76,13 +75,17 @@ function runIngest(listFile: string, label: string, timeoutMs: number): Promise<
     const since = getSinceDate();
     const child = spawn(
       "npx",
-      ["tsx", `--env-file=${ENV_FILE}`, SCRIPT, "--list", listFile, "--cdp", "--skip-vpn-check", "--since", since],
-      { cwd: ROOT, stdio: "inherit", env: process.env }
+      ["tsx", SCRIPT, "--list", listFile, "--cdp", "--skip-vpn-check", "--since", since],
+      { cwd: ROOT, stdio: "inherit", env: process.env, detached: true }
     );
 
     const watchdog = setTimeout(() => {
-      console.error(`[daemon] ${label} exceeded ${timeoutMs / 60000}m timeout — killing child process`);
-      child.kill("SIGTERM");
+      console.error(`[daemon] ${label} exceeded ${timeoutMs / 60000}m timeout — killing process group`);
+      try {
+        process.kill(-child.pid!, "SIGTERM");
+      } catch (e) {
+        // Process may have already exited
+      }
     }, timeoutMs);
 
     child.on("close", (code) => {
