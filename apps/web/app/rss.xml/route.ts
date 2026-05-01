@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { desc, eq } from "drizzle-orm";
 import { getDb, deletionEvents, trackedAccounts, tweets } from "@taa/db";
 

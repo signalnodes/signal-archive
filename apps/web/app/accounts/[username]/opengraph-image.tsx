@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { ImageResponse } from "next/og";
 import { count, eq } from "drizzle-orm";
 import { getDb, trackedAccounts, tweets, deletionEvents } from "@taa/db";

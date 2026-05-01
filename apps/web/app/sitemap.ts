@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import type { MetadataRoute } from "next";
 import { getDb, tweets, trackedAccounts } from "@taa/db";
 import { eq } from "drizzle-orm";
