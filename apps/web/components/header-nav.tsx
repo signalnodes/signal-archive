@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { IconMenu2, IconX } from "@tabler/icons-react";
-import { WalletButton } from "@/components/wallet-button";
 import { useWallet } from "@/lib/wallet/context";
 
 const NAV_LINKS = [
@@ -39,7 +38,6 @@ export function HeaderNav() {
             Research
           </Link>
         )}
-        <WalletButton />
       </nav>
 
       {/* Mobile hamburger */}
@@ -74,9 +72,6 @@ export function HeaderNav() {
               Research
             </Link>
           )}
-          <div className="pt-2 mt-1 border-t border-border">
-            <WalletButton />
-          </div>
           <div className="pt-2 mt-1 border-t border-border">
             <form method="GET" action="/search">
               <input

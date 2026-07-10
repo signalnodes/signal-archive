@@ -47,7 +47,7 @@ export default async function HomePage() {
       {/* Hero */}
       <section className="mb-12">
         <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground/60 mb-3 leading-none">
-            Hedera Mainnet · Live
+            Hedera Mainnet · Active
           </p>
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl max-w-3xl leading-[1.05] font-editorial">
           Deleted.
