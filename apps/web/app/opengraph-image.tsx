@@ -55,7 +55,7 @@ export default function Image() {
           }}
         >
           <span>Public statements.</span>
-          <span>Permanent record.</span>
+          <span>Permanent proof.</span>
         </div>
 
         {/* Subline */}
@@ -67,8 +67,8 @@ export default function Image() {
             maxWidth: "800px",
           }}
         >
-          Cryptographic proof of every tweet, anchored to the Hedera Consensus
-          Service. Deletion is never the last word.
+          Public statements preserved with cryptographic proof anchored to
+          Hedera. No login required to verify.
         </div>
       </div>
     ),

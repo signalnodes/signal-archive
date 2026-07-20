@@ -67,7 +67,7 @@ export function TweetMetaPanel({ tweet, deletion }: TweetMetaPanelProps) {
           </div>
           {deletion.severityScore != null && (
             <div className="col-span-2">
-              <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1.5">AI Severity Score</dt>
+              <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1.5">Public Interest Signal</dt>
               <dd className="flex items-center gap-3">
                 <SeverityBadge score={deletion.severityScore} />
                 {deletion.categoryTags && deletion.categoryTags.filter(t => t !== "heuristic_scored").length > 0 && (
@@ -83,12 +83,9 @@ export function TweetMetaPanel({ tweet, deletion }: TweetMetaPanelProps) {
             </div>
           )}
           {deletion.metadata?.ai?.reasoning && (
-            <div className="col-span-2" id="ai-analysis">
+            <div className="col-span-2" id="classification-note">
               <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-2">
-                AI Analysis
-                {deletion.metadata.ai.model && (
-                  <span className="ml-1 opacity-50">({deletion.metadata.ai.model})</span>
-                )}
+                Classification Note
               </dt>
               <dd className="text-xs leading-relaxed text-muted-foreground italic">
                 {deletion.metadata.ai.reasoning}

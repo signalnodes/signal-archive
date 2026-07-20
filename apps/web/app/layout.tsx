@@ -36,24 +36,24 @@ export const metadata: Metadata = {
   },
   title: {
     template: "%s | Signal Archive",
-    default: "Signal Archive: Public Statements. Permanent Record.",
+    default: "Signal Archive: Public Statements. Permanent Proof.",
   },
   description:
-    "Signal Archive monitors public figures, captures their statements, and creates cryptographic proof anchored to the Hedera Consensus Service. Deletion is never the last word.",
+    "Signal Archive preserves public statements from high-impact accounts and anchors cryptographic proof to Hedera. Anyone can verify what was captured, when it was captured, and whether it was later deleted.",
   openGraph: {
     siteName: "Signal Archive",
     type: "website",
-    title: "Signal Archive: Public Statements. Permanent Record.",
+    title: "Signal Archive: Public Statements. Permanent Proof.",
     description:
-      "Signal Archive monitors public figures, captures their statements, and creates cryptographic proof anchored to the Hedera Consensus Service. Deletion is never the last word.",
+      "Signal Archive preserves public statements from high-impact accounts and anchors cryptographic proof to Hedera. Anyone can verify what was captured, when it was captured, and whether it was later deleted.",
     url: "https://signalarchive.org",
   },
   twitter: {
     card: "summary_large_image",
     site: "@signalarchives",
-    title: "Signal Archive: Public Statements. Permanent Record.",
+    title: "Signal Archive: Public Statements. Permanent Proof.",
     description:
-      "Monitoring public figures. Cryptographic proof of every tweet. Deletion is never the last word.",
+      "Public statements preserved with cryptographic proof anchored to Hedera.",
   },
   metadataBase: new URL("https://signalarchive.org"),
 };

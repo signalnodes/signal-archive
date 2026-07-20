@@ -4,7 +4,7 @@ import { RecentDeletionsFeed } from "@/components/recent-deletions-feed";
 import { DeletionFilters } from "@/components/deletion-filters";
 import type { DeletionRow } from "@/components/recent-deletions-feed";
 
-export const metadata: Metadata = { title: "Deletion Feed - Preview" };
+export const metadata: Metadata = { title: "Recent Deletions - Preview" };
 
 const FIXTURE_DELETIONS: DeletionRow[] = [
   {
@@ -209,7 +209,7 @@ export default function DeletionsPreviewPage() {
       <div className="mb-6 px-3 py-2 rounded border border-yellow-500/40 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 text-xs font-mono">
         PREVIEW — fixture data for design review. Not live.
       </div>
-      <h1 className="text-2xl font-bold mb-1">Deletion Feed</h1>
+      <h1 className="text-2xl font-bold mb-1">Recent Deletions</h1>
       <p className="text-muted-foreground mb-6">
         Reverse-chronological record of all detected tweet deletions.
       </p>

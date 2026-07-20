@@ -174,10 +174,10 @@ Live site: https://signalarchive.org`;
 function handleHelp() {
   return `Signal Archive Agent — HOL Registry (HCS-11)
 
-I monitor 40 high-value public figures on X/Twitter, archive every tweet with a SHA-256 hash, and submit cryptographic attestations to Hedera HCS. When tweets are deleted, I detect and attest the deletion on-chain with an AI severity score.
+I monitor 40 high-value public figures on X/Twitter, archive every tweet with a SHA-256 hash, and submit cryptographic attestations to Hedera HCS. When tweets are deleted, I detect and attest the deletion on-chain with a public-interest review signal.
 
 I can answer:
-• "Show recent deletions" — latest deletions with severity scores and proof links
+• "Show recent deletions" — latest deletions with review signals and proof links
 • "Status @username" — monitoring status and deletion count for a tracked account
 • "Verify [sha256-hash]" — look up an HCS attestation by content hash
 • "Stats" — live counts of archived tweets, deletions, and monitored accounts
@@ -263,7 +263,7 @@ export async function GET() {
     uaid: "uaid:aid:98gtn21G8xhjbQg4WYkVHHtyYsf6ko2V9YC2WLuh6rjTnD5J8qKxvux6CLGwMakhLH",
     hcsTopicId: "0.0.10301350",
     capabilities: ["tweet-monitoring", "deletion-detection", "hcs-attestation", "severity-scoring"],
-    description: "Monitors high-value public figures on X/Twitter. Archives tweets with SHA-256 hashes on Hedera HCS. Detects and attests deletions on-chain with AI severity scoring.",
+    description: "Monitors high-value public figures on X/Twitter. Archives tweets with SHA-256 hashes on Hedera HCS. Detects and attests deletions on-chain with public-interest review signals.",
     site: "https://signalarchive.org",
     status: "active",
   });

@@ -47,31 +47,30 @@ export default async function HomePage() {
       {/* Hero */}
       <section className="mb-12">
         <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground/60 mb-3 leading-none">
-            Hedera Mainnet · Active
-          </p>
+          Hedera Mainnet · Public Proof Archive
+        </p>
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl max-w-3xl leading-[1.05] font-editorial">
-          Deleted.
+          Public statements.
           <br />
-          Documented.
-          <br />
-          Permanent.
+          Permanent proof.
         </h1>
         <p className="mt-4 text-lg text-muted-foreground max-w-2xl leading-relaxed">
-          Signal Archive monitors public figures, captures their statements, and creates
-          cryptographic proof anchored to the Hedera Consensus Service. Deletion is never the
-          last word.
+          Signal Archive preserves public statements from high-impact accounts and anchors
+          cryptographic proof to Hedera. Anyone can verify what was captured, when it was
+          captured, and whether it was later deleted.
         </p>
         <div className="mt-6 flex gap-3 flex-wrap">
           <Button asChild>
-            <Link href="/accounts">Browse Accounts</Link>
+            <Link href="/accounts">Explore the Archive</Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link href="/deletions">View Deletion Feed</Link>
+            <Link href="/deletions">View Recent Deletions</Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link href="/verify">Verify a Tweet</Link>
+            <Link href="/verify">Verify a Record</Link>
           </Button>
         </div>
+        <p><small>Open source. Public HCS topic. No login required to verify.</small></p>
       </section>
 
       {/* Stats */}

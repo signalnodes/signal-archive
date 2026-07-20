@@ -125,33 +125,33 @@ export default function ResearchPage() {
   return (
     <div className="container mx-auto max-w-screen-xl px-4 py-8">
       <h1 className="text-2xl font-bold mb-1">Research</h1>
-      <p className="text-muted-foreground mb-8">Wallet tracking and donor-only accounts for supporters.</p>
+      <p className="text-muted-foreground mb-8">Research tools and additional monitoring views for supporters.</p>
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : (
         <div className="flex flex-col gap-12">
-          {/* Wallet Watch */}
+          {/* Tracked Wallets */}
           <section>
-            <h2 className="text-lg font-semibold mb-1">Wallet Watch</h2>
+            <h2 className="text-lg font-semibold mb-1">Tracked Wallets</h2>
             <p className="text-sm text-muted-foreground mb-4">
               Labeled crypto wallets associated with persons of interest.
             </p>
             <WalletWatchTable wallets={wallets} />
           </section>
 
-          {/* Donor-only accounts */}
+          {/* Supporter accounts */}
           <section>
-            <h2 className="text-lg font-semibold mb-1">Tracked Accounts (Supporter-Only)</h2>
+            <h2 className="text-lg font-semibold mb-1">Tracked Accounts (Supporters)</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              {donorAccounts.length} account{donorAccounts.length !== 1 ? "s" : ""} tracked exclusively for supporters.
+              {donorAccounts.length} account{donorAccounts.length !== 1 ? "s" : ""} tracked for supporters.
             </p>
             {donorAccounts.length > 0 ? (
               <AccountsGrid accounts={donorAccounts} />
             ) : (
               <Card>
                 <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                  No supporter-only accounts yet. Check back soon.
+                  No supporter accounts yet. Check back soon.
                 </CardContent>
               </Card>
             )}

@@ -11,11 +11,11 @@ import { CATEGORY_LABELS } from "@/lib/category";
 import type { AccountCategory } from "@taa/shared";
 
 export const metadata: Metadata = {
-  title: "Deletion Feed",
+  title: "Recent Deletions",
   description:
     "Continuously updated feed of deleted tweets from politicians and public figures, cryptographically attested on the Hedera Consensus Service.",
   openGraph: {
-    title: "Deletion Feed - Signal Archive",
+    title: "Recent Deletions - Signal Archive",
     description:
       "Continuously updated feed of deleted tweets from politicians and public figures, cryptographically attested on the Hedera Consensus Service.",
   },
@@ -101,7 +101,7 @@ export default async function DeletionsPage({ searchParams }: Props) {
         description={
           <>
             {sortBySeverity
-              ? "Deletions ranked by AI-assessed public interest significance."
+              ? "Deletions ranked by estimated public-interest relevance. Scores are signals for review, not verdicts."
               : "Reverse-chronological record of all detected tweet deletions."}
             {category && (
               <span className="ml-1">

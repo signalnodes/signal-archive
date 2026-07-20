@@ -90,7 +90,7 @@ export async function GET() {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Signal Archive - Deletion Feed</title>
+    <title>Signal Archive - Recent Deletions</title>
     <link>${BASE_URL}/deletions</link>
     <description>Cryptographically attested tweet deletions from public figures, politicians, and government officials.</description>
     <language>en-us</language>

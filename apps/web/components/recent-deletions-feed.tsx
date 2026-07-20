@@ -92,7 +92,7 @@ function DeletionCard({ row }: { row: DeletionRow }) {
             </div>
           </div>
           {deletion.severityScore != null && deletion.tweetId && (
-            <Link href={`/tweet/${deletion.tweetId}#ai-analysis`}>
+            <Link href={`/tweet/${deletion.tweetId}#classification-note`}>
               <SeverityBadge score={deletion.severityScore} className="hover:opacity-80 transition-opacity cursor-pointer" />
             </Link>
           )}
